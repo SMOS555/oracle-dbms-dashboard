@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Oracle Data Studio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="logo">
+                OD
+            </div>
+
+            <div>
+                <div class="brand-title">
+                    Oracle Data Studio
+                </div>
+
+                <div class="brand-subtitle">
+                    DBMS Management Console
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="navigation">
+
+            <button class="nav-button active" data-page="explorer">
+
+                <span class="nav-icon">▦</span>
+
+                <span>
+                    Data Explorer
+                </span>
+
+            </button>
+
+
+            <button class="nav-button" data-page="sql">
+
+                <span class="nav-icon">⌘</span>
+
+                <span>
+                    SQL Console
+                </span>
+
+            </button>
+
+        </nav>
+
+
+        <!-- TABLES -->
+
+        <div class="section-title">
+            DATABASE OBJECTS
+        </div>
+
+        <div id="tableList" class="table-list">
+
+            <!-- Tables loaded by JavaScript -->
+
+        </div>
+
+
+        <!-- CONNECTION -->
+
+        <div class="connection-status">
+
+            <span class="connection-dot"></span>
+
+            <div>
+
+                <strong>
+                    Oracle Connected
+                </strong>
+
+                <small>
+                    JDBC connection active
+                </small>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="main-content">
+
+
+        <!-- HEADER -->
+
+        <header class="top-header">
+
+            <div>
+
+                <div class="page-label">
+                    ORACLE DATABASE
+                </div>
+
+                <h1 id="pageTitle">
+                    Data Explorer
+                </h1>
+
+            </div>
+
+
+            <button id="refresh" class="button secondary-button">
+
+                ↻ Refresh
+
+            </button>
+
+        </header>
+
+
+        <!-- ===================== -->
+        <!-- DATA EXPLORER -->
+        <!-- ===================== -->
+
+        <section id="explorerPage" class="page active">
+
+
+            <!-- HERO -->
+
+            <div class="hero-card">
+
+                <div class="hero-content">
+
+                    <div class="page-label">
+                        DATABASE MANAGEMENT
+                    </div>
+
+                    <h2>
+                        Explore and manage your data
+                    </h2>
+
+                    <p>
+                        Browse Oracle tables, inspect records,
+                        edit values, delete rows and run SQL
+                        from one workspace.
+                    </p>
+
+                </div>
+
+
+                <div class="table-count">
+
+                    <strong id="tableCount">
+                        0
+                    </strong>
+
+                    <span>
+                        tables available
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- TABLE SELECTOR -->
+
+            <div class="table-toolbar">
+
+                <div class="table-selector">
+
+                    <label>
+                        SELECT DATA OBJECT
+                    </label>
+
+                    <select id="tableSelect">
+
+                        <option value="">
+                            Choose a table...
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button
+                    id="openTable"
+                    class="button primary-button">
+
+                    Open Table
+
+                </button>
+
+
+                <button
+                    id="openSql"
+                    class="button secondary-button">
+
+                    Open SQL Console
+
+                </button>
+
+            </div>
+
+
+            <!-- TABLE PANEL -->
+
+            <section class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <div class="page-label">
+                            TABLE VIEW
+                        </div>
+
+                        <h3 id="tableTitle">
+                            No table selected
+                        </h3>
+
+                        <p id="tableMeta">
+                            Choose a data object above
+                            to view its records.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="insertSql"
+                        class="button secondary-button">
+
+                        ＋ Insert with SQL
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="tableWrap"
+                    class="table-container empty-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ▦
+                        </div>
+
+                        <h3>
+                            Select a data object
+                        </h3>
+
+                        <p>
+                            Your Oracle records will
+                            appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ===================== -->
+        <!-- SQL CONSOLE -->
+        <!-- ===================== -->
+
+        <section id="sqlPage" class="page">
+
+
+            <div class="hero-card sql-hero">
+
+                <div class="hero-content">
+
+                    <div class="page-label">
+                        DATABASE WORKSPACE
+                    </div>
+
+                    <h2>
+                        SQL Console
+                    </h2>
+
+                    <p>
+                        Run SELECT, WITH, INSERT, UPDATE
+                        and DELETE statements through
+                        the JDBC connection.
+                    </p>
+
+                </div>
+
+
+                <div class="keyboard-shortcut">
+
+                    Ctrl + Enter
+
+                    <span>
+                        Run
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- SQL EDITOR -->
+
+            <section class="panel sql-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="page-label">
+                            QUERY EDITOR
+                        </div>
+
+                        <h3>
+                            SQL statement
+                        </h3>
+
+                    </div>
+
+
+                    <button
+                        id="clearSql"
+                        class="button secondary-button">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
+
+                <textarea
+                    id="sqlInput"
+                    spellcheck="false"
+                    placeholder="SELECT * FROM EMPLOYEES ORDER BY EMP_ID;">
+                </textarea>
+
+
+                <div class="sql-actions">
+
+                    <button
+                        id="runSql"
+                        class="button primary-button">
+
+                        ▶ Run Query
+
+                    </button>
+
+
+                    <small>
+                        DROP, ALTER, TRUNCATE, GRANT
+                        and REVOKE are blocked.
+                    </small>
+
+                </div>
+
+            </section>
+
+
+            <!-- QUERY RESULT -->
+
+            <section class="panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="page-label">
+                            RESULT
+                        </div>
+
+                        <h3 id="resultTitle">
+                            No query executed
+                        </h3>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="resultWrap"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ⌘
+                        </div>
+
+                        <h3>
+                            Query results appear here
+                        </h3>
+
+                        <p>
+                            Run a statement to see
+                            rows or affected-row counts.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ===================== -->
+<!-- EDIT MODAL -->
+<!-- ===================== -->
+
+<div
+    id="modal"
+    class="modal hidden">
+
+    <div class="modal-backdrop"></div>
+
+
+    <div class="modal-card">
+
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="page-label">
+                    EDIT RECORD
+                </div>
+
+                <h2 id="modalTitle">
+                    Edit row
+                </h2>
+
+            </div>
+
+
+            <button
+                id="closeModal"
+                class="close-button">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="editFields"
+            class="edit-fields">
+
+        </div>
+
+
+        <div class="modal-actions">
+
+            <button
+                id="cancel"
+                class="button secondary-button">
+
+                Cancel
+
+            </button>
+
+
+            <button
+                id="save"
+                class="button primary-button">
+
+                Save Changes
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    id="toast"
+    class="toast hidden">
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+
+</html>
