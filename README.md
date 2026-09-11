@@ -2,7 +2,7 @@
 
 Full-stack local DBMS lab application using **Oracle + JDBC + Spring Boot + HTML/CSS/JavaScript**.
 
-The project is based on the supplied **DBMS Lab Assessment 2** PDF. The PDF covers SQL subqueries/nested queries and joins, and shows practice relations such as Student/Apply/College plus Employees, Departments, Projects, Customers, Orders, Products, Suppliers, Categories, Students, Courses, Enrollments, Order Details, Shipments and Locations.
+
 
 ## Included
 
