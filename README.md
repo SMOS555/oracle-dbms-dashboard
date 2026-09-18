@@ -1,84 +1,115 @@
 # Oracle DBMS Dashboard
 
-Full-stack local DBMS lab application using **Oracle + JDBC + Spring Boot + HTML/CSS/JavaScript**.
+A full-stack Oracle Database Management Dashboard built using **Spring Boot, Oracle Database, JDBC, HTML, CSS, and JavaScript**.
 
+The project provides a web-based interface for exploring database tables, executing SQL queries, performing CRUD operations, viewing database triggers, and demonstrating cursor-based database operations.
 
+---
 
-## Included
+## 📌 Project Overview
 
+The Oracle DBMS Dashboard is designed as a web-based database management interface.
+
+Instead of interacting with the Oracle database only through SQL Developer, users can access important database operations through a browser-based dashboard.
+
+### Main functionalities
+
+- Database table explorer
+- View table records
+- View table structure/columns
+- Primary key information
+- Insert records
+- Edit/update records
+- Delete records
+- SQL Console
+- Execute SELECT queries
+- Execute INSERT queries
+- Execute UPDATE queries
+- Execute DELETE queries
+- Database trigger monitoring
+- Trigger validation demonstrations
+- Cursor operations
+- Parameterized cursor operations
+- Order total calculations
+- Customer and order data management
+- Responsive dashboard UI
 - Oracle JDBC connectivity
-- Spring Boot backend
-- Dashboard table browser
-- Automatic column/primary-key detection
-- Edit input form
-- Delete option
-- SQL query window
-- SELECT/WITH results displayed as a table
-- INSERT/UPDATE/DELETE affected-row display
-- Oracle PK/FK/UNIQUE/NOT NULL/CHECK constraints
-- Seed data based on the sample values visible in the PDF
-- `database/03_lab_queries.sql` with join/subquery examples
+- REST API backend
+- Error handling and user notifications
 
-## Run
+---
 
-Requirements: JDK 17+, Maven 3.9+, Oracle XE/Oracle-compatible database.
+# 🏗️ Technology Stack
 
-1. Run `database/01_schema.sql` in your Oracle schema.
-2. Run `database/02_seed.sql`.
-3. Set Oracle connection variables:
+## Frontend
 
-Windows CMD:
-```bat
-set DB_URL=jdbc:oracle:thin:@localhost:1521/XEPDB1
-set DB_USERNAME=system
-set DB_PASSWORD=your_password
-mvn spring-boot:run
-```
+- HTML5
+- CSS3
+- JavaScript
+- Google Fonts
+- Responsive UI
 
-PowerShell:
-```powershell
-$env:DB_URL="jdbc:oracle:thin:@localhost:1521/XEPDB1"
-$env:DB_USERNAME="system"
-$env:DB_PASSWORD="your_password"
-mvn spring-boot:run
-```
+## Backend
 
-4. Open `http://localhost:8080`.
+- Java
+- Spring Boot
+- Spring JDBC
+- REST APIs
+- Maven
 
-If your Oracle service name is different, change `DB_URL`, e.g. `FREEPDB1`.
+## Database
 
-## Dashboard
+- Oracle Database
+- Oracle SQL
+- PL/SQL
+- Database Triggers
+- Cursors
+- Views
+- Constraints
+- Foreign Keys
+- Primary Keys
 
-Choose a table and load it. Every row has:
+## Connectivity
 
-- **Edit** — opens generated input fields; primary-key columns are locked.
-- **Delete** — deletes by primary key after confirmation.
+- Oracle JDBC Driver
+- Spring `JdbcTemplate`
 
-Composite primary keys are supported.
+---
 
-## SQL Query Window
+# 🧩 System Architecture
 
-Examples:
-
-```sql
-SELECT * FROM EMPLOYEES;
-```
-
-```sql
-SELECT e.EMPLOYEE_NAME, d.DEPARTMENT_NAME
-FROM EMPLOYEES e
-JOIN DEPARTMENTS d ON e.DEPARTMENT_ID=d.DEPARTMENT_ID;
-```
-
-```sql
-UPDATE EMPLOYEES SET SALARY=SALARY*1.50
-WHERE EMPLOYEE_ID=101;
-```
-
-The local query endpoint permits SELECT/WITH/INSERT/UPDATE/DELETE. DROP, ALTER, TRUNCATE and GRANT/REVOKE are blocked.
-
-## Important
-
-The PDF gives the relations, sample data and query exercises but does not provide a complete formal constraint list for every table. Therefore the schema implements relational constraints inferred from the identifiers and relationships shown: primary keys, foreign keys, unique values, NOT NULL and basic domain checks.
-
-`01_schema.sql` recreates these lab tables, so do not run it against a production schema.
+```text
+                    ┌──────────────────────┐
+                    │       User           │
+                    │      Browser         │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    HTML / CSS / JS   │
+                    │      Dashboard       │
+                    └──────────┬───────────┘
+                               │
+                         REST API Calls
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    Spring Boot       │
+                    │      Backend         │
+                    │                      │
+                    │ DatabaseController   │
+                    │ DatabaseService      │
+                    └──────────┬───────────┘
+                               │
+                         JDBC Connection
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   Oracle Database    │
+                    │                      │
+                    │ Tables               │
+                    │ Constraints          │
+                    │ Triggers             │
+                    │ Cursors              │
+                    │ Views                │
+                    └──────────────────────┘
