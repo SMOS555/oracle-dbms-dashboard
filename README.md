@@ -1,51 +1,64 @@
+Yes — the current one is **too polished and repetitive**, especially with all the emojis, tables, formal wording, and phrases like “The project aims to…”. For a college GitHub project, a simpler README will look much more natural.
 
+Use this version instead:
+
+````markdown
 # Oracle DBMS Dashboard
 
-A full-stack web-based **Oracle Database Management Dashboard** developed using **Spring Boot, Oracle JDBC, HTML, CSS, and JavaScript**.
+Oracle DBMS Dashboard is a web application built to manage and interact with an Oracle database through a simple database-workbench style interface.
 
-The project provides a database-workbench interface for exploring tables, managing records, executing SQL queries, and demonstrating Oracle DBMS concepts.
+It was developed as a DBMS project using Spring Boot, Oracle JDBC, HTML, CSS and JavaScript.
 
----
-## 🎯 Project Objective
+## Project Objective
 
-The main objective of the **Oracle DBMS Dashboard** is to develop a web-based database management system that demonstrates practical **Oracle DBMS concepts** through an interactive dashboard.
+The main objective of this project is to connect an Oracle database with a web application and demonstrate important DBMS concepts through a working interface.
 
-The project aims to:
+The dashboard allows users to:
 
-- Provide a simple interface to **explore and manage Oracle database tables**.
-- Perform **CRUD operations** on database records through a web interface.
-- Allow users to **execute SQL queries** using an integrated SQL Console.
-- Demonstrate the use of **Oracle triggers** for automatic data validation and database actions.
-- Demonstrate **PL/SQL cursors**, including parameterized cursors that accept user input.
-- Implement a **database view** to combine information from multiple tables.
-- Demonstrate database concepts such as **primary keys, composite keys, foreign keys, constraints, SQL, PL/SQL, JDBC, and REST APIs**.
-- Connect a web application to an Oracle database using **Spring Boot and Oracle JDBC**.
-- Provide a database-workbench-style interface for interacting with the database.
+- View and explore database tables
+- Insert, update and delete records
+- Run SQL queries
+- View and test database triggers
+- Work with PL/SQL cursors
+- Use a parameterized cursor by entering a Customer ID
+- View data using a database view
+- Access the database through REST APIs and JDBC
 
-## 🚀 Features
+## Features
 
-### 📊 Data Explorer
-- View all database tables
-- Select and explore tables
-- View table columns and primary keys
-- Display table records
-- Refresh table data
+### Data Explorer
 
-### ✏️ CRUD Operations
-- Insert new records
-- Update/Edit existing records
+The Data Explorer allows users to:
+
+- View all available tables
+- Select a table
+- View its columns and primary keys
+- View the records stored in the table
+- Refresh the table data
+
+### CRUD Operations
+
+Records can be managed directly from the dashboard.
+
+- Insert records
+- Edit existing records
 - Delete records
-- Database constraints and triggers validate operations
 
-### 💻 SQL Console
+Oracle constraints and triggers are used to validate the data.
 
-Execute SQL queries directly from the dashboard:
+### SQL Console
 
-- `SELECT`
-- `INSERT`
-- `UPDATE`
-- `DELETE`
-- `WITH`
+The SQL Console allows SQL commands to be executed from the website.
+
+Supported queries include:
+
+```sql
+SELECT
+INSERT
+UPDATE
+DELETE
+WITH
+````
 
 Example:
 
@@ -53,154 +66,132 @@ Example:
 SELECT CUSTID, CNAME, CITY
 FROM CUSTOMER
 WHERE CITY = 'Chennai';
-````
-
-### ⚡ Triggers
-
-The project implements Oracle database triggers to automatically validate data and perform actions when specific database events occur.
-
-| Trigger | What it Does |
-|---|---|
-| `TRG_STOCK_NO_NEGATIVE` | Prevents inserting or updating stock with a negative quantity. |
-| `TRG_ORDER_ITEM_VALIDATION` | Ensures order quantity is greater than zero and item price is not negative. |
-| `TRG_ORDER_DATE_VALIDATION` | Prevents orders from being created with a future order date. |
-| `TRG_ORDER_STATUS_VALIDATION` | Allows only valid order statuses such as `NEW`, `SHIPPED`, `DELIVERED`, and `CANCELLED`. |
-| `TRG_SALARY_VALIDATION` | Prevents an employee's salary from being reduced. |
-| `TRG_SALARY_AUDIT` | Automatically records old salary, new salary, employee ID, and change date whenever salary is updated. |
-| `TRG_ORDER_SHIP_STATUS` | Automatically changes an order's status to `SHIPPED` when a shipment is created. |
-| `TRG_CUSTOMER_DELETE_CHECK` | Prevents deleting a customer if the customer already has orders. |
-| `TRG_RETURN_AMOUNT_VALIDATION` | Prevents negative refund amounts in goods returns. |
-| `TRG_INSPECTION_RESULT` | Automatically sets the inspection result to `PENDING` when no result is provided. |
-
-The **Triggers** page in the dashboard displays:
-
-- Trigger name
-- Status
-- Triggering event
-- Trigger type
-
----
-
-### 🔄 Cursors
-
-The project demonstrates Oracle **PL/SQL cursor concepts** for processing query results and performing calculations.
-
-| Cursor | Input | What it Does | Output |
-|---|---|---|---|
-| **Customer Cursor** | No input | Fetches customer records one by one. | Customer ID, name, and city |
-| **Parameterized Order Cursor** | Customer ID | Fetches only the orders belonging to the specified customer. | Order ID, order date, and status |
-| **Order Total Cursor** | No input | Processes order items and calculates the total amount for each order. | Order ID and total order amount |
-
-#### Customer Cursor
-
-Processes customer records sequentially.
-
-```text
-Customer Table
-      ↓
-Customer Cursor
-      ↓
-Fetch Customer Records
-      ↓
-Customer ID + Name + City
-
-
-Example flow:
-
-```text
-Customer ID
-     ↓
-Parameterized Cursor
-     ↓
-Customer Orders
-     ↓
-Result
 ```
 
-### 👁️ Database View
+## Triggers
 
-`CUSTOMER_ORDER_VIEW` combines customer and order information using a SQL `JOIN`.
+The database contains 10 triggers. They are used mainly for validation and automatic database actions.
 
-### 🔗 Oracle Database Connectivity
+| Trigger                        | Purpose                                                   |
+| ------------------------------ | --------------------------------------------------------- |
+| `TRG_STOCK_NO_NEGATIVE`        | Prevents negative stock quantity                          |
+| `TRG_ORDER_ITEM_VALIDATION`    | Checks order quantity and price                           |
+| `TRG_ORDER_DATE_VALIDATION`    | Prevents future order dates                               |
+| `TRG_ORDER_STATUS_VALIDATION`  | Checks whether the order status is valid                  |
+| `TRG_SALARY_VALIDATION`        | Prevents reducing an employee's salary                    |
+| `TRG_SALARY_AUDIT`             | Records salary changes in `SALARY_AUDIT`                  |
+| `TRG_ORDER_SHIP_STATUS`        | Changes order status to `SHIPPED` after shipment          |
+| `TRG_CUSTOMER_DELETE_CHECK`    | Prevents deleting customers who have orders               |
+| `TRG_RETURN_AMOUNT_VALIDATION` | Prevents negative refund amounts                          |
+| `TRG_INSPECTION_RESULT`        | Sets inspection result to `PENDING` if no result is given |
+
+The Triggers page displays the trigger name, status, event and trigger type.
+
+## Cursors
+
+Three cursor examples are included in the project.
+
+### Customer Cursor
+
+Fetches customer records one by one and displays:
+
+* Customer ID
+* Customer name
+* City
+
+### Parameterized Order Cursor
+
+This cursor accepts a **Customer ID as input** and retrieves the orders for that customer.
+
+Example:
 
 ```text
-Frontend
-   ↓
-Spring Boot REST API
-   ↓
-JdbcTemplate / Oracle JDBC
-   ↓
-Oracle Database
+Customer ID: C-01
+        ↓
+Order Cursor
+        ↓
+Orders belonging to C-01
+        ↓
+Order ID, Date and Status
 ```
 
----
+### Order Total Cursor
 
-## 🗄️ Database
+Calculates the total amount of each order using:
 
-The project contains **22 main relational tables**:
+```text
+Quantity × Price
+```
 
-1. CITY
-2. SUPPLIER
-3. SUPPLIER_PHONE
-4. PRODUCT
-5. PERISHABLE_PRODUCT
-6. HAZARDOUS_PRODUCT
-7. SUPPLIES
-8. INSPECTION
-9. WAREHOUSE
-10. STOCK
-11. EMPLOYEE
-12. MANAGER
-13. DRIVER
-14. DRIVER_CITY
-15. CUSTOMER
-16. ORDERS
-17. ORDER_ITEM
-18. ORDER_DRIVER
-19. DELIVERY_DUTY
-20. GOODS_MOVEMENT
-21. SHIPMENT
-22. GOODS_RETURN
+The result displays the order ID and its total amount.
 
-Additional table:
+## Database View
 
-* `SALARY_AUDIT` – Stores salary change audit records.
+The project includes:
 
-### DBMS Concepts
+```text
+CUSTOMER_ORDER_VIEW
+```
+
+This view combines customer and order information using a SQL JOIN.
+
+## Database
+
+The main database contains 22 tables:
+
+```text
+CITY
+SUPPLIER
+SUPPLIER_PHONE
+PRODUCT
+PERISHABLE_PRODUCT
+HAZARDOUS_PRODUCT
+SUPPLIES
+INSPECTION
+WAREHOUSE
+STOCK
+EMPLOYEE
+MANAGER
+DRIVER
+DRIVER_CITY
+CUSTOMER
+ORDERS
+ORDER_ITEM
+ORDER_DRIVER
+DELIVERY_DUTY
+GOODS_MOVEMENT
+SHIPMENT
+GOODS_RETURN
+```
+
+An additional `SALARY_AUDIT` table is used by the salary audit trigger.
+
+The database uses:
 
 * Primary Keys
 * Composite Keys
 * Foreign Keys
-* `NOT NULL` Constraints
-* `CHECK` Constraints
+* NOT NULL constraints
+* CHECK constraints
 * SQL
 * PL/SQL
 * Triggers
 * Cursors
-* Parameterized Cursors
 * Views
-* JDBC
-* REST APIs
 
----
+## Technology Used
 
-## 🛠️ Technology Stack
+* **Frontend:** HTML, CSS, JavaScript
+* **Backend:** Java, Spring Boot
+* **Database:** Oracle Database
+* **Connectivity:** Oracle JDBC, JdbcTemplate
+* **Database Language:** SQL, PL/SQL
+* **Build Tool:** Maven
+* **IDE:** Visual Studio Code
+* **Version Control:** Git, GitHub
+* **Deployment:** AWS EC2
 
-| Component         | Technology                |
-| ----------------- | ------------------------- |
-| Frontend          | HTML, CSS, JavaScript     |
-| Backend           | Java, Spring Boot         |
-| Database          | Oracle Database           |
-| Connectivity      | Oracle JDBC, JdbcTemplate |
-| Database Language | SQL / PL/SQL              |
-| Build Tool        | Maven                     |
-| IDE               | Visual Studio Code        |
-| Version Control   | Git / GitHub              |
-| Deployment        | AWS EC2                   |
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```text
 oracle-dbms-dashboard/
@@ -208,27 +199,20 @@ oracle-dbms-dashboard/
 ├── src/
 │   └── main/
 │       ├── java/
-│       │   └── ...
-│       │
 │       └── resources/
 │           ├── static/
 │           │   ├── index.html
 │           │   ├── app.js
 │           │   └── style.css
-│           │
 │           └── application.properties
 │
 ├── pom.xml
 └── README.md
 ```
 
----
+## Running the Project
 
-## ▶️ Run the Project
-
-### 1. Configure Oracle Database
-
-Update:
+Configure the Oracle database connection in:
 
 ```text
 src/main/resources/application.properties
@@ -243,65 +227,66 @@ spring.datasource.password=YOUR_PASSWORD
 spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 ```
 
-### 2. Start Spring Boot
+Run the application:
 
 ```bash
 mvn spring-boot:run
 ```
 
-### 3. Open Dashboard
+Then open:
 
 ```text
 http://localhost:8080
 ```
 
----
+## REST API
 
-## 🔌 REST APIs
+Main endpoints:
 
-| Method | Endpoint                          | Purpose                        |
-| ------ | --------------------------------- | ------------------------------ |
-| GET    | `/api/tables`                     | Get database tables            |
-| GET    | `/api/tables/{table}/columns`     | Get table columns              |
-| GET    | `/api/tables/{table}/rows`        | Get table records              |
-| PUT    | `/api/tables/{table}`             | Update records                 |
-| DELETE | `/api/tables/{table}`             | Delete records                 |
-| POST   | `/api/query`                      | Execute SQL query              |
-| GET    | `/api/triggers`                   | Get database triggers          |
-| GET    | `/api/cursors/customers`          | Run customer cursor            |
-| GET    | `/api/cursors/orders?custId=C-01` | Run parameterized order cursor |
-| GET    | `/api/cursors/order-totals`       | Calculate order totals         |
+```text
+GET    /api/tables
+GET    /api/tables/{table}/columns
+GET    /api/tables/{table}/rows
+PUT    /api/tables/{table}
+DELETE /api/tables/{table}
+POST   /api/query
 
----
+GET    /api/triggers
 
-## ☁️ Deployment
+GET    /api/cursors/customers
+GET    /api/cursors/orders?custId=C-01
+GET    /api/cursors/order-totals
+```
 
-The Spring Boot application can be hosted on **AWS EC2**.
+## Database Connection
+
+The application follows this structure:
+
+```text
+HTML / CSS / JavaScript
+          ↓
+     Spring Boot
+          ↓
+       JDBC
+          ↓
+   Oracle Database
+```
+
+## Deployment
+
+The Spring Boot application can be deployed on AWS EC2.
 
 ```text
 User
  ↓
 AWS EC2
  ↓
-Spring Boot Application
+Spring Boot
  ↓
 Oracle Database
 ```
 
----
-
-## 📌 Project Information
-
-| Property        | Details               |
-| --------------- | --------------------- |
-| Project         | Oracle DBMS Dashboard |
-| Type            | Academic DBMS Project |
-| Frontend        | HTML, CSS, JavaScript |
-| Backend         | Java + Spring Boot    |
-| Database        | Oracle Database       |
-| Connectivity    | Oracle JDBC           |
-| Version Control | Git / GitHub          |
-| Deployment      | AWS EC2               |
-
 ```
+
+This version should look **much more like a student-built GitHub README**: straightforward, less promotional, and focused on what your application actually does.
 ```
