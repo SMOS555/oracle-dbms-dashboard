@@ -1,8 +1,4 @@
-Yes — the current one is **too polished and repetitive**, especially with all the emojis, tables, formal wording, and phrases like “The project aims to…”. For a college GitHub project, a simpler README will look much more natural.
 
-Use this version instead:
-
-````markdown
 # Oracle DBMS Dashboard
 
 Oracle DBMS Dashboard is a web application built to manage and interact with an Oracle database through a simple database-workbench style interface.
