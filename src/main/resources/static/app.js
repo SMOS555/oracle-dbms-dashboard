@@ -12,19 +12,12 @@ const $ = (id) => document.getElementById(id);
 
 
 const state = {
-
     tables: [],
-
     columns: [],
-
     rows: [],
-
     table: "",
-
     primaryKeys: [],
-
     currentRow: null
-
 };
 
 
@@ -32,109 +25,64 @@ const state = {
    DATE FORMATTER
 ===================================================== */
 
-/*
-   Oracle DATE values are being returned by the backend
-   as ISO timestamps such as:
-
-   2026-04-01T18:30:00.000+00:00
-
-   In Indian time this represents:
-
-   02-Apr-2026
-
-   This function converts date columns into:
-   DD-MMM-YYYY
-*/
-
 function formatDate(value) {
 
     if (value === null || value === undefined || value === "") {
-
         return value;
-
     }
-
 
     const date = new Date(value);
 
-
     if (Number.isNaN(date.getTime())) {
-
         return value;
-
     }
 
-
     return new Intl.DateTimeFormat("en-GB", {
-
         day: "2-digit",
-
         month: "short",
-
         year: "numeric",
-
         timeZone: "Asia/Kolkata"
-
     }).format(date);
-
 }
 
 
 /* =====================================================
-   CHECK WHETHER COLUMN IS A DATE COLUMN
+   CHECK DATE COLUMN
 ===================================================== */
 
 function isDateColumn(columnName) {
 
     if (!columnName) {
-
         return false;
-
     }
-
 
     const name = String(columnName).toUpperCase();
 
-
     return (
-
         name.includes("DATE") ||
-
         name === "EXPIRY" ||
-
         name === "INSPDATE" ||
-
         name === "MOVEDATE" ||
-
         name === "DELIVERYDATE"
-
     );
-
 }
 
 
 /* =====================================================
-   FORMAT CELL VALUE
+   FORMAT CELL
 ===================================================== */
 
 function formatCellValue(value, columnName) {
 
     if (value === null || value === undefined) {
-
         return "NULL";
-
     }
-
 
     if (isDateColumn(columnName)) {
-
         return formatDate(value);
-
     }
 
-
     return String(value);
-
 }
 
 
@@ -149,52 +97,35 @@ async function api(url, options = {}) {
         ...options,
 
         headers: {
-
             "Content-Type": "application/json",
-
             ...(options.headers || {})
-
         }
 
     });
-
 
     const text = await response.text();
 
     let data = {};
 
     try {
-
         data = text ? JSON.parse(text) : {};
-
     } catch {
-
         data = {
-
             message: text
-
         };
-
     }
-
 
     if (!response.ok) {
 
         throw new Error(
-
             data.message ||
-
             data.error ||
-
             `Request failed (${response.status})`
-
         );
 
     }
 
-
     return data;
-
 }
 
 
@@ -205,21 +136,14 @@ async function api(url, options = {}) {
 function escapeHtml(value) {
 
     return String(value ?? "")
-
         .replace(/[&<>"']/g, (character) => {
 
             const map = {
-
                 "&": "&amp;",
-
                 "<": "&lt;",
-
                 ">": "&gt;",
-
                 '"': "&quot;",
-
                 "'": "&#039;"
-
             };
 
             return map[character];
@@ -230,24 +154,24 @@ function escapeHtml(value) {
 
 
 /* =====================================================
-   TOAST MESSAGE
+   TOAST
 ===================================================== */
 
 function showToast(message) {
 
     const toast = $("toast");
 
+    if (!toast) {
+        return;
+    }
+
     toast.textContent = message;
 
     toast.classList.remove("hidden");
 
-
     setTimeout(() => {
-
         toast.classList.add("hidden");
-
     }, 2500);
-
 }
 
 
@@ -258,13 +182,9 @@ function showToast(message) {
 function getColumnName(column) {
 
     return (
-
         column.name ||
-
         column.columnName ||
-
         column.COLUMN_NAME
-
     );
 
 }
@@ -280,87 +200,70 @@ async function loadTables() {
 
         const data = await api("/api/tables");
 
-
         state.tables = Array.isArray(data)
-
             ? data
-
             : (data.tables || []);
 
 
-        $("tableCount").textContent =
+        if ($("tableCount")) {
+            $("tableCount").textContent =
+                state.tables.length;
+        }
 
-            state.tables.length;
+
+        if ($("tableCountSmall")) {
+            $("tableCountSmall").textContent =
+                state.tables.length;
+        }
 
 
         /* DROPDOWN */
 
         $("tableSelect").innerHTML =
-
             `<option value="">
                 Choose a table...
             </option>` +
 
             state.tables.map(
-
                 table => `
-
                     <option value="${escapeHtml(table)}">
-
                         ${escapeHtml(table)}
-
                     </option>
-
                 `
-
             ).join("");
 
 
         /* SIDEBAR */
 
         $("tableList").innerHTML =
-
             state.tables.map(
-
                 table => `
-
                     <button
                         data-table="${escapeHtml(table)}">
 
                         ${escapeHtml(table)}
 
                     </button>
-
                 `
-
             ).join("");
 
 
         document
-
             .querySelectorAll("#tableList button")
-
             .forEach(button => {
 
                 button.addEventListener(
-
                     "click",
-
                     () => {
 
                         $("tableSelect").value =
-
                             button.dataset.table;
 
-
                         loadTable(
-
                             button.dataset.table
-
                         );
 
                     }
-
                 );
 
             });
@@ -376,13 +279,11 @@ async function loadTables() {
 
 
 /* =====================================================
-   LOAD SELECTED TABLE
+   LOAD TABLE
 ===================================================== */
 
 async function loadTable(
-
     tableName = $("tableSelect").value
-
 ) {
 
     if (!tableName) {
@@ -397,20 +298,13 @@ async function loadTable(
     state.table = tableName;
 
 
-    /* SIDEBAR ACTIVE */
-
     document
-
         .querySelectorAll("#tableList button")
-
         .forEach(button => {
 
             button.classList.toggle(
-
                 "active",
-
                 button.dataset.table === tableName
-
             );
 
         });
@@ -419,66 +313,41 @@ async function loadTable(
     try {
 
         const [columns, rows] =
-
             await Promise.all([
 
                 api(
-
                     `/api/tables/${encodeURIComponent(
                         tableName
                     )}/columns`
-
                 ),
 
                 api(
-
                     `/api/tables/${encodeURIComponent(
                         tableName
                     )}/rows`
-
                 )
 
             ]);
 
 
         state.columns =
-
             columns.columns || columns || [];
 
 
         state.rows =
-
             rows.rows || rows || [];
 
 
-        /* PRIMARY KEYS */
-
         state.primaryKeys =
-
-            state.columns
-
-                .filter(column =>
-
-                    column.primaryKey ||
-
-                    column.primary ||
-
-                    column.isPrimaryKey
-
-                )
-
-                .map(getColumnName);
+            columns.primaryKeys || [];
 
 
         $("tableTitle").textContent =
-
             tableName;
 
 
         $("tableMeta").textContent =
-
             `${state.rows.length} records · ` +
-
             `${state.columns.length} columns`;
 
 
@@ -503,7 +372,6 @@ function renderTable() {
     if (!state.rows.length) {
 
         $("tableWrap").className =
-
             "table-container empty-container";
 
 
@@ -533,12 +401,10 @@ function renderTable() {
 
 
     const columnNames =
-
         state.columns.map(getColumnName);
 
 
     $("tableWrap").className =
-
         "table-container";
 
 
@@ -551,19 +417,12 @@ function renderTable() {
                 <tr>
 
                     ${columnNames.map(
-
                         column => `
-
                             <th>
-
                                 ${escapeHtml(column)}
-
                             </th>
-
                         `
-
                     ).join("")}
-
 
                     <th>
                         Actions
@@ -577,26 +436,21 @@ function renderTable() {
             <tbody>
 
                 ${state.rows.map(
-
                     (row, index) => `
 
                         <tr>
 
                             ${columnNames.map(
-
                                 column => {
 
                                     const rawValue =
-
                                         row[column];
 
                                     const displayValue =
-
                                         formatCellValue(
                                             rawValue,
                                             column
                                         );
-
 
                                     return `
 
@@ -618,7 +472,6 @@ function renderTable() {
                                     `;
 
                                 }
-
                             ).join("")}
 
 
@@ -650,7 +503,6 @@ function renderTable() {
                         </tr>
 
                     `
-
                 ).join("")}
 
             </tbody>
@@ -660,59 +512,37 @@ function renderTable() {
     `;
 
 
-    /* EDIT */
-
     document
-
         .querySelectorAll("[data-edit]")
-
         .forEach(button => {
 
             button.addEventListener(
-
                 "click",
-
                 () => {
 
                     openEditModal(
-
-                        Number(
-                            button.dataset.edit
-                        )
-
+                        Number(button.dataset.edit)
                     );
 
                 }
-
             );
 
         });
 
 
-    /* DELETE */
-
     document
-
         .querySelectorAll("[data-delete]")
-
         .forEach(button => {
 
             button.addEventListener(
-
                 "click",
-
                 () => {
 
                     deleteRow(
-
-                        Number(
-                            button.dataset.delete
-                        )
-
+                        Number(button.dataset.delete)
                     );
 
                 }
-
             );
 
         });
@@ -727,51 +557,34 @@ function renderTable() {
 function openEditModal(index) {
 
     state.currentRow =
-
         state.rows[index];
 
 
     $("modalTitle").textContent =
-
         `Edit ${state.table}`;
 
 
     $("editFields").innerHTML =
-
         state.columns.map(column => {
 
             const name =
-
                 getColumnName(column);
 
 
             const isPrimaryKey =
-
                 state.primaryKeys.includes(name);
 
 
             let value =
-
                 state.currentRow[name] ?? "";
 
-
-            /*
-               Keep the original raw value in the input.
-               This is important so the backend receives
-               the original database-compatible value.
-            */
 
             if (isDateColumn(name) && value) {
 
                 const date = new Date(value);
 
-
                 if (!Number.isNaN(date.getTime())) {
-
-                    value =
-
-                        date.toISOString();
-
+                    value = date.toISOString();
                 }
 
             }
@@ -800,17 +613,13 @@ function openEditModal(index) {
 
 
                     <input
-
                         data-field="${escapeHtml(name)}"
-
                         value="${escapeHtml(value)}"
-
                         ${
                             isPrimaryKey
                                 ? "disabled"
                                 : ""
                         }
-
                     />
 
                 </div>
@@ -821,9 +630,7 @@ function openEditModal(index) {
 
 
     $("modal")
-
         .classList
-
         .remove("hidden");
 
 }
@@ -836,51 +643,35 @@ function openEditModal(index) {
 async function saveEdit() {
 
     if (!state.currentRow) {
-
         return;
-
     }
 
 
     const queryParams =
-
         new URLSearchParams();
 
 
-    /* PRIMARY KEY VALUES */
-
     state.primaryKeys.forEach(
-
         key => {
 
             queryParams.set(
-
                 key,
-
                 state.currentRow[key]
-
             );
 
         }
-
     );
 
-
-    /* NEW VALUES */
 
     const updatedValues = {};
 
 
     document
-
         .querySelectorAll("#editFields input")
-
         .forEach(input => {
 
             updatedValues[
-
                 input.dataset.field
-
             ] = input.value;
 
         });
@@ -889,45 +680,28 @@ async function saveEdit() {
     try {
 
         await api(
-
             `/api/tables/${encodeURIComponent(
                 state.table
             )}?${queryParams}`,
 
             {
-
                 method: "PUT",
-
-                body: JSON.stringify(
-
-                    updatedValues
-
-                )
-
+                body: JSON.stringify(updatedValues)
             }
-
         );
 
 
         $("modal")
-
             .classList
-
             .add("hidden");
 
 
         showToast(
-
             "Record updated successfully."
-
         );
 
 
-        await loadTable(
-
-            state.table
-
-        );
+        await loadTable(state.table);
 
 
     } catch (error) {
@@ -948,9 +722,7 @@ async function deleteRow(index) {
     if (!state.primaryKeys.length) {
 
         showToast(
-
             "Delete requires a primary key."
-
         );
 
         return;
@@ -959,77 +731,49 @@ async function deleteRow(index) {
 
 
     const row =
-
         state.rows[index];
 
 
     const queryParams =
-
         new URLSearchParams();
 
 
     state.primaryKeys.forEach(
-
         key => {
 
             queryParams.set(
-
                 key,
-
                 row[key]
-
             );
 
         }
-
     );
 
 
-    const confirmed =
-
-        confirm(
-
-            "Delete this record?"
-
-        );
-
-
-    if (!confirmed) {
-
+    if (!confirm("Delete this record?")) {
         return;
-
     }
 
 
     try {
 
         await api(
-
             `/api/tables/${encodeURIComponent(
                 state.table
             )}?${queryParams}`,
 
             {
-
                 method: "DELETE"
-
             }
-
         );
 
 
         showToast(
-
             "Record deleted successfully."
-
         );
 
 
-        await loadTable(
-
-            state.table
-
-        );
+        await loadTable(state.table);
 
 
     } catch (error) {
@@ -1048,46 +792,44 @@ async function deleteRow(index) {
 function showPage(page) {
 
     document
-
         .querySelectorAll(".nav-button")
-
         .forEach(button => {
 
             button.classList.toggle(
-
                 "active",
-
                 button.dataset.page === page
-
             );
 
         });
 
 
     document
-
         .querySelectorAll(".page")
-
         .forEach(section => {
 
             section.classList.toggle(
-
                 "active",
-
                 section.id === `${page}Page`
-
             );
 
         });
 
 
+    const titles = {
+
+        explorer: "Data Explorer",
+
+        sql: "SQL Console",
+
+        triggers: "Database Triggers",
+
+        cursors: "Database Cursors"
+
+    };
+
+
     $("pageTitle").textContent =
-
-        page === "sql"
-
-            ? "SQL Console"
-
-            : "Data Explorer";
+        titles[page] || "Data Explorer";
 
 }
 
@@ -1099,20 +841,13 @@ function showPage(page) {
 async function runSQL() {
 
     const sql =
-
-        $("sqlInput")
-
-            .value
-
-            .trim();
+        $("sqlInput").value.trim();
 
 
     if (!sql) {
 
         showToast(
-
             "Enter a SQL statement first."
-
         );
 
         return;
@@ -1123,60 +858,36 @@ async function runSQL() {
     try {
 
         const data =
-
             await api(
-
                 "/api/query",
-
                 {
-
                     method: "POST",
 
                     body: JSON.stringify({
-
                         sql: sql
-
                     })
-
                 }
-
             );
 
 
-        /* SELECT / WITH */
-
         if (
-
             Array.isArray(data) ||
-
             Array.isArray(data.rows)
-
         ) {
 
             const rows =
-
                 Array.isArray(data)
-
                     ? data
-
                     : data.rows;
 
 
             const columns =
-
                 rows.length
-
                     ? Object.keys(rows[0])
-
-                    : (
-
-                        data.columns || []
-
-                    );
+                    : (data.columns || []);
 
 
             $("resultTitle").textContent =
-
                 `${rows.length} rows returned`;
 
 
@@ -1208,19 +919,11 @@ async function runSQL() {
                         <tr>
 
                             ${columns.map(
-
                                 column => `
-
                                     <th>
-
-                                        ${escapeHtml(
-                                            column
-                                        )}
-
+                                        ${escapeHtml(column)}
                                     </th>
-
                                 `
-
                             ).join("")}
 
                         </tr>
@@ -1231,34 +934,25 @@ async function runSQL() {
                     <tbody>
 
                         ${rows.map(
-
                             row => `
 
                                 <tr>
 
                                     ${columns.map(
-
                                         column => {
 
                                             const rawValue =
-
                                                 row[column];
 
-
                                             const displayValue =
-
                                                 formatCellValue(
                                                     rawValue,
                                                     column
                                                 );
 
-
                                             return `
 
-                                                <td
-                                                    title="${escapeHtml(
-                                                        displayValue
-                                                    )}">
+                                                <td>
 
                                                     ${
                                                         rawValue === null
@@ -1273,13 +967,11 @@ async function runSQL() {
                                             `;
 
                                         }
-
                                     ).join("")}
 
                                 </tr>
 
                             `
-
                         ).join("")}
 
                     </tbody>
@@ -1294,21 +986,14 @@ async function runSQL() {
         }
 
 
-        /* INSERT / UPDATE / DELETE */
-
         const affectedRows =
-
             data.affectedRows ??
-
             data.rowsAffected ??
-
             data.count ??
-
             0;
 
 
         $("resultTitle").textContent =
-
             "Statement executed";
 
 
@@ -1319,13 +1004,7 @@ async function runSQL() {
                 Affected rows
 
                 <strong>
-
-                    ${escapeHtml(
-
-                        affectedRows
-
-                    )}
-
+                    ${escapeHtml(affectedRows)}
                 </strong>
 
             </div>
@@ -1334,20 +1013,13 @@ async function runSQL() {
 
 
         if (state.table) {
-
-            await loadTable(
-
-                state.table
-
-            );
-
+            await loadTable(state.table);
         }
 
 
     } catch (error) {
 
         $("resultTitle").textContent =
-
             "Query failed";
 
 
@@ -1359,15 +1031,429 @@ async function runSQL() {
                     Error
                 </strong>
 
-                ${escapeHtml(
-
-                    error.message
-
-                )}
+                ${escapeHtml(error.message)}
 
             </div>
 
         `;
+
+    }
+
+}
+
+
+/* =====================================================
+   TRIGGERS
+===================================================== */
+
+async function loadTriggers() {
+
+    const container =
+        $("triggerWrap");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ⚡
+            </div>
+
+            <h3>
+                Loading triggers...
+            </h3>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const data =
+            await api("/api/triggers");
+
+
+        const triggers =
+            data.triggers || [];
+
+
+        if (!triggers.length) {
+
+            container.innerHTML = `
+
+                <div class="empty-state">
+
+                    <h3>
+                        No triggers found
+                    </h3>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        container.innerHTML = `
+
+            <table class="result-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Trigger Name
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Event
+                        </th>
+
+                        <th>
+                            Trigger Type
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    ${triggers.map(
+                        trigger => {
+
+                            const name =
+                                trigger.TRIGGER_NAME ??
+                                trigger.trigger_name ??
+                                trigger.Trigger_Name ??
+                                "";
+
+                            const status =
+                                trigger.STATUS ??
+                                trigger.status ??
+                                "";
+
+                            const event =
+                                trigger.TRIGGERING_EVENT ??
+                                trigger.triggering_event ??
+                                "";
+
+                            const type =
+                                trigger.TRIGGER_TYPE ??
+                                trigger.trigger_type ??
+                                "";
+
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            ${escapeHtml(name)}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="trigger-status ${
+                                            String(status).toUpperCase() === "ENABLED"
+                                                ? "enabled"
+                                                : "disabled"
+                                        }">
+
+                                            ${escapeHtml(status)}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(event)}
+                                    </td>
+
+                                    <td>
+                                        ${escapeHtml(type)}
+                                    </td>
+
+                                </tr>
+
+                            `;
+
+                        }
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        `;
+
+
+    } catch (error) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ⚠
+                </div>
+
+                <h3>
+                    Could not load triggers
+                </h3>
+
+                <p>
+                    ${escapeHtml(error.message)}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =====================================================
+   CURSOR TABLE RENDERER
+===================================================== */
+
+function renderCursorResult(
+    containerId,
+    rows,
+    emptyMessage = "No rows returned."
+) {
+
+    const container =
+        $(containerId);
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!rows || !rows.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <h3>
+                    No rows returned
+                </h3>
+
+                <p>
+                    ${escapeHtml(emptyMessage)}
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    const columns =
+        Object.keys(rows[0]);
+
+
+    container.innerHTML = `
+
+        <table class="result-table">
+
+            <thead>
+
+                <tr>
+
+                    ${columns.map(
+                        column => `
+                            <th>
+                                ${escapeHtml(column)}
+                            </th>
+                        `
+                    ).join("")}
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                ${rows.map(
+                    row => `
+
+                        <tr>
+
+                            ${columns.map(
+                                column => {
+
+                                    const value =
+                                        row[column];
+
+                                    return `
+
+                                        <td>
+
+                                            ${
+                                                value === null
+                                                    ? "NULL"
+                                                    : escapeHtml(
+                                                        formatCellValue(
+                                                            value,
+                                                            column
+                                                        )
+                                                    )
+                                            }
+
+                                        </td>
+
+                                    `;
+
+                                }
+                            ).join("")}
+
+                        </tr>
+
+                    `
+                ).join("")}
+
+            </tbody>
+
+        </table>
+
+    `;
+
+}
+
+
+/* =====================================================
+   CURSOR 1
+   CUSTOMER CURSOR
+===================================================== */
+
+async function runCustomerCursor() {
+
+    try {
+
+        const data =
+            await api(
+                "/api/cursors/customers"
+            );
+
+
+        renderCursorResult(
+            "customerCursorResult",
+            data.rows,
+            "No customers found."
+        );
+
+
+    } catch (error) {
+
+        showToast(error.message);
+
+    }
+
+}
+
+
+/* =====================================================
+   CURSOR 2
+   PARAMETERIZED ORDER CURSOR
+===================================================== */
+
+async function runOrderCursor() {
+
+    const customerId =
+        $("cursorCustomerId")
+            .value
+            .trim();
+
+
+    if (!customerId) {
+
+        showToast(
+            "Enter a customer ID."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const data =
+            await api(
+                `/api/cursors/orders?custId=${encodeURIComponent(
+                    customerId
+                )}`
+            );
+
+
+        renderCursorResult(
+            "orderCursorResult",
+            data.rows,
+            `No orders found for ${customerId}.`
+        );
+
+
+    } catch (error) {
+
+        showToast(error.message);
+
+    }
+
+}
+
+
+/* =====================================================
+   CURSOR 3
+   ORDER TOTAL CURSOR
+===================================================== */
+
+async function runOrderTotalCursor() {
+
+    try {
+
+        const data =
+            await api(
+                "/api/cursors/order-totals"
+            );
+
+
+        renderCursorResult(
+            "orderTotalCursorResult",
+            data.rows,
+            "No order totals found."
+        );
+
+
+    } catch (error) {
+
+        showToast(error.message);
 
     }
 
@@ -1382,25 +1468,29 @@ async function runSQL() {
 /* NAVIGATION */
 
 document
-
     .querySelectorAll(".nav-button")
-
     .forEach(button => {
 
         button.addEventListener(
-
             "click",
-
             () => {
 
                 showPage(
-
                     button.dataset.page
-
                 );
 
-            }
 
+                /* Load trigger data when opened */
+
+                if (
+                    button.dataset.page === "triggers"
+                ) {
+
+                    loadTriggers();
+
+                }
+
+            }
         );
 
     });
@@ -1409,36 +1499,25 @@ document
 /* OPEN TABLE */
 
 $("openTable")
-
     .addEventListener(
-
         "click",
-
         () => {
-
             loadTable();
-
         }
-
     );
 
 
 /* REFRESH */
 
 $("refresh")
-
     .addEventListener(
-
         "click",
-
         async () => {
 
             if (state.table) {
 
                 await loadTable(
-
                     state.table
-
                 );
 
             } else {
@@ -1448,44 +1527,20 @@ $("refresh")
             }
 
         }
-
-    );
-
-
-/* OPEN SQL */
-
-$("openSql")
-
-    .addEventListener(
-
-        "click",
-
-        () => {
-
-            showPage("sql");
-
-            $("sqlInput").focus();
-
-        }
-
     );
 
 
 /* INSERT WITH SQL */
 
 $("insertSql")
-
     .addEventListener(
-
         "click",
-
         () => {
 
             showPage("sql");
 
 
             $("sqlInput").value =
-
                 `INSERT INTO ${
                     state.table || "TABLE_NAME"
                 } (...) VALUES (...);`;
@@ -1494,38 +1549,29 @@ $("insertSql")
             $("sqlInput").focus();
 
         }
-
     );
 
 
 /* RUN SQL */
 
 $("runSql")
-
     .addEventListener(
-
         "click",
-
         runSQL
-
     );
 
 
 /* CLEAR SQL */
 
 $("clearSql")
-
     .addEventListener(
-
         "click",
-
         () => {
 
             $("sqlInput").value = "";
 
 
             $("resultTitle").textContent =
-
                 "No query executed";
 
 
@@ -1538,16 +1584,12 @@ $("clearSql")
                     </div>
 
                     <h3>
-
                         Query results appear here
-
                     </h3>
 
                     <p>
-
                         Run a statement to see
                         rows or affected-row counts.
-
                     </p>
 
                 </div>
@@ -1555,82 +1597,111 @@ $("clearSql")
             `;
 
         }
-
     );
+
+
+/* REFRESH TRIGGERS */
+
+if ($("refreshTriggers")) {
+
+    $("refreshTriggers")
+        .addEventListener(
+            "click",
+            loadTriggers
+        );
+
+}
+
+
+/* CUSTOMER CURSOR */
+
+if ($("runCustomerCursor")) {
+
+    $("runCustomerCursor")
+        .addEventListener(
+            "click",
+            runCustomerCursor
+        );
+
+}
+
+
+/* PARAMETERIZED CURSOR */
+
+if ($("runOrderCursor")) {
+
+    $("runOrderCursor")
+        .addEventListener(
+            "click",
+            runOrderCursor
+        );
+
+}
+
+
+/* ORDER TOTAL CURSOR */
+
+if ($("runOrderTotalCursor")) {
+
+    $("runOrderTotalCursor")
+        .addEventListener(
+            "click",
+            runOrderTotalCursor
+        );
+
+}
 
 
 /* CLOSE MODAL */
 
 $("closeModal")
-
     .addEventListener(
-
         "click",
-
         () => {
 
             $("modal")
-
                 .classList
-
                 .add("hidden");
 
         }
-
     );
 
 
 /* CANCEL */
 
 $("cancel")
-
     .addEventListener(
-
         "click",
-
         () => {
 
             $("modal")
-
                 .classList
-
                 .add("hidden");
 
         }
-
     );
 
 
 /* SAVE */
 
 $("save")
-
     .addEventListener(
-
         "click",
-
         saveEdit
-
     );
 
 
 /* CTRL + ENTER */
 
 $("sqlInput")
-
     .addEventListener(
-
         "keydown",
-
         event => {
 
             if (
-
                 (event.ctrlKey ||
                  event.metaKey) &&
-
                 event.key === "Enter"
-
             ) {
 
                 event.preventDefault();
@@ -1640,7 +1711,6 @@ $("sqlInput")
             }
 
         }
-
     );
 
 

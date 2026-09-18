@@ -21,7 +21,8 @@
 
 <div class="app">
 
-    <!-- SIDEBAR -->
+    <!-- ================= SIDEBAR ================= -->
+
     <aside class="sidebar">
 
         <div class="brand">
@@ -36,7 +37,7 @@
                 </div>
 
                 <div class="brand-subtitle">
-                    DBMS Management Console
+                    Database Workbench
                 </div>
             </div>
 
@@ -51,9 +52,7 @@
 
                 <span class="nav-icon">▦</span>
 
-                <span>
-                    Data Explorer
-                </span>
+                <span>Data Explorer</span>
 
             </button>
 
@@ -62,20 +61,50 @@
 
                 <span class="nav-icon">⌘</span>
 
-                <span>
-                    SQL Console
-                </span>
+                <span>SQL Console</span>
+
+            </button>
+
+
+            <button class="nav-button" data-page="triggers">
+
+                <span class="nav-icon">⚡</span>
+
+                <span>Triggers</span>
+
+            </button>
+
+
+            <button class="nav-button" data-page="cursors">
+
+                <span class="nav-icon">🔄</span>
+
+                <span>Cursors</span>
 
             </button>
 
         </nav>
 
 
-        <!-- TABLES -->
+        <!-- DATABASE TREE -->
 
-        <div class="section-title">
-            DATABASE OBJECTS
+        <div class="database-header">
+
+            <span class="database-arrow">▾</span>
+
+            <span>DATABASE OBJECTS</span>
+
         </div>
+
+
+        <div class="object-header">
+
+            <span>TABLES</span>
+
+            <span id="tableCountSmall">22</span>
+
+        </div>
+
 
         <div id="tableList" class="table-list">
 
@@ -88,17 +117,13 @@
 
         <div class="connection-status">
 
-            <span class="connection-dot"></span>
+            <div class="connection-indicator"></div>
 
-            <div>
+            <div class="connection-info">
 
-                <strong>
-                    Oracle Connected
-                </strong>
+                <strong>Connected</strong>
 
-                <small>
-                    JDBC connection active
-                </small>
+                <small>Oracle Database</small>
 
             </div>
 
@@ -107,7 +132,7 @@
     </aside>
 
 
-    <!-- MAIN CONTENT -->
+    <!-- ================= MAIN ================= -->
 
     <main class="main-content">
 
@@ -116,10 +141,12 @@
 
         <header class="top-header">
 
-            <div>
+            <div class="header-left">
 
-                <div class="page-label">
-                    ORACLE DATABASE
+                <div class="breadcrumb">
+
+                    DATABASE OBJECTS
+
                 </div>
 
                 <h1 id="pageTitle">
@@ -129,111 +156,96 @@
             </div>
 
 
-            <button id="refresh" class="button secondary-button">
+            <div class="header-actions">
 
-                ↻ Refresh
+                <div class="server-status">
 
-            </button>
+                    <span></span>
+
+                    ONLINE
+
+                </div>
+
+                <button id="refresh" class="button secondary-button">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
 
         </header>
 
 
-        <!-- ===================== -->
-        <!-- DATA EXPLORER -->
-        <!-- ===================== -->
+        <!-- ================= EXPLORER ================= -->
 
         <section id="explorerPage" class="page active">
 
 
-            <!-- HERO -->
+            <!-- TABLE TOOLBAR -->
 
-            <div class="hero-card">
+            <div class="workspace-toolbar">
 
-                <div class="hero-content">
+                <div>
 
-                    <div class="page-label">
-                        DATABASE MANAGEMENT
+                    <div class="section-label">
+                        TABLE EXPLORER
                     </div>
 
                     <h2>
-                        Explore and manage your data
+                        Browse database objects
                     </h2>
 
-                    <p>
-                        Browse Oracle tables, inspect records,
-                        edit values, delete rows and run SQL
-                        from one workspace.
-                    </p>
-
                 </div>
 
 
-                <div class="table-count">
+                <div class="toolbar-controls">
 
-                    <strong id="tableCount">
-                        0
-                    </strong>
+                    <div class="table-selector">
 
-                    <span>
-                        tables available
-                    </span>
+                        <select id="tableSelect">
+
+                            <option value="">
+                                Choose a table...
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="openTable"
+                        class="button primary-button">
+
+                        Open Table
+
+                    </button>
+
+
+                    <button
+                        class="button secondary-button"
+                        onclick="document.querySelector('[data-page=\'sql\']').click()">
+
+                        SQL Console
+
+                    </button>
 
                 </div>
-
-            </div>
-
-
-            <!-- TABLE SELECTOR -->
-
-            <div class="table-toolbar">
-
-                <div class="table-selector">
-
-                    <label>
-                        SELECT DATA OBJECT
-                    </label>
-
-                    <select id="tableSelect">
-
-                        <option value="">
-                            Choose a table...
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <button
-                    id="openTable"
-                    class="button primary-button">
-
-                    Open Table
-
-                </button>
-
-
-                <button
-                    id="openSql"
-                    class="button secondary-button">
-
-                    Open SQL Console
-
-                </button>
 
             </div>
 
 
             <!-- TABLE PANEL -->
 
-            <section class="panel">
+            <section class="panel table-panel">
 
                 <div class="panel-header">
 
                     <div>
 
-                        <div class="page-label">
-                            TABLE VIEW
+                        <div class="panel-kicker">
+                            TABLE
                         </div>
 
                         <h3 id="tableTitle">
@@ -241,8 +253,7 @@
                         </h3>
 
                         <p id="tableMeta">
-                            Choose a data object above
-                            to view its records.
+                            Select a table from the explorer to view its records.
                         </p>
 
                     </div>
@@ -252,7 +263,7 @@
                         id="insertSql"
                         class="button secondary-button">
 
-                        ＋ Insert with SQL
+                        + Insert with SQL
 
                     </button>
 
@@ -270,12 +281,11 @@
                         </div>
 
                         <h3>
-                            Select a data object
+                            No table selected
                         </h3>
 
                         <p>
-                            Your Oracle records will
-                            appear here.
+                            Choose a database object to inspect its records.
                         </p>
 
                     </div>
@@ -287,41 +297,31 @@
         </section>
 
 
-        <!-- ===================== -->
-        <!-- SQL CONSOLE -->
-        <!-- ===================== -->
+        <!-- ================= SQL CONSOLE ================= -->
 
         <section id="sqlPage" class="page">
 
 
-            <div class="hero-card sql-hero">
+            <div class="sql-toolbar">
 
-                <div class="hero-content">
+                <div>
 
-                    <div class="page-label">
-                        DATABASE WORKSPACE
+                    <div class="section-label">
+                        SQL WORKSPACE
                     </div>
 
                     <h2>
                         SQL Console
                     </h2>
 
-                    <p>
-                        Run SELECT, WITH, INSERT, UPDATE
-                        and DELETE statements through
-                        the JDBC connection.
-                    </p>
-
                 </div>
 
 
-                <div class="keyboard-shortcut">
+                <div class="editor-shortcut">
 
                     Ctrl + Enter
 
-                    <span>
-                        Run
-                    </span>
+                    <span>Run</span>
 
                 </div>
 
@@ -336,7 +336,7 @@
 
                     <div>
 
-                        <div class="page-label">
+                        <div class="panel-kicker">
                             QUERY EDITOR
                         </div>
 
@@ -358,11 +358,30 @@
                 </div>
 
 
-                <textarea
-                    id="sqlInput"
-                    spellcheck="false"
-                    placeholder="SELECT * FROM EMPLOYEES ORDER BY EMP_ID;">
-                </textarea>
+                <div class="editor-wrapper">
+
+                    <div class="editor-line-numbers">
+
+                        1<br>
+                        2<br>
+                        3<br>
+                        4<br>
+                        5<br>
+                        6<br>
+                        7<br>
+                        8<br>
+                        9<br>
+                        10
+
+                    </div>
+
+
+                    <textarea
+                        id="sqlInput"
+                        spellcheck="false"
+                        placeholder="SELECT * FROM CUSTOMER ORDER BY CUSTID;"></textarea>
+
+                </div>
 
 
                 <div class="sql-actions">
@@ -377,8 +396,7 @@
 
 
                     <small>
-                        DROP, ALTER, TRUNCATE, GRANT
-                        and REVOKE are blocked.
+                        DROP, ALTER, TRUNCATE, GRANT and REVOKE are blocked.
                     </small>
 
                 </div>
@@ -386,7 +404,7 @@
             </section>
 
 
-            <!-- QUERY RESULT -->
+            <!-- RESULT -->
 
             <section class="panel">
 
@@ -394,8 +412,8 @@
 
                     <div>
 
-                        <div class="page-label">
-                            RESULT
+                        <div class="panel-kicker">
+                            QUERY RESULT
                         </div>
 
                         <h3 id="resultTitle">
@@ -418,12 +436,301 @@
                         </div>
 
                         <h3>
-                            Query results appear here
+                            Waiting for query
                         </h3>
 
                         <p>
-                            Run a statement to see
-                            rows or affected-row counts.
+                            Execute a SQL statement to view the result.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ================= TRIGGERS ================= -->
+
+        <section id="triggersPage" class="page">
+
+            <div class="workspace-toolbar">
+
+                <div>
+
+                    <div class="section-label">
+                        PL/SQL
+                    </div>
+
+                    <h2>
+                        Database Triggers
+                    </h2>
+
+                </div>
+
+                <button
+                    id="refreshTriggers"
+                    class="button secondary-button">
+
+                    ↻ Refresh
+
+                </button>
+
+            </div>
+
+
+            <section class="panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            TRIGGER STATUS
+                        </div>
+
+                        <h3>
+                            Configured database triggers
+                        </h3>
+
+                        <p>
+                            View the triggers created in the Oracle database and their current status.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="triggerWrap"
+                    class="table-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ⚡
+                        </div>
+
+                        <h3>
+                            Loading triggers...
+                        </h3>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ================= CURSORS ================= -->
+
+        <section id="cursorsPage" class="page">
+
+            <div class="workspace-toolbar">
+
+                <div>
+
+                    <div class="section-label">
+                        PL/SQL
+                    </div>
+
+                    <h2>
+                        Database Cursors
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <!-- CUSTOMER CURSOR -->
+
+            <section class="panel cursor-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            CURSOR 01
+                        </div>
+
+                        <h3>
+                            Customer Cursor
+                        </h3>
+
+                        <p>
+                            Displays customer ID, customer name and city.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="runCustomerCursor"
+                        class="button primary-button">
+
+                        ▶ Run Cursor
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="customerCursorResult"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            👥
+                        </div>
+
+                        <h3>
+                            Cursor not executed
+                        </h3>
+
+                        <p>
+                            Click "Run Cursor" to display the cursor result.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- PARAMETERIZED CURSOR -->
+
+            <section class="panel cursor-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            CURSOR 02
+                        </div>
+
+                        <h3>
+                            Parameterized Order Cursor
+                        </h3>
+
+                        <p>
+                            Displays orders belonging to a selected customer.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="cursor-controls">
+
+                    <label for="cursorCustomerId">
+                        Customer ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cursorCustomerId"
+                        placeholder="Example: C-01"
+                        value="C-01"
+                    >
+
+                    <button
+                        id="runOrderCursor"
+                        class="button primary-button">
+
+                        ▶ Run Cursor
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="orderCursorResult"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            📦
+                        </div>
+
+                        <h3>
+                            Cursor not executed
+                        </h3>
+
+                        <p>
+                            Enter a customer ID and run the cursor.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ORDER TOTAL CURSOR -->
+
+            <section class="panel cursor-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            CURSOR 03
+                        </div>
+
+                        <h3>
+                            Order Total Cursor
+                        </h3>
+
+                        <p>
+                            Calculates the total amount for each order.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="runOrderTotalCursor"
+                        class="button primary-button">
+
+                        ▶ Run Cursor
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="orderTotalCursorResult"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ₹
+                        </div>
+
+                        <h3>
+                            Cursor not executed
+                        </h3>
+
+                        <p>
+                            Click "Run Cursor" to calculate order totals.
                         </p>
 
                     </div>
@@ -439,26 +746,21 @@
 </div>
 
 
-<!-- ===================== -->
-<!-- EDIT MODAL -->
-<!-- ===================== -->
+<!-- ================= EDIT MODAL ================= -->
 
-<div
-    id="modal"
-    class="modal hidden">
+<div id="modal" class="modal hidden">
 
     <div class="modal-backdrop"></div>
 
 
     <div class="modal-card">
 
-
         <div class="modal-header">
 
             <div>
 
-                <div class="page-label">
-                    EDIT RECORD
+                <div class="panel-kicker">
+                    RECORD EDITOR
                 </div>
 
                 <h2 id="modalTitle">
@@ -514,11 +816,7 @@
 
 <!-- TOAST -->
 
-<div
-    id="toast"
-    class="toast hidden">
-
-</div>
+<div id="toast" class="toast hidden"></div>
 
 
 <script src="app.js"></script>
