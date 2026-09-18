@@ -284,5 +284,3 @@ Oracle Database
 
 ```
 
-This version should look **much more like a student-built GitHub README**: straightforward, less promotional, and focused on what your application actually does.
-```
