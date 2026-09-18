@@ -35,9 +35,8 @@ SELECT CUSTID, CNAME, CITY
 FROM CUSTOMER
 WHERE CITY = 'Chennai';
 
-Structural commands such as DROP, ALTER, TRUNCATE, GRANT, and REVOKE are blocked.
 
-⚡ Triggers
+⚡ Triggers:
 
 The project implements Oracle triggers for:
 
