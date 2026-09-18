@@ -6,6 +6,21 @@ A full-stack web-based **Oracle Database Management Dashboard** developed using 
 The project provides a database-workbench interface for exploring tables, managing records, executing SQL queries, and demonstrating Oracle DBMS concepts.
 
 ---
+## 🎯 Project Objective
+
+The main objective of the **Oracle DBMS Dashboard** is to develop a web-based database management system that demonstrates practical **Oracle DBMS concepts** through an interactive dashboard.
+
+The project aims to:
+
+- Provide a simple interface to **explore and manage Oracle database tables**.
+- Perform **CRUD operations** on database records through a web interface.
+- Allow users to **execute SQL queries** using an integrated SQL Console.
+- Demonstrate the use of **Oracle triggers** for automatic data validation and database actions.
+- Demonstrate **PL/SQL cursors**, including parameterized cursors that accept user input.
+- Implement a **database view** to combine information from multiple tables.
+- Demonstrate database concepts such as **primary keys, composite keys, foreign keys, constraints, SQL, PL/SQL, JDBC, and REST APIs**.
+- Connect a web application to an Oracle database using **Spring Boot and Oracle JDBC**.
+- Provide a database-workbench-style interface for interacting with the database.
 
 ## 🚀 Features
 
