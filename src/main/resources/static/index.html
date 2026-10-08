@@ -776,7 +776,6 @@
                 </div>
                 <div class="toolbar-controls">
                     <span id="graphEngineBadge" class="badge badge-purple">Engine: Standby</span>
-                    <button id="openJustificationModal" class="button secondary-button">📄 Academic Justification</button>
                     <button id="refreshGraph" class="button secondary-button">↻ Refresh Network</button>
                 </div>
             </div>
@@ -856,11 +855,11 @@
 
                 <div class="cypher-shortcuts">
                     <span class="shortcut-label">Sample Queries:</span>
-                    <button class="pill-btn" data-cypher="MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) RETURN s, p">Suppliers & Products</button>
-                    <button class="pill-btn" data-cypher="MATCH (w:Warehouse)-[:STOCKS]->(p:Product) RETURN w, p">Warehouse Inventory</button>
-                    <button class="pill-btn" data-cypher="MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN c, o, p">Customer Orders</button>
-                    <button class="pill-btn" data-cypher="MATCH (d:Driver)-[:DELIVERS]->(o:Order) RETURN d, o">Driver Route Assignments</button>
-                    <button class="pill-btn" data-cypher="MATCH (p:Product)<-[:SUPPLIES]-(s:Supplier) RETURN p, s">Supply Chain Provenance</button>
+                    <button class="pill-btn" data-cypher="MATCH (n) RETURN labels(n)[0] AS EntityType, count(n) AS Count ORDER BY Count DESC">Node Counts</button>
+                    <button class="pill-btn" data-cypher="MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) RETURN s.name AS Supplier, s.city AS City, p.name AS Product, p.unitPrice AS Price">Suppliers &amp; Products</button>
+                    <button class="pill-btn" data-cypher="MATCH (w:Warehouse)-[:STOCKS]->(p:Product) RETURN w.name AS Warehouse, p.name AS Product, p.category AS Category">Warehouse Inventory</button>
+                    <button class="pill-btn" data-cypher="MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN c.name AS Customer, o.id AS OrderID, p.name AS Item">Customer Orders</button>
+                    <button class="pill-btn" data-cypher="MATCH path = (s:Supplier)-[:SUPPLIES]->(p:Product)&lt;-[:STOCKS]-(w:Warehouse) RETURN s.name AS Supplier, p.name AS Product, w.name AS Warehouse LIMIT 10">Full Supply Trace</button>
                 </div>
 
                 <div class="editor-wrapper">
@@ -911,13 +910,12 @@
         <section id="eerPage" class="page">
             <div class="workspace-toolbar">
                 <div>
-                    <div class="section-label">SCHEMA & CONCEPTUAL MODELING</div>
+                    <div class="section-label">CONCEPTUAL & RELATIONAL SCHEMA</div>
                     <h2>ER & Enhanced ER (EER) Studio</h2>
                 </div>
                 <div class="toolbar-controls">
-                    <button id="btnViewEer" class="button primary-button">EER Conceptual Model (Specialization)</button>
-                    <button id="btnViewRelationalEr" class="button secondary-button">Relational Physical Schema (22 Tables)</button>
-                    <button id="btnCopyMermaid" class="button secondary-button">📋 Copy Mermaid Code</button>
+                    <button id="btnViewEer" class="button primary-button">Enhanced ER (EER) Model</button>
+                    <button id="btnViewRelationalEr" class="button secondary-button">Classic ER Model (Chen Notation)</button>
                 </div>
             </div>
 
@@ -926,9 +924,9 @@
                 <section class="panel diagram-panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">CONCEPTUAL MODEL</div>
-                            <h3>Enhanced Entity-Relationship (EER) Visual Diagram</h3>
-                            <p>Graphical diagram rendering of entities, generalization/specialization {d} hierarchies, weak entities, and multivalued relationships.</p>
+                            <div class="panel-kicker">ENHANCED MODEL · SPECIALIZATION & WEAK ENTITIES</div>
+                            <h3>Enhanced Entity-Relationship (EER) Model</h3>
+                            <p>Specialization hierarchies, weak entities, multivalued & composite attributes, and recursive relationships.</p>
                         </div>
                         <div class="canvas-actions">
                             <button id="btnZoomInEer" class="button icon-btn" title="Zoom In">+</button>
@@ -936,82 +934,56 @@
                             <button id="btnResetEerZoom" class="button icon-btn" title="Reset View">⊡</button>
                         </div>
                     </div>
-                    <div class="diagram-canvas-box" id="eerDiagramBox">
-                        <div id="eerMermaidSvg" class="mermaid-diagram-content"></div>
+                    <div class="diagram-canvas-box" id="eerDiagramBox" style="display:flex; justify-content:center; align-items:center; overflow:auto; min-height:550px; padding:20px; background:#080d14;">
+                        <img id="eerDiagramImg" src="images/eer_diagram.png" alt="Enhanced ER Model" style="max-width:100%; height:auto; transition:transform 0.2s ease; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.6);">
                     </div>
                 </section>
 
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">ADVANCED CONCEPTUAL CONSTRUCTS</div>
-                            <h3>Generalization & Specialization Hierarchies (ISA)</h3>
-                            <p>The system models 3 distinct ISA specialization hierarchies with disjointness and total/partial constraints.</p>
+                            <div class="panel-kicker">EER CONSTRUCTS SUMMARY</div>
+                            <h3>What EER Added to the ER Model</h3>
                         </div>
                     </div>
-
-                    <div class="eer-hierarchy-grid">
+                    <div class="eer-hierarchy-grid" style="padding:16px;">
                         <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-green">Disjoint Specialization {d}</div>
-                            <h4>PRODUCT Hierarchy</h4>
-                            <div class="hierarchy-tree">
-                                <div class="tree-super">PRODUCT (Superclass)</div>
-                                <div class="tree-sub-list">
-                                    <div class="tree-sub">↳ PERISHABLE_PRODUCT (ShelfLifeDays, StorageTempC)</div>
-                                    <div class="tree-sub">↳ HAZARDOUS_PRODUCT (HazardClass, HandlingNote)</div>
-                                </div>
-                            </div>
-                            <p class="hierarchy-desc">Subclasses inherit PRODUCTID, PNAME, CATEGORY, UNITPRICE. Foreign key cascade maintains referential integrity.</p>
+                            <div class="hierarchy-badge badge-green">Weak Entity</div>
+                            <h4>ORDER_ITEM</h4>
+                            <p class="hierarchy-desc">Weak entity identified by owner <strong>ORDERS</strong> via identifying relationship <strong>HAS</strong> (double diamond), replacing the M:N CONTAINS. Partial key: <code>ItemNo</code>.</p>
                         </div>
-
                         <div class="hierarchy-card">
                             <div class="hierarchy-badge badge-blue">Disjoint Specialization {d}</div>
                             <h4>EMPLOYEE Hierarchy</h4>
-                            <div class="hierarchy-tree">
-                                <div class="tree-super">EMPLOYEE (Superclass)</div>
-                                <div class="tree-sub-list">
-                                    <div class="tree-sub">↳ MANAGER (LevelNo, Bonus)</div>
-                                    <div class="tree-sub">↳ DRIVER (LicenseNo, Expiry)</div>
-                                </div>
-                            </div>
-                            <p class="hierarchy-desc">Recursive relationship: SUPERVISORID points to EMPLOYEE.EMPID. Managers run warehouses; drivers handle deliveries.</p>
+                            <p class="hierarchy-desc">Total + disjoint specialization splitting <strong>EMPLOYEE</strong> into <strong>MANAGER</strong> (Level, Bonus) and <strong>DRIVER</strong> (LicenseNo, Expiry). Every employee is exactly one of these.</p>
                         </div>
-
                         <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-purple">Disjoint Specialization {d}</div>
-                            <h4>GOODS_MOVEMENT Hierarchy</h4>
-                            <div class="hierarchy-tree">
-                                <div class="tree-super">GOODS_MOVEMENT (Superclass)</div>
-                                <div class="tree-sub-list">
-                                    <div class="tree-sub">↳ SHIPMENT (DeliveryDate)</div>
-                                    <div class="tree-sub">↳ GOODS_RETURN (Reason, RefundAmt)</div>
-                                </div>
-                            </div>
-                            <p class="hierarchy-desc">Tracks transitions of goods between Warehouses and Customer Orders with forward or reverse logistics.</p>
+                            <div class="hierarchy-badge badge-amber">Partial Specialization {d}</div>
+                            <h4>PERISHABLE_PRODUCT</h4>
+                            <p class="hierarchy-desc">Partial specialization of <strong>PRODUCT</strong> with attributes <code>ShelfLifeDays</code> and <code>StorageTempC</code>. Most products are non-perishable.</p>
                         </div>
-
                         <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-amber">Weak Entity & Multivalued</div>
-                            <h4>Complex Structural Elements</h4>
+                            <div class="hierarchy-badge badge-purple">Attributes & Recursion</div>
+                            <h4>Advanced Attribute Constraints</h4>
                             <ul class="eer-feature-list">
-                                <li><strong>Weak Entity:</strong> <code>ORDER_ITEM</code> (Identified by owner <code>ORDERS</code>; Composite PK: <code>ORDERID + PRODUCTID</code>)</li>
-                                <li><strong>Multivalued Attribute:</strong> <code>SUPPLIER_PHONE</code> (1NF normalization for multiple supplier phone lines)</li>
-                                <li><strong>Multivalued Route:</strong> <code>DRIVER_CITY</code> (Driver authorized transit routes across cities)</li>
-                                <li><strong>M:N Associations:</strong> <code>SUPPLIES</code>, <code>STOCK</code>, <code>DELIVERY_DUTY</code></li>
+                                <li><strong>Multivalued Attribute:</strong> <code>Phone</code> on SUPPLIER (double ellipse)</li>
+                                <li><strong>Composite Attribute:</strong> <code>Address</code> on CUSTOMER (Street, City, Pincode)</li>
+                                <li><strong>Derived Attribute:</strong> <code>TotalAmt</code> on ORDERS (dashed ellipse)</li>
+                                <li><strong>Recursive Relationship:</strong> <code>SUPERVISES</code> (1 supervisor, N subordinate on EMPLOYEE)</li>
                             </ul>
                         </div>
                     </div>
                 </section>
             </div>
 
-            <!-- Relational Physical Schema View -->
+            <!-- Classic Relational ER View (Chen Notation) -->
             <div id="relationalErView" class="eer-view-container hidden">
                 <section class="panel diagram-panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">PHYSICAL RELATIONAL SCHEMA</div>
-                            <h3>Relational ER Visual Diagram (All 22 Tables & Foreign Keys)</h3>
-                            <p>Graphical crow's-foot ER diagram showing referential integrity and cardinality across the normalized schema.</p>
+                            <div class="panel-kicker">CHEN NOTATION · 7 ENTITIES & 7 RELATIONSHIPS</div>
+                            <h3>Classic Entity-Relationship (ER) Model</h3>
+                            <p>Formal Chen notation diagram displaying entities, attributes, primary keys, relationships, and participation constraints.</p>
                         </div>
                         <div class="canvas-actions">
                             <button id="btnZoomInRel" class="button icon-btn" title="Zoom In">+</button>
@@ -1019,29 +991,38 @@
                             <button id="btnResetRelZoom" class="button icon-btn" title="Reset View">⊡</button>
                         </div>
                     </div>
-                    <div class="diagram-canvas-box" id="relErDiagramBox">
-                        <div id="relMermaidSvg" class="mermaid-diagram-content"></div>
+                    <div class="diagram-canvas-box" id="relErDiagramBox" style="display:flex; justify-content:center; align-items:center; overflow:auto; min-height:550px; padding:20px; background:#080d14;">
+                        <img id="erDiagramImg" src="images/er_diagram.png" alt="Classic ER Model" style="max-width:100%; height:auto; transition:transform 0.2s ease; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.6);">
                     </div>
                 </section>
 
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">PHYSICAL SCHEMA SPECIFICATION</div>
-                            <h3>22 Relational Tables with Foreign Keys</h3>
-                            <p>Select any table to inspect its primary keys, foreign keys, and integrity rules.</p>
+                            <div class="panel-kicker">RELATIONSHIP MATRIX</div>
+                            <h3>The 7 Core System Relationships</h3>
                         </div>
-                        <select id="schemaTableSelect">
-                            <option value="">Select a table to inspect...</option>
-                        </select>
                     </div>
-
-                    <div id="tableSchemaDetails" class="schema-details-box">
-                        <div class="empty-state">
-                            <div class="empty-icon">📐</div>
-                            <h3>Select a table above</h3>
-                            <p>Inspect constraints, nullability, data types, and referenced tables.</p>
-                        </div>
+                    <div style="padding:16px; overflow-x:auto;">
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Relationship</th>
+                                    <th>Participating Entities</th>
+                                    <th>Cardinality</th>
+                                    <th>Attributes / Participation Rules</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>SUPPLIES</strong></td><td>SUPPLIER — PRODUCT</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>LeadTimeDays</code></td></tr>
+                                <tr><td><strong>STORED_IN</strong></td><td>PRODUCT — WAREHOUSE</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>Quantity</code></td></tr>
+                                <tr><td><strong>CONTAINS</strong></td><td>PRODUCT — ORDERS</td><td><span class="badge badge-purple">M:N</span></td><td>Has attribute: <code>Qty</code> (Double line = ORDERS total participation)</td></tr>
+                                <tr><td><strong>WORKS_AT</strong></td><td>WAREHOUSE — EMPLOYEE</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = EMPLOYEE total participation</td></tr>
+                                <tr><td><strong>PLACES</strong></td><td>CUSTOMER — ORDERS</td><td><span class="badge badge-blue">1:N</span></td><td>Customer places 1 or many orders</td></tr>
+                                <tr><td><strong>SHIPPED_BY</strong></td><td>ORDERS — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td></tr>
+                                <tr><td><strong>DISPATCHED_FROM</strong></td><td>WAREHOUSE — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </div>
@@ -1120,84 +1101,7 @@
 
 
 
-<!-- ================= JUSTIFICATION MODAL ================= -->
 
-<div id="justificationModal" class="modal hidden">
-
-    <div class="modal-backdrop"></div>
-
-    <div class="modal-card modal-large" style="max-width: 820px; max-height: 85vh; overflow-y: auto;">
-
-        <div class="modal-header">
-
-            <div>
-
-                <div class="panel-kicker">LAB EVALUATION REPORT</div>
-
-                <h2>Academic Justification: Neo4j vs. Relational DBMS</h2>
-
-            </div>
-
-            <button id="closeJustificationModal" class="close-button">&times;</button>
-
-        </div>
-
-        <div class="modal-body" style="font-size: 0.92rem; line-height: 1.6; color: var(--text-muted);">
-
-            <h3 style="color:var(--text-main); margin-top:0.5rem; margin-bottom:0.5rem;">1. Domain Problem: Why RDBMS Struggles with Supply Chains</h3>
-
-            <p style="margin-bottom:1rem;">
-                Physical Supply Chains and Multi-Echelon Warehouses are connected networks. Tracing an order from customer back to origin supplier requires joining <strong>7 relational tables</strong> (<code>SUPPLIER</code> &rarr; <code>SUPPLIES</code> &rarr; <code>PRODUCT</code> &rarr; <code>STOCK</code> &rarr; <code>WAREHOUSE</code> &rarr; <code>ORDER_ITEM</code> &rarr; <code>ORDERS</code> &rarr; <code>CUSTOMER</code>).
-            </p>
-
-            <p style="margin-bottom:1rem;">
-                In Relational SQL, this produces <strong>O(N<sup>k</sup>) join explosion</strong>, nested-loop latency, and complex queries. In Neo4j, relationships are physical pointers traversed in <strong>O(1) index-free adjacency</strong>.
-            </p>
-
-            <h3 style="color:var(--text-main); margin-top:1.5rem; margin-bottom:0.5rem;">2. Concrete Query Comparison</h3>
-
-            <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
-                <div style="font-weight:600; color:#ef4444; margin-bottom:0.4rem;">Relational Oracle SQL (7 Joins):</div>
-                <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:0.8rem; overflow-x:auto;"><code>SELECT s.SNAME, p.PNAME, w.WNAME, c.CNAME
-FROM SUPPLIER s
-JOIN SUPPLIES sup ON s.SUPPLIERID=sup.SUPPLIERID
-JOIN PRODUCT p ON sup.PRODUCTID=p.PRODUCTID
-JOIN STOCK st ON p.PRODUCTID=st.PRODUCTID
-JOIN WAREHOUSE w ON st.WAREHOUSEID=w.WAREHOUSEID
-JOIN ORDER_ITEM oi ON p.PRODUCTID=oi.PRODUCTID
-JOIN ORDERS o ON oi.ORDERID=o.ORDERID
-JOIN CUSTOMER c ON o.CUSTID=c.CUSTID
-WHERE s.SUPPLIERID='S01';</code></pre>
-            </div>
-
-            <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
-                <div style="font-weight:600; color:#10b981; margin-bottom:0.4rem;">Modern Neo4j Cypher (Index-Free Pattern Match):</div>
-                <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:0.8rem; overflow-x:auto;"><code>MATCH path = (s:Supplier {id:'S01'})-[:SUPPLIES]->(p:Product)
-             <-[:STOCKS]-(w:Warehouse),
-             (p)<-[:CONTAINS]-(o:Order)<-[:PLACED]-(c:Customer)
-RETURN path;</code></pre>
-            </div>
-
-            <h3 style="color:var(--text-main); margin-top:1.5rem; margin-bottom:0.5rem;">3. Key Modern Database Advantages for this Project</h3>
-
-            <ul style="padding-left:1.5rem; margin-bottom:1rem;">
-                <li style="margin-bottom:0.4rem;"><strong>Index-Free Adjacency:</strong> Physical edge pointers traverse multi-hop supply lines in sub-millisecond O(1) time regardless of graph size.</li>
-                <li style="margin-bottom:0.4rem;"><strong>Agile Property Graph:</strong> Heterogeneous products (Perishable with ShelfLife, Hazardous with HazardClass) are modeled as polymorphic multi-label nodes (<code>:Product:Perishable</code>) without sparse null columns or subclass junction tables.</li>
-                <li style="margin-bottom:0.4rem;"><strong>Single Point of Failure (SPOF) Analysis:</strong> Graph degree centrality identifies products with only 1 supplier, alerting logisticians to stockout vulnerabilities.</li>
-                <li style="margin-bottom:0.4rem;"><strong>Free Cloud Tier:</strong> Fully managed cloud database on Neo4j AuraDB with Bolt binary protocol support.</li>
-            </ul>
-
-        </div>
-
-        <div class="modal-actions">
-
-            <button id="closeJustificationBtn" class="button primary-button">Close Report</button>
-
-        </div>
-
-    </div>
-
-</div>
 
 
 <!-- TOAST -->

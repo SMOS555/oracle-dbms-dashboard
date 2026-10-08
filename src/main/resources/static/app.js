@@ -2237,20 +2237,6 @@ function setupGraphEventListeners() {
     $("runCypher").addEventListener("click", runCypherQuery);
 
     $("btnRefreshBottlenecks").addEventListener("click", loadBottlenecks);
-
-
-
-    $("openJustificationModal").addEventListener("click", () => {
-        $("justificationModal").classList.remove("hidden");
-    });
-
-    $("closeJustificationModal").addEventListener("click", () => {
-        $("justificationModal").classList.add("hidden");
-    });
-
-    $("closeJustificationBtn").addEventListener("click", () => {
-        $("justificationModal").classList.add("hidden");
-    });
 }
 
 async function runCypherQuery() {
@@ -2558,46 +2544,18 @@ let relRendered = false;
 function applyDiagramZoom(type) {
     const isEer = type === "eer";
     const zoom = isEer ? eerZoom : relZoom;
-    const target = $(isEer ? "eerMermaidSvg" : "relMermaidSvg");
+    const target = $(isEer ? "eerDiagramImg" : "erDiagramImg") || $(isEer ? "eerMermaidSvg" : "relMermaidSvg");
     if (target) {
         target.style.transform = `scale(${zoom})`;
     }
 }
 
 async function renderEerSvgDiagram() {
-    const container = $("eerMermaidSvg");
-    if (!container || eerRendered) return;
-    try {
-        if (window.mermaid) {
-            container.innerHTML = `<div style="color:#94a3b8; padding:20px; font-size:0.9rem;">Rendering EER Conceptual Model...</div>`;
-            const id = "eerSvg_" + Math.floor(Math.random() * 1000000);
-            const { svg } = await mermaid.render(id, EER_MERMAID_CODE);
-            container.innerHTML = svg;
-            eerRendered = true;
-            applyDiagramZoom("eer");
-        }
-    } catch (err) {
-        console.error("Mermaid EER render error:", err);
-        container.innerHTML = `<div style="color:#f87171; padding:20px;">Could not render diagram: ${escapeHtml(err.message || String(err))}</div>`;
-    }
+    applyDiagramZoom("eer");
 }
 
 async function renderRelationalErSvgDiagram() {
-    const container = $("relMermaidSvg");
-    if (!container || relRendered) return;
-    try {
-        if (window.mermaid) {
-            container.innerHTML = `<div style="color:#94a3b8; padding:20px; font-size:0.9rem;">Rendering Relational Physical ER Diagram...</div>`;
-            const id = "relSvg_" + Math.floor(Math.random() * 1000000);
-            const { svg } = await mermaid.render(id, RELATIONAL_ER_MERMAID_CODE);
-            container.innerHTML = svg;
-            relRendered = true;
-            applyDiagramZoom("rel");
-        }
-    } catch (err) {
-        console.error("Mermaid Relational ER render error:", err);
-        container.innerHTML = `<div style="color:#f87171; padding:20px;">Could not render diagram: ${escapeHtml(err.message || String(err))}</div>`;
-    }
+    applyDiagramZoom("rel");
 }
 
 function initEerStudio() {
@@ -2605,31 +2563,39 @@ function initEerStudio() {
         eerStudioInitialized = true;
 
         // View toggle buttons
-        $("btnViewEer").addEventListener("click", () => {
-            $("eerConceptualView").classList.remove("hidden");
-            $("relationalErView").classList.add("hidden");
-            $("btnViewEer").className = "button primary-button";
-            $("btnViewRelationalEr").className = "button secondary-button";
-            renderEerSvgDiagram();
-        });
-
-        $("btnViewRelationalEr").addEventListener("click", () => {
-            $("eerConceptualView").classList.add("hidden");
-            $("relationalErView").classList.remove("hidden");
-            $("btnViewEer").className = "button secondary-button";
-            $("btnViewRelationalEr").className = "button primary-button";
-            renderRelationalErSvgDiagram();
-            populateSchemaTableSelect();
-        });
-
-        // Copy Mermaid code
-        $("btnCopyMermaid").addEventListener("click", () => {
-            const isEer = !$("eerConceptualView").classList.contains("hidden");
-            const code = isEer ? EER_MERMAID_CODE : RELATIONAL_ER_MERMAID_CODE;
-            navigator.clipboard.writeText(code).then(() => {
-                showToast("Mermaid diagram code copied to clipboard!");
+        if ($("btnViewEer")) {
+            $("btnViewEer").addEventListener("click", () => {
+                $("eerConceptualView").classList.remove("hidden");
+                $("relationalErView").classList.add("hidden");
+                $("btnViewEer").className = "button primary-button";
+                $("btnViewRelationalEr").className = "button secondary-button";
+                applyDiagramZoom("eer");
             });
-        });
+        }
+
+        if ($("btnViewRelationalEr")) {
+            $("btnViewRelationalEr").addEventListener("click", () => {
+                $("eerConceptualView").classList.add("hidden");
+                $("relationalErView").classList.remove("hidden");
+                $("btnViewEer").className = "button secondary-button";
+                $("btnViewRelationalEr").className = "button primary-button";
+                applyDiagramZoom("rel");
+                if ($("schemaTableSelect")) {
+                    populateSchemaTableSelect();
+                }
+            });
+        }
+
+        // Copy Mermaid code (if present)
+        if ($("btnCopyMermaid")) {
+            $("btnCopyMermaid").addEventListener("click", () => {
+                const isEer = !$("eerConceptualView").classList.contains("hidden");
+                const code = isEer ? EER_MERMAID_CODE : RELATIONAL_ER_MERMAID_CODE;
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast("Diagram code copied to clipboard!");
+                });
+            });
+        }
 
         // Zoom controls for EER
         if ($("btnZoomInEer")) {
@@ -2671,12 +2637,14 @@ function initEerStudio() {
             });
         }
 
-        $("schemaTableSelect").addEventListener("change", e => {
-            inspectTableSchema(e.target.value);
-        });
+        if ($("schemaTableSelect")) {
+            $("schemaTableSelect").addEventListener("change", e => {
+                inspectTableSchema(e.target.value);
+            });
+        }
     }
 
-    renderEerSvgDiagram();
+    applyDiagramZoom("eer");
 }
 
 function populateSchemaTableSelect() {
