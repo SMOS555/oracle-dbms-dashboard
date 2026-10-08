@@ -268,6 +268,14 @@ async function loadTables() {
 
             });
 
+        // Automatically open default table so Data Explorer immediately displays records
+        if (state.tables.length > 0 && !state.table) {
+            const initialTable = state.tables.includes("PRODUCT")
+                ? "PRODUCT"
+                : state.tables[0];
+            $("tableSelect").value = initialTable;
+            loadTable(initialTable);
+        }
 
     } catch (error) {
 
@@ -1502,13 +1510,26 @@ document
 
 /* OPEN TABLE */
 
-$("openTable")
-    .addEventListener(
+if ($("openTable")) {
+    $("openTable").addEventListener(
         "click",
         () => {
             loadTable();
         }
     );
+}
+
+/* TABLE SELECT DROPDOWN AUTO-LOAD */
+if ($("tableSelect")) {
+    $("tableSelect").addEventListener(
+        "change",
+        (e) => {
+            if (e.target.value) {
+                loadTable(e.target.value);
+            }
+        }
+    );
+}
 
 
 /* REFRESH */
