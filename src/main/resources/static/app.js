@@ -2238,62 +2238,7 @@ function setupGraphEventListeners() {
 
     $("btnRefreshBottlenecks").addEventListener("click", loadBottlenecks);
 
-    // Modals
-    $("openNeo4jModal").addEventListener("click", () => {
-        $("neo4jModal").classList.remove("hidden");
-    });
 
-    $("closeNeo4jModal").addEventListener("click", () => {
-        $("neo4jModal").classList.add("hidden");
-    });
-
-    $("cancelNeo4j").addEventListener("click", () => {
-        $("neo4jModal").classList.add("hidden");
-    });
-
-    $("saveNeo4j").addEventListener("click", async () => {
-        const uri = $("auraUri").value.trim();
-        const username = $("auraUser").value.trim();
-        const password = $("auraPass").value.trim();
-
-        if (!uri || !password) {
-            showToast("Enter URI and password.");
-            return;
-        }
-
-        const statusEl = $("auraConnectStatus");
-        statusEl.style.display = "block";
-        statusEl.style.background = "#3b82f633";
-        statusEl.style.color = "#93c5fd";
-        statusEl.textContent = "Connecting to Neo4j...";
-
-        try {
-            const res = await api("/api/graph/connect", {
-                method: "POST",
-                body: JSON.stringify({ uri, username, password })
-            });
-
-            if (res.success) {
-                statusEl.style.background = "#10b98133";
-                statusEl.style.color = "#34d399";
-                statusEl.textContent = "Connected successfully!";
-                showToast("Connected to live Neo4j AuraDB!");
-                setTimeout(() => {
-                    $("neo4jModal").classList.add("hidden");
-                    loadGraphStatus();
-                    loadGraphData();
-                }, 1000);
-            } else {
-                statusEl.style.background = "#ef444433";
-                statusEl.style.color = "#f87171";
-                statusEl.textContent = res.message;
-            }
-        } catch (e) {
-            statusEl.style.background = "#ef444433";
-            statusEl.style.color = "#f87171";
-            statusEl.textContent = e.message;
-        }
-    });
 
     $("openJustificationModal").addEventListener("click", () => {
         $("justificationModal").classList.remove("hidden");

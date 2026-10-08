@@ -776,7 +776,6 @@
                 </div>
                 <div class="toolbar-controls">
                     <span id="graphEngineBadge" class="badge badge-purple">Engine: Standby</span>
-                    <button id="openNeo4jModal" class="button primary-button">⚡ Connect Live AuraDB</button>
                     <button id="openJustificationModal" class="button secondary-button">📄 Academic Justification</button>
                     <button id="refreshGraph" class="button secondary-button">↻ Refresh Network</button>
                 </div>
@@ -1119,73 +1118,6 @@
 </div>
 
 
-<!-- ================= NEO4J MODAL ================= -->
-
-<div id="neo4jModal" class="modal hidden">
-
-    <div class="modal-backdrop"></div>
-
-    <div class="modal-card">
-
-        <div class="modal-header">
-
-            <div>
-
-                <div class="panel-kicker">MODERN DATABASE CONNECTIVITY</div>
-
-                <h2>Connect Live Neo4j AuraDB</h2>
-
-            </div>
-
-            <button id="closeNeo4jModal" class="close-button">&times;</button>
-
-        </div>
-
-        <div class="modal-body">
-
-            <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">
-                Connect this workbench to your free cloud database instance on Neo4j AuraDB.
-            </p>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-
-                <label for="auraUri" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Bolt / AuraDB URI</label>
-
-                <input type="text" id="auraUri" placeholder="neo4j+s://xxxxxxxx.databases.neo4j.io" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
-
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-
-                <label for="auraUser" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Username</label>
-
-                <input type="text" id="auraUser" value="neo4j" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
-
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1rem;">
-
-                <label for="auraPass" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Password</label>
-
-                <input type="password" id="auraPass" placeholder="Your AuraDB password" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
-
-            </div>
-
-            <div id="auraConnectStatus" style="font-size:0.85rem; padding:0.5rem; border-radius:4px; display:none;"></div>
-
-        </div>
-
-        <div class="modal-actions">
-
-            <button id="cancelNeo4j" class="button secondary-button">Cancel</button>
-
-            <button id="saveNeo4j" class="button primary-button">Connect to AuraDB</button>
-
-        </div>
-
-    </div>
-
-</div>
 
 
 <!-- ================= JUSTIFICATION MODAL ================= -->
