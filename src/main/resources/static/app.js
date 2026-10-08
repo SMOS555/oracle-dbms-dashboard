@@ -1816,6 +1816,15 @@ async function loadGraphStatus() {
             $("graphEngineBadge").textContent = data.liveConnected ? "Neo4j AuraDB (Cloud Active)" : "Built-in Graph Engine (Ready)";
             $("graphEngineBadge").className = data.liveConnected ? "badge badge-green" : "badge badge-purple";
         }
+        if ($("openNeo4jModal")) {
+            if (data.liveConnected) {
+                $("openNeo4jModal").textContent = "✓ AuraDB Connected";
+                $("openNeo4jModal").className = "button secondary-button";
+            } else {
+                $("openNeo4jModal").textContent = "⚡ Connect Live AuraDB";
+                $("openNeo4jModal").className = "button primary-button";
+            }
+        }
         if ($("cloudGraphStatus")) {
             $("cloudGraphStatus").innerHTML = `<span class="badge ${data.liveConnected ? "badge-green" : "badge-purple"}">${escapeHtml(data.engine || "Graph Engine Active")}</span>`;
         }
