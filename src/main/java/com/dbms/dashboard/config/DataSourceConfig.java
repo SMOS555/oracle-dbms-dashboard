@@ -71,7 +71,7 @@ public class DataSourceConfig {
         log.warn("=========================================================================");
 
         HikariDataSource h2Ds = new HikariDataSource();
-        h2Ds.setJdbcUrl("jdbc:h2:mem:dbms;MODE=Oracle;DEFAULT_NULL_ORDERINGS=HIGH;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=TRUE");
+        h2Ds.setJdbcUrl("jdbc:h2:mem:dbms;MODE=Oracle;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=TRUE");
         h2Ds.setDriverClassName("org.h2.Driver");
         h2Ds.setUsername("sa");
         h2Ds.setPassword("");
