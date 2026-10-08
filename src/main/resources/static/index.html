@@ -15,6 +15,12 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        if (window.mermaid) {
+            mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+        }
+    </script>
 </head>
 
 <body>
@@ -66,6 +72,15 @@
             </button>
 
 
+            <button class="nav-button" data-page="graph">
+
+                <span class="nav-icon">🕸️</span>
+
+                <span>Neo4j Graph (Modern DB)</span>
+
+            </button>
+
+
             <button class="nav-button" data-page="triggers">
 
                 <span class="nav-icon">⚡</span>
@@ -82,6 +97,16 @@
                 <span>Cursors</span>
 
             </button>
+
+
+            <button class="nav-button" data-page="eer">
+
+                <span class="nav-icon">📐</span>
+
+                <span>ER / EER Studio</span>
+
+            </button>
+
 
         </nav>
 
@@ -741,6 +766,288 @@
 
         </section>
 
+
+        <!-- ================= MODERN DATABASE: NEO4J GRAPH WORKBENCH ================= -->
+        <section id="graphPage" class="page">
+            <div class="workspace-toolbar">
+                <div>
+                    <div class="section-label">MODERN DATABASE EXTENSION</div>
+                    <h2>Neo4j Graph Workbench & Supply Chain Network</h2>
+                </div>
+                <div class="toolbar-controls">
+                    <span id="graphEngineBadge" class="badge badge-purple">Engine: Standby</span>
+                    <button id="openNeo4jModal" class="button primary-button">⚡ Connect Live AuraDB</button>
+                    <button id="openJustificationModal" class="button secondary-button">📄 Academic Justification</button>
+                    <button id="refreshGraph" class="button secondary-button">↻ Refresh Network</button>
+                </div>
+            </div>
+
+            <!-- Graph Canvas Container -->
+            <section class="panel graph-panel">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-kicker">NETWORK TOPOLOGY</div>
+                        <h3>Interactive Logistics Topology</h3>
+                        <p>Visualizing Suppliers, Warehouses, Products, Orders, Customers, and Fleet Routes with index-free adjacency.</p>
+                    </div>
+                    <div class="graph-legend">
+                        <span class="legend-item"><span class="dot dot-supplier"></span> Supplier</span>
+                        <span class="legend-item"><span class="dot dot-product"></span> Product</span>
+                        <span class="legend-item"><span class="dot dot-warehouse"></span> Warehouse</span>
+                        <span class="legend-item"><span class="dot dot-order"></span> Order</span>
+                        <span class="legend-item"><span class="dot dot-customer"></span> Customer</span>
+                        <span class="legend-item"><span class="dot dot-driver"></span> Driver</span>
+                    </div>
+                </div>
+
+                <div class="graph-toolbar-bar">
+                    <div class="filter-group">
+                        <label>Filter Nodes:</label>
+                        <select id="graphFilter">
+                            <option value="ALL">All Entities (Full Graph)</option>
+                            <option value="Supplier">Suppliers Only</option>
+                            <option value="Product">Products (Standard, Perishable, Hazmat)</option>
+                            <option value="Warehouse">Warehouses & Stock</option>
+                            <option value="Order">Orders & Items</option>
+                            <option value="Customer">Retail Customers</option>
+                            <option value="Driver">Drivers & Fleets</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group path-finder">
+                        <label>Supply Chain Pathfinder:</label>
+                        <select id="traceSupplierSelect">
+                            <option value="SUPPLIER_S01">S01 - Apex Agro Supplies</option>
+                            <option value="SUPPLIER_S03">S03 - Metro Wholesale Mills</option>
+                            <option value="SUPPLIER_S05">S05 - Delta Cold & Chemicals</option>
+                        </select>
+                        <button id="btnTracePath" class="button primary-button small">Trace Supply Chain</button>
+                        <button id="btnResetTrace" class="button secondary-button small">Reset Path</button>
+                    </div>
+
+                    <div class="canvas-actions">
+                        <button id="btnZoomIn" class="button icon-btn" title="Zoom In">+</button>
+                        <button id="btnZoomOut" class="button icon-btn" title="Zoom Out">-</button>
+                        <button id="btnResetZoom" class="button icon-btn" title="Center View">⊡</button>
+                    </div>
+                </div>
+
+                <div class="canvas-container" id="canvasContainer">
+                    <canvas id="graphCanvas"></canvas>
+                    <div id="graphTooltip" class="graph-tooltip hidden"></div>
+                    <div id="nodeDetailDrawer" class="node-detail-drawer hidden">
+                        <div class="drawer-header">
+                            <h4 id="drawerNodeTitle">Node Details</h4>
+                            <button id="closeDrawer" class="close-button">&times;</button>
+                        </div>
+                        <div id="drawerNodeBody" class="drawer-body"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cypher Query Workspace -->
+            <section class="panel">
+                <div class="panel-header compact">
+                    <div>
+                        <div class="panel-kicker">GRAPH QUERY LANGUAGE</div>
+                        <h3>Cypher Console</h3>
+                        <p>Execute declarative Cypher graph pattern matching queries.</p>
+                    </div>
+                </div>
+
+                <div class="cypher-shortcuts">
+                    <span class="shortcut-label">Sample Queries:</span>
+                    <button class="pill-btn" data-cypher="MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) RETURN s, p">Suppliers & Products</button>
+                    <button class="pill-btn" data-cypher="MATCH (w:Warehouse)-[:STOCKS]->(p:Product) RETURN w, p">Warehouse Inventory</button>
+                    <button class="pill-btn" data-cypher="MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN c, o, p">Customer Orders</button>
+                    <button class="pill-btn" data-cypher="MATCH (d:Driver)-[:DELIVERS]->(o:Order) RETURN d, o">Driver Route Assignments</button>
+                    <button class="pill-btn" data-cypher="MATCH (p:Product)<-[:SUPPLIES]-(s:Supplier) RETURN p, s">Supply Chain Provenance</button>
+                </div>
+
+                <div class="editor-wrapper">
+                    <textarea id="cypherInput" spellcheck="false" placeholder="MATCH (n) RETURN n LIMIT 25;"></textarea>
+                </div>
+
+                <div class="sql-actions">
+                    <button id="runCypher" class="button primary-button">▶ Execute Cypher</button>
+                    <small>Declarative graph pattern matching executed via Neo4j Driver</small>
+                </div>
+
+                <div id="cypherResultWrap" class="result-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">🕸️</div>
+                        <h3>Waiting for Cypher query</h3>
+                        <p>Click a sample query above or type a Cypher statement to inspect graph records.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottleneck & Risk Analysis -->
+            <section class="panel">
+                <div class="panel-header compact">
+                    <div>
+                        <div class="panel-kicker">NETWORK TELEMETRY</div>
+                        <h3>Supply Chain Bottlenecks & Single Point of Failure (SPOF)</h3>
+                    </div>
+                    <button id="btnRefreshBottlenecks" class="button secondary-button small">Analyze Topology</button>
+                </div>
+                <div id="bottleneckWrap" class="bottlenecks-grid">
+                    <div class="telemetry-card">
+                        <h4>Single Source Vulnerabilities</h4>
+                        <div id="singleSourceList">Loading analysis...</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <h4>Driver Workload Centrality</h4>
+                        <div id="driverLoadList">Loading analysis...</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <h4>Graph Density & Topology</h4>
+                        <div id="topologyMetrics">Loading analysis...</div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= ER & EER STUDIO ================= -->
+        <section id="eerPage" class="page">
+            <div class="workspace-toolbar">
+                <div>
+                    <div class="section-label">SCHEMA & CONCEPTUAL MODELING</div>
+                    <h2>ER & Enhanced ER (EER) Studio</h2>
+                </div>
+                <div class="toolbar-controls">
+                    <button id="btnViewEer" class="button primary-button">EER Conceptual Model (Specialization)</button>
+                    <button id="btnViewRelationalEr" class="button secondary-button">Relational Physical Schema (22 Tables)</button>
+                    <button id="btnCopyMermaid" class="button secondary-button">📋 Copy Mermaid Code</button>
+                </div>
+            </div>
+
+            <!-- EER Conceptual View -->
+            <div id="eerConceptualView" class="eer-view-container">
+                <section class="panel diagram-panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-kicker">CONCEPTUAL MODEL</div>
+                            <h3>Enhanced Entity-Relationship (EER) Visual Diagram</h3>
+                            <p>Graphical diagram rendering of entities, generalization/specialization {d} hierarchies, weak entities, and multivalued relationships.</p>
+                        </div>
+                        <div class="canvas-actions">
+                            <button id="btnZoomInEer" class="button icon-btn" title="Zoom In">+</button>
+                            <button id="btnZoomOutEer" class="button icon-btn" title="Zoom Out">-</button>
+                            <button id="btnResetEerZoom" class="button icon-btn" title="Reset View">⊡</button>
+                        </div>
+                    </div>
+                    <div class="diagram-canvas-box" id="eerDiagramBox">
+                        <div id="eerMermaidSvg" class="mermaid-diagram-content"></div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-kicker">ADVANCED CONCEPTUAL CONSTRUCTS</div>
+                            <h3>Generalization & Specialization Hierarchies (ISA)</h3>
+                            <p>The system models 3 distinct ISA specialization hierarchies with disjointness and total/partial constraints.</p>
+                        </div>
+                    </div>
+
+                    <div class="eer-hierarchy-grid">
+                        <div class="hierarchy-card">
+                            <div class="hierarchy-badge badge-green">Disjoint Specialization {d}</div>
+                            <h4>PRODUCT Hierarchy</h4>
+                            <div class="hierarchy-tree">
+                                <div class="tree-super">PRODUCT (Superclass)</div>
+                                <div class="tree-sub-list">
+                                    <div class="tree-sub">↳ PERISHABLE_PRODUCT (ShelfLifeDays, StorageTempC)</div>
+                                    <div class="tree-sub">↳ HAZARDOUS_PRODUCT (HazardClass, HandlingNote)</div>
+                                </div>
+                            </div>
+                            <p class="hierarchy-desc">Subclasses inherit PRODUCTID, PNAME, CATEGORY, UNITPRICE. Foreign key cascade maintains referential integrity.</p>
+                        </div>
+
+                        <div class="hierarchy-card">
+                            <div class="hierarchy-badge badge-blue">Disjoint Specialization {d}</div>
+                            <h4>EMPLOYEE Hierarchy</h4>
+                            <div class="hierarchy-tree">
+                                <div class="tree-super">EMPLOYEE (Superclass)</div>
+                                <div class="tree-sub-list">
+                                    <div class="tree-sub">↳ MANAGER (LevelNo, Bonus)</div>
+                                    <div class="tree-sub">↳ DRIVER (LicenseNo, Expiry)</div>
+                                </div>
+                            </div>
+                            <p class="hierarchy-desc">Recursive relationship: SUPERVISORID points to EMPLOYEE.EMPID. Managers run warehouses; drivers handle deliveries.</p>
+                        </div>
+
+                        <div class="hierarchy-card">
+                            <div class="hierarchy-badge badge-purple">Disjoint Specialization {d}</div>
+                            <h4>GOODS_MOVEMENT Hierarchy</h4>
+                            <div class="hierarchy-tree">
+                                <div class="tree-super">GOODS_MOVEMENT (Superclass)</div>
+                                <div class="tree-sub-list">
+                                    <div class="tree-sub">↳ SHIPMENT (DeliveryDate)</div>
+                                    <div class="tree-sub">↳ GOODS_RETURN (Reason, RefundAmt)</div>
+                                </div>
+                            </div>
+                            <p class="hierarchy-desc">Tracks transitions of goods between Warehouses and Customer Orders with forward or reverse logistics.</p>
+                        </div>
+
+                        <div class="hierarchy-card">
+                            <div class="hierarchy-badge badge-amber">Weak Entity & Multivalued</div>
+                            <h4>Complex Structural Elements</h4>
+                            <ul class="eer-feature-list">
+                                <li><strong>Weak Entity:</strong> <code>ORDER_ITEM</code> (Identified by owner <code>ORDERS</code>; Composite PK: <code>ORDERID + PRODUCTID</code>)</li>
+                                <li><strong>Multivalued Attribute:</strong> <code>SUPPLIER_PHONE</code> (1NF normalization for multiple supplier phone lines)</li>
+                                <li><strong>Multivalued Route:</strong> <code>DRIVER_CITY</code> (Driver authorized transit routes across cities)</li>
+                                <li><strong>M:N Associations:</strong> <code>SUPPLIES</code>, <code>STOCK</code>, <code>DELIVERY_DUTY</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Relational Physical Schema View -->
+            <div id="relationalErView" class="eer-view-container hidden">
+                <section class="panel diagram-panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-kicker">PHYSICAL RELATIONAL SCHEMA</div>
+                            <h3>Relational ER Visual Diagram (All 22 Tables & Foreign Keys)</h3>
+                            <p>Graphical crow's-foot ER diagram showing referential integrity and cardinality across the normalized schema.</p>
+                        </div>
+                        <div class="canvas-actions">
+                            <button id="btnZoomInRel" class="button icon-btn" title="Zoom In">+</button>
+                            <button id="btnZoomOutRel" class="button icon-btn" title="Zoom Out">-</button>
+                            <button id="btnResetRelZoom" class="button icon-btn" title="Reset View">⊡</button>
+                        </div>
+                    </div>
+                    <div class="diagram-canvas-box" id="relErDiagramBox">
+                        <div id="relMermaidSvg" class="mermaid-diagram-content"></div>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-kicker">PHYSICAL SCHEMA SPECIFICATION</div>
+                            <h3>22 Relational Tables with Foreign Keys</h3>
+                            <p>Select any table to inspect its primary keys, foreign keys, and integrity rules.</p>
+                        </div>
+                        <select id="schemaTableSelect">
+                            <option value="">Select a table to inspect...</option>
+                        </select>
+                    </div>
+
+                    <div id="tableSchemaDetails" class="schema-details-box">
+                        <div class="empty-state">
+                            <div class="empty-icon">📐</div>
+                            <h3>Select a table above</h3>
+                            <p>Inspect constraints, nullability, data types, and referenced tables.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
     </main>
 
 </div>
@@ -806,6 +1113,153 @@
                 Save Changes
 
             </button>
+
+        </div>
+
+</div>
+
+
+<!-- ================= NEO4J MODAL ================= -->
+
+<div id="neo4jModal" class="modal hidden">
+
+    <div class="modal-backdrop"></div>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="panel-kicker">MODERN DATABASE CONNECTIVITY</div>
+
+                <h2>Connect Live Neo4j AuraDB</h2>
+
+            </div>
+
+            <button id="closeNeo4jModal" class="close-button">&times;</button>
+
+        </div>
+
+        <div class="modal-body">
+
+            <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                Connect this workbench to your free cloud database instance on Neo4j AuraDB.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+
+                <label for="auraUri" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Bolt / AuraDB URI</label>
+
+                <input type="text" id="auraUri" placeholder="neo4j+s://xxxxxxxx.databases.neo4j.io" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
+
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+
+                <label for="auraUser" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Username</label>
+
+                <input type="text" id="auraUser" value="neo4j" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
+
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+
+                <label for="auraPass" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Password</label>
+
+                <input type="password" id="auraPass" placeholder="Your AuraDB password" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-main);" />
+
+            </div>
+
+            <div id="auraConnectStatus" style="font-size:0.85rem; padding:0.5rem; border-radius:4px; display:none;"></div>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button id="cancelNeo4j" class="button secondary-button">Cancel</button>
+
+            <button id="saveNeo4j" class="button primary-button">Connect to AuraDB</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= JUSTIFICATION MODAL ================= -->
+
+<div id="justificationModal" class="modal hidden">
+
+    <div class="modal-backdrop"></div>
+
+    <div class="modal-card modal-large" style="max-width: 820px; max-height: 85vh; overflow-y: auto;">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="panel-kicker">LAB EVALUATION REPORT</div>
+
+                <h2>Academic Justification: Neo4j vs. Relational DBMS</h2>
+
+            </div>
+
+            <button id="closeJustificationModal" class="close-button">&times;</button>
+
+        </div>
+
+        <div class="modal-body" style="font-size: 0.92rem; line-height: 1.6; color: var(--text-muted);">
+
+            <h3 style="color:var(--text-main); margin-top:0.5rem; margin-bottom:0.5rem;">1. Domain Problem: Why RDBMS Struggles with Supply Chains</h3>
+
+            <p style="margin-bottom:1rem;">
+                Physical Supply Chains and Multi-Echelon Warehouses are connected networks. Tracing an order from customer back to origin supplier requires joining <strong>7 relational tables</strong> (<code>SUPPLIER</code> &rarr; <code>SUPPLIES</code> &rarr; <code>PRODUCT</code> &rarr; <code>STOCK</code> &rarr; <code>WAREHOUSE</code> &rarr; <code>ORDER_ITEM</code> &rarr; <code>ORDERS</code> &rarr; <code>CUSTOMER</code>).
+            </p>
+
+            <p style="margin-bottom:1rem;">
+                In Relational SQL, this produces <strong>O(N<sup>k</sup>) join explosion</strong>, nested-loop latency, and complex queries. In Neo4j, relationships are physical pointers traversed in <strong>O(1) index-free adjacency</strong>.
+            </p>
+
+            <h3 style="color:var(--text-main); margin-top:1.5rem; margin-bottom:0.5rem;">2. Concrete Query Comparison</h3>
+
+            <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
+                <div style="font-weight:600; color:#ef4444; margin-bottom:0.4rem;">Relational Oracle SQL (7 Joins):</div>
+                <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:0.8rem; overflow-x:auto;"><code>SELECT s.SNAME, p.PNAME, w.WNAME, c.CNAME
+FROM SUPPLIER s
+JOIN SUPPLIES sup ON s.SUPPLIERID=sup.SUPPLIERID
+JOIN PRODUCT p ON sup.PRODUCTID=p.PRODUCTID
+JOIN STOCK st ON p.PRODUCTID=st.PRODUCTID
+JOIN WAREHOUSE w ON st.WAREHOUSEID=w.WAREHOUSEID
+JOIN ORDER_ITEM oi ON p.PRODUCTID=oi.PRODUCTID
+JOIN ORDERS o ON oi.ORDERID=o.ORDERID
+JOIN CUSTOMER c ON o.CUSTID=c.CUSTID
+WHERE s.SUPPLIERID='S01';</code></pre>
+            </div>
+
+            <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; border:1px solid var(--border-color); margin-bottom:1rem;">
+                <div style="font-weight:600; color:#10b981; margin-bottom:0.4rem;">Modern Neo4j Cypher (Index-Free Pattern Match):</div>
+                <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:0.8rem; overflow-x:auto;"><code>MATCH path = (s:Supplier {id:'S01'})-[:SUPPLIES]->(p:Product)
+             <-[:STOCKS]-(w:Warehouse),
+             (p)<-[:CONTAINS]-(o:Order)<-[:PLACED]-(c:Customer)
+RETURN path;</code></pre>
+            </div>
+
+            <h3 style="color:var(--text-main); margin-top:1.5rem; margin-bottom:0.5rem;">3. Key Modern Database Advantages for this Project</h3>
+
+            <ul style="padding-left:1.5rem; margin-bottom:1rem;">
+                <li style="margin-bottom:0.4rem;"><strong>Index-Free Adjacency:</strong> Physical edge pointers traverse multi-hop supply lines in sub-millisecond O(1) time regardless of graph size.</li>
+                <li style="margin-bottom:0.4rem;"><strong>Agile Property Graph:</strong> Heterogeneous products (Perishable with ShelfLife, Hazardous with HazardClass) are modeled as polymorphic multi-label nodes (<code>:Product:Perishable</code>) without sparse null columns or subclass junction tables.</li>
+                <li style="margin-bottom:0.4rem;"><strong>Single Point of Failure (SPOF) Analysis:</strong> Graph degree centrality identifies products with only 1 supplier, alerting logisticians to stockout vulnerabilities.</li>
+                <li style="margin-bottom:0.4rem;"><strong>Free Cloud Tier:</strong> Fully managed cloud database on Neo4j AuraDB with Bolt binary protocol support.</li>
+            </ul>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button id="closeJustificationBtn" class="button primary-button">Close Report</button>
 
         </div>
 

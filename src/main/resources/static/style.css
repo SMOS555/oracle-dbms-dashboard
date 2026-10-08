@@ -27,6 +27,8 @@ body {
     color: var(--text);
 
     font-family: "DM Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
 }
 
 button,
@@ -116,7 +118,7 @@ input {
 
     color: #63758a;
 
-    font-size: 10px;
+    font-size: 12px;
 }
 
 
@@ -216,7 +218,7 @@ input {
 
     color: #657589;
 
-    font-size: 10px;
+    font-size: 12px;
 
     font-weight: 700;
 
@@ -226,7 +228,7 @@ input {
 .database-arrow {
     color: #8da0b4;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .database-name {
@@ -244,7 +246,7 @@ input {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 10px;
+    font-size: 13px;
 
     display: flex;
 
@@ -273,7 +275,7 @@ input {
 
     color: #5f7083;
 
-    font-size: 9px;
+    font-size: 12px;
 
     font-weight: 700;
 
@@ -318,7 +320,7 @@ input {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 10px;
+    font-size: 13px;
 
     position: relative;
 
@@ -388,7 +390,7 @@ input {
 
     color: #dce5ee;
 
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .connection-info small {
@@ -396,7 +398,7 @@ input {
 
     color: #5f7185;
 
-    font-size: 9px;
+    font-size: 12px;
 
     margin-top: 3px;
 
@@ -434,7 +436,7 @@ input {
 .breadcrumb {
     color: #5f7084;
 
-    font-size: 9px;
+    font-size: 12px;
 
     font-weight: 700;
 
@@ -476,7 +478,7 @@ h1 {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .server-status span {
@@ -498,11 +500,11 @@ h1 {
 
     border-radius: 6px;
 
-    padding: 9px 14px;
+    padding: 10px 16px;
 
     cursor: pointer;
 
-    font-size: 11px;
+    font-size: 13.5px;
 
     font-weight: 700;
 
@@ -586,7 +588,7 @@ h1 {
 
     color: #5e7083;
 
-    font-size: 8px;
+    font-size: 11px;
 
     font-weight: 700;
 
@@ -600,7 +602,7 @@ h1 {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 11px;
+    font-size: 14px;
 }
 
 .database-strip .online-text {
@@ -625,7 +627,7 @@ h1 {
 .section-label {
     color: #607286;
 
-    font-size: 9px;
+    font-size: 12px;
 
     font-weight: 700;
 
@@ -638,7 +640,7 @@ h1 {
 
     color: #dfe7ef;
 
-    font-size: 17px;
+    font-size: 20px;
 }
 
 .toolbar-controls {
@@ -664,7 +666,7 @@ h1 {
 
     outline: none;
 
-    font-size: 11px;
+    font-size: 13.5px;
 }
 
 .table-selector select:focus {
@@ -709,7 +711,7 @@ h1 {
 .panel-kicker {
     color: #607286;
 
-    font-size: 8px;
+    font-size: 11px;
 
     font-weight: 700;
 
@@ -721,7 +723,7 @@ h1 {
 
     color: #e3eaf1;
 
-    font-size: 14px;
+    font-size: 17px;
 }
 
 .panel-header p {
@@ -729,7 +731,7 @@ h1 {
 
     color: #627386;
 
-    font-size: 9px;
+    font-size: 13px;
 }
 
 
@@ -751,7 +753,7 @@ h1 {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 9px;
+    font-size: 13.5px;
 }
 
 .data-table th,
@@ -770,7 +772,7 @@ h1 {
 
     border-bottom: 1px solid var(--border);
 
-    font-size: 8px;
+    font-size: 12px;
 
     letter-spacing: 0.7px;
 
@@ -822,7 +824,7 @@ h1 {
 
     padding: 5px 8px;
 
-    font-size: 8px;
+    font-size: 11px;
 
     font-weight: 700;
 
@@ -891,7 +893,7 @@ h1 {
 
     color: #91a3b5;
 
-    font-size: 12px;
+    font-size: 16px;
 }
 
 .empty-state p {
@@ -899,7 +901,7 @@ h1 {
 
     color: #56697d;
 
-    font-size: 9px;
+    font-size: 13px;
 }
 
 
@@ -930,7 +932,7 @@ h1 {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 9px;
+    font-size: 12px;
 }
 
 .editor-shortcut span {
@@ -962,7 +964,7 @@ h1 {
 
     border-right: 1px solid #1d2934;
 
-    font: 11px/1.7 "JetBrains Mono", monospace;
+    font: 13px/1.7 "JetBrains Mono", monospace;
 
     user-select: none;
 }
@@ -986,7 +988,7 @@ textarea {
 
     padding: 17px;
 
-    font: 11px/1.7 "JetBrains Mono", monospace;
+    font: 13.5px/1.7 "JetBrains Mono", monospace;
 }
 
 textarea::placeholder {
@@ -1008,7 +1010,7 @@ textarea::placeholder {
 .sql-actions small {
     color: #56697b;
 
-    font-size: 8px;
+    font-size: 12px;
 }
 
 
@@ -1027,7 +1029,7 @@ textarea::placeholder {
 
     color: #627486;
 
-    font-size: 10px;
+    font-size: 13px;
 }
 
 .affected strong {
@@ -1102,7 +1104,7 @@ textarea::placeholder {
 .modal-header h2 {
     color: #e3eaf1;
 
-    font-size: 16px;
+    font-size: 18px;
 
     margin: 5px 0;
 }
@@ -1143,7 +1145,7 @@ textarea::placeholder {
 
     color: #718398;
 
-    font-size: 8px;
+    font-size: 12px;
 
     margin-bottom: 5px;
 
@@ -1165,7 +1167,7 @@ textarea::placeholder {
 
     outline: 0;
 
-    font-size: 10px;
+    font-size: 13.5px;
 }
 
 .field input:focus {
@@ -1219,7 +1221,7 @@ textarea::placeholder {
 
     border-radius: 6px;
 
-    font-size: 10px;
+    font-size: 13px;
 
     z-index: 30;
 
@@ -1328,4 +1330,613 @@ textarea::placeholder {
         width: 100%;
     }
 
+}
+
+
+/* =====================================================
+   MODERN DATABASE (NEO4J GRAPH) & ENTERPRISE STYLES
+===================================================== */
+
+/* BADGES */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-purple {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.badge-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-amber {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* GRAPH WORKBENCH */
+.graph-panel {
+    position: relative;
+    overflow: hidden;
+}
+
+.graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.86rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot-supplier { background: #8b5cf6; }
+.dot-product { background: #10b981; }
+.dot-warehouse { background: #3b82f6; }
+.dot-order { background: #06b6d4; }
+.dot-customer { background: #f59e0b; }
+.dot-driver { background: #f97316; }
+
+.graph-toolbar-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #0f172a;
+    border-top: 1px solid var(--border, #1e293b);
+    border-bottom: 1px solid var(--border, #1e293b);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted, #94a3b8);
+}
+
+.filter-group select {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.filter-group.path-finder {
+    background: rgba(99, 102, 241, 0.08);
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.button.small {
+    padding: 5px 12px;
+    font-size: 0.86rem;
+}
+
+.canvas-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-weight: bold;
+    font-size: 1rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: #334155;
+    color: #fff;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: #090d16;
+    overflow: hidden;
+}
+
+#graphCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+#graphCanvas:active {
+    cursor: grabbing;
+}
+
+.graph-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #334155;
+    color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    transition: opacity 0.1s ease;
+}
+
+.node-detail-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 320px;
+    height: 100%;
+    background: #0f172a;
+    border-left: 1px solid #334155;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid #1e293b;
+}
+
+.drawer-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #f8fafc;
+}
+
+.drawer-body {
+    padding: 18px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+}
+
+.drawer-prop-row {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e293b;
+}
+
+.drawer-prop-key {
+    font-size: 0.82rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.drawer-prop-val {
+    font-weight: 500;
+    color: #f1f5f9;
+}
+
+/* CYPHER WORKSPACE */
+.cypher-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #0f172a;
+    border-bottom: 1px solid var(--border, #1e293b);
+}
+
+.shortcut-label {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.pill-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.84rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.pill-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
+    color: #f1f5f9;
+}
+
+#cypherInput {
+    width: 100%;
+    min-height: 90px;
+    background: #0b0f19;
+    border: none;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    padding: 14px;
+    outline: none;
+    resize: vertical;
+}
+
+/* TELEMETRY & BOTTLENECKS */
+.bottlenecks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.telemetry-card {
+    background: #0b0f19;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.telemetry-card h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.risk-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #1e293b;
+    font-size: 0.82rem;
+}
+
+.risk-tag {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* EER STUDIO */
+.eer-view-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.eer-hierarchy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.hierarchy-card {
+    background: #0b0f19;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+}
+
+.hierarchy-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+.hierarchy-card h4 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #f8fafc;
+}
+
+.hierarchy-tree {
+    background: #030712;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    border-left: 3px solid #6366f1;
+}
+
+.tree-super {
+    font-weight: 700;
+    color: #a5b4fc;
+    margin-bottom: 6px;
+}
+
+.tree-sub-list {
+    padding-left: 10px;
+}
+
+.tree-sub {
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.hierarchy-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.eer-feature-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
+.eer-diagram-box {
+    padding: 18px;
+    background: #030712;
+    overflow-x: auto;
+}
+
+.mermaid-code {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.86rem;
+    color: #38bdf8;
+    white-space: pre;
+    line-height: 1.5;
+}
+
+.schema-details-box {
+    padding: 18px;
+    background: #0b0f19;
+}
+
+/* CLOUD & DEPLOYMENT */
+.cloud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cloud-card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.cloud-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.cloud-icon {
+    font-size: 1.6rem;
+}
+
+.cloud-card-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #f9fafb;
+}
+
+.cloud-card-header small {
+    color: #9ca3af;
+    font-size: 0.84rem;
+}
+
+.cloud-status-val {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.cloud-card-desc {
+    margin: 0;
+    font-size: 0.86rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.deploy-steps-list {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.deploy-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 0.95rem;
+    color: #f3f4f6;
+}
+
+.step-content p {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.code-snippet {
+    background: #030712;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: #34d399;
+    overflow-x: auto;
+}
+
+.aws-guide-content {
+    padding: 18px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.aws-guide-content pre {
+    background: #030712;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #60a5fa;
+    overflow-x: auto;
+}
+
+.modal-large {
+    max-width: 820px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.report-table th, .report-table td {
+    padding: 10px;
+    border: 1px solid #334155;
+    text-align: left;
+}
+
+.report-table th {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+/* =====================================================
+   DIAGRAM CANVAS VIEWPORT & ZOOM CONTROLS
+===================================================== */
+.diagram-panel {
+    background: #090e15;
+}
+
+.diagram-canvas-box {
+    background: #060a0f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-height: 580px;
+    max-height: 750px;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px;
+    box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.mermaid-diagram-content {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+    transform-origin: top center;
+}
+
+.mermaid-diagram-content svg {
+    max-width: 100% !important;
+    height: auto !important;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5));
+}
+
+.mermaid-diagram-content svg text {
+    font-family: 'DM Sans', 'JetBrains Mono', sans-serif !important;
 }

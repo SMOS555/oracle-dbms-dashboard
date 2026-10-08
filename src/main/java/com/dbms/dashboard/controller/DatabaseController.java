@@ -155,18 +155,14 @@ public class DatabaseController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
-
         try {
-
             db.tables();
-
+            String engine = db.getDatabaseEngineName();
             return Map.of(
                 "status", "UP",
-                "database", "Oracle"
+                "database", engine != null ? engine : "Oracle"
             );
-
         } catch (Exception e) {
-
             return Map.of(
                 "status", "DOWN",
                 "database", "Oracle",

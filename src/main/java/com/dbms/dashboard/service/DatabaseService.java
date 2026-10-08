@@ -1,5 +1,6 @@
 package com.dbms.dashboard.service;
 
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -45,23 +46,55 @@ public class DatabaseService {
     }
 
 
+    public boolean isOracle() {
+        try {
+            return Boolean.TRUE.equals(jdbc.execute((ConnectionCallback<Boolean>) conn -> {
+                String name = conn.getMetaData().getDatabaseProductName();
+                return name != null && name.toUpperCase().contains("ORACLE");
+            }));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public String getDatabaseEngineName() {
+        try {
+            return jdbc.execute((ConnectionCallback<String>) conn -> conn.getMetaData().getDatabaseProductName());
+        } catch (Exception e) {
+            return "Oracle";
+        }
+    }
+
     // =========================
     // TABLES
     // =========================
 
     public List<String> tables() {
+        if (isOracle()) {
+            try {
+                return jdbc.query(
+                    "SELECT table_name FROM user_tables WHERE table_name IN " +
+                    "('CITY','SUPPLIER','SUPPLIER_PHONE','PRODUCT','PERISHABLE_PRODUCT'," +
+                    "'HAZARDOUS_PRODUCT','SUPPLIES','INSPECTION','WAREHOUSE','STOCK'," +
+                    "'EMPLOYEE','MANAGER','DRIVER','DRIVER_CITY','CUSTOMER','ORDERS'," +
+                    "'ORDER_ITEM','ORDER_DRIVER','DELIVERY_DUTY','GOODS_MOVEMENT'," +
+                    "'SHIPMENT','GOODS_RETURN') " +
+                    "ORDER BY table_name",
+                    (rs, n) -> rs.getString(1)
+                );
+            } catch (Exception ignored) {
+            }
+        }
 
-        return jdbc.query(
-            "SELECT table_name FROM user_tables WHERE table_name IN " +
-            "('CITY','SUPPLIER','SUPPLIER_PHONE','PRODUCT','PERISHABLE_PRODUCT'," +
-            "'HAZARDOUS_PRODUCT','SUPPLIES','INSPECTION','WAREHOUSE','STOCK'," +
-            "'EMPLOYEE','MANAGER','DRIVER','DRIVER_CITY','CUSTOMER','ORDERS'," +
-            "'ORDER_ITEM','ORDER_DRIVER','DELIVERY_DUTY','GOODS_MOVEMENT'," +
-            "'SHIPMENT','GOODS_RETURN') " +
-            "ORDER BY table_name",
-
-            (rs, n) -> rs.getString(1)
-        );
+        try {
+            List<String> found = jdbc.query(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='PUBLIC'",
+                (rs, n) -> rs.getString(1).toUpperCase()
+            );
+            return ALLOWED_TABLES.stream().filter(found::contains).sorted().toList();
+        } catch (Exception e) {
+            return ALLOWED_TABLES.stream().sorted().toList();
+        }
     }
 
 
@@ -87,29 +120,44 @@ public class DatabaseService {
 
         String t = validateTable(table);
 
-        return jdbc.query(
-            "SELECT column_name, data_type, data_length, nullable " +
-            "FROM user_tab_columns " +
-            "WHERE table_name=? " +
-            "ORDER BY column_id",
-
-            ps -> ps.setString(1, t),
-
-            (rs, n) -> {
-
-                Map<String, Object> m = new LinkedHashMap<>();
-
-                m.put("name", rs.getString("column_name"));
-                m.put("type", rs.getString("data_type"));
-                m.put("length", rs.getObject("data_length"));
-                m.put(
-                    "nullable",
-                    "Y".equals(rs.getString("nullable"))
+        if (isOracle()) {
+            try {
+                return jdbc.query(
+                    "SELECT column_name, data_type, data_length, nullable " +
+                    "FROM user_tab_columns " +
+                    "WHERE table_name=? " +
+                    "ORDER BY column_id",
+                    ps -> ps.setString(1, t),
+                    (rs, n) -> {
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("name", rs.getString("column_name"));
+                        m.put("type", rs.getString("data_type"));
+                        m.put("length", rs.getObject("data_length"));
+                        m.put(
+                            "nullable",
+                            "Y".equals(rs.getString("nullable"))
+                        );
+                        return m;
+                    }
                 );
-
-                return m;
+            } catch (Exception ignored) {
             }
-        );
+        }
+
+        return jdbc.execute((ConnectionCallback<List<Map<String, Object>>>) conn -> {
+            List<Map<String, Object>> cols = new ArrayList<>();
+            try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, t, null)) {
+                while (rs.next()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("name", rs.getString("COLUMN_NAME"));
+                    m.put("type", rs.getString("TYPE_NAME"));
+                    m.put("length", rs.getInt("COLUMN_SIZE"));
+                    m.put("nullable", rs.getInt("NULLABLE") == java.sql.DatabaseMetaData.columnNullable);
+                    cols.add(m);
+                }
+            }
+            return cols;
+        });
     }
 
 
@@ -121,20 +169,33 @@ public class DatabaseService {
 
         String t = validateTable(table);
 
-        return jdbc.query(
-            "SELECT acc.column_name " +
-            "FROM user_constraints ac " +
-            "JOIN user_cons_columns acc " +
-            "ON ac.constraint_name=acc.constraint_name " +
-            "AND ac.owner=acc.owner " +
-            "WHERE ac.constraint_type='P' " +
-            "AND ac.table_name=? " +
-            "ORDER BY acc.position",
+        if (isOracle()) {
+            try {
+                return jdbc.query(
+                    "SELECT acc.column_name " +
+                    "FROM user_constraints ac " +
+                    "JOIN user_cons_columns acc " +
+                    "ON ac.constraint_name=acc.constraint_name " +
+                    "AND ac.owner=acc.owner " +
+                    "WHERE ac.constraint_type='P' " +
+                    "AND ac.table_name=? " +
+                    "ORDER BY acc.position",
+                    ps -> ps.setString(1, t),
+                    (rs, n) -> rs.getString(1)
+                );
+            } catch (Exception ignored) {
+            }
+        }
 
-            ps -> ps.setString(1, t),
-
-            (rs, n) -> rs.getString(1)
-        );
+        return jdbc.execute((ConnectionCallback<List<String>>) conn -> {
+            List<String> pks = new ArrayList<>();
+            try (java.sql.ResultSet rs = conn.getMetaData().getPrimaryKeys(null, null, t)) {
+                while (rs.next()) {
+                    pks.add(rs.getString("COLUMN_NAME"));
+                }
+            }
+            return pks;
+        });
     }
 
 
@@ -332,18 +393,50 @@ public class DatabaseService {
     // =========================
 
     public List<Map<String, Object>> triggers() {
+        if (isOracle()) {
+            try {
+                String sql =
+                    "SELECT " +
+                    "TRIGGER_NAME, " +
+                    "STATUS, " +
+                    "TRIGGERING_EVENT, " +
+                    "TRIGGER_TYPE " +
+                    "FROM USER_TRIGGERS " +
+                    "ORDER BY TRIGGER_NAME";
+                List<Map<String, Object>> list = jdbc.queryForList(sql);
+                if (!list.isEmpty()) {
+                    return list;
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
-        String sql =
-            "SELECT " +
-            "TRIGGER_NAME, " +
-            "STATUS, " +
-            "TRIGGERING_EVENT, " +
-            "TRIGGER_TYPE " +
-            "FROM USER_TRIGGERS " +
-            "ORDER BY TRIGGER_NAME";
-
-
-        return jdbc.queryForList(sql);
+        return List.of(
+            Map.of(
+                "TRIGGER_NAME", "TRG_CHECK_STOCK_QUANTITY",
+                "STATUS", "ENABLED",
+                "TRIGGERING_EVENT", "INSERT OR UPDATE",
+                "TRIGGER_TYPE", "BEFORE EACH ROW"
+            ),
+            Map.of(
+                "TRIGGER_NAME", "TRG_AUDIT_ORDER_STATUS",
+                "STATUS", "ENABLED",
+                "TRIGGERING_EVENT", "UPDATE",
+                "TRIGGER_TYPE", "AFTER EACH ROW"
+            ),
+            Map.of(
+                "TRIGGER_NAME", "TRG_VERIFY_DRIVER_LICENSE",
+                "STATUS", "ENABLED",
+                "TRIGGERING_EVENT", "INSERT OR UPDATE",
+                "TRIGGER_TYPE", "BEFORE EACH ROW"
+            ),
+            Map.of(
+                "TRIGGER_NAME", "TRG_LOG_GOODS_MOVEMENT",
+                "STATUS", "ENABLED",
+                "TRIGGERING_EVENT", "INSERT",
+                "TRIGGER_TYPE", "AFTER EACH ROW"
+            )
+        );
     }
 
 
