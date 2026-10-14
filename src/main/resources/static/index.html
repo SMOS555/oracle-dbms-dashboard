@@ -816,6 +816,16 @@
                         </select>
                     </div>
 
+                    <div class="filter-group layout-group">
+                        <label>Layout Flow:</label>
+                        <select id="graphLayoutSelect">
+                            <option value="tiered">Tiered Supply Chain Pipeline (Organized)</option>
+                            <option value="radial">Concentric Radial Rings</option>
+                            <option value="force">Force Dynamics</option>
+                        </select>
+                        <button id="btnAutoOrganize" class="button secondary-button small" title="Snap graph into clean uncollided supply tiers">⚡ Auto-Organize Flow</button>
+                    </div>
+
                     <div class="filter-group path-finder">
                         <label>Supply Chain Pathfinder:</label>
                         <select id="traceSupplierSelect">
@@ -925,109 +935,522 @@
 
             <!-- EER Conceptual View -->
             <div id="eerConceptualView" class="eer-view-container">
-                <section class="panel diagram-panel">
-                    <div class="panel-header">
-                        <div>
-                            <div class="panel-kicker">ENHANCED MODEL · SPECIALIZATION & WEAK ENTITIES</div>
-                            <h3>Enhanced Entity-Relationship (EER) Model</h3>
-                            <p>Specialization hierarchies, weak entities, multivalued & composite attributes, and recursive relationships.</p>
-                        </div>
-                        <div class="canvas-actions">
-                            <button id="btnZoomInEer" class="button icon-btn" title="Zoom In">+</button>
-                            <button id="btnZoomOutEer" class="button icon-btn" title="Zoom Out">-</button>
-                            <button id="btnResetEerZoom" class="button icon-btn" title="Reset View">⊡</button>
-                        </div>
-                    </div>
-                    <div class="diagram-canvas-box" id="eerDiagramBox" style="display:flex; justify-content:center; align-items:center; overflow:auto; min-height:550px; padding:20px; background:#080d14;">
-                        <img id="eerDiagramImg" src="images/eer_diagram.png" alt="Enhanced ER Model" style="max-width:100%; height:auto; transition:transform 0.2s ease; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.6);">
-                    </div>
-                </section>
-
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">EER CONSTRUCTS SUMMARY</div>
-                            <h3>What EER Added to the ER Model</h3>
+                            <div class="panel-kicker">INTERACTIVE SCHEMA · SPECIALIZATION & WEAK ENTITIES</div>
+                            <h3>Enhanced Entity-Relationship (EER) Conceptual Architecture</h3>
+                            <p>Click any entity below to navigate to the live table in Data Explorer and inspect database records directly.</p>
+                        </div>
+                        <div class="canvas-actions">
+                            <span class="badge badge-purple">Live Oracle / H2 Schema Active</span>
                         </div>
                     </div>
-                    <div class="eer-hierarchy-grid" style="padding:16px;">
-                        <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-green">Weak Entity</div>
-                            <h4>ORDER_ITEM</h4>
-                            <p class="hierarchy-desc">Weak entity identified by owner <strong>ORDERS</strong> via identifying relationship <strong>HAS</strong> (double diamond), replacing the M:N CONTAINS. Partial key: <code>ItemNo</code>.</p>
+
+                    <div class="schema-studio-wrap">
+
+                        <!-- CLUSTER 1: PRODUCT HIERARCHY -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>📦</span> 1. PRODUCT Specialization Hierarchy (Generalization / Inheritance)</h3>
+                                <div class="isa-junction-bar">
+                                    <span class="isa-badge">{d, t}</span>
+                                    <span>Total & Disjoint Specialization &mdash; Every Product must be Standard, Perishable, or Hazardous</span>
+                                </div>
+                            </div>
+                            <div class="schema-hierarchy-container">
+                                <!-- Superclass -->
+                                <div class="schema-table-card" onclick="openTableInExplorer('PRODUCT')" title="Click to view PRODUCT in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">SUPERCLASS ENTITY</span>
+                                            <h4>PRODUCT</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">PNAME</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">CATEGORY</span></div><span class="col-type">VARCHAR2(50)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">UNITPRICE</span></div><span class="col-type">NUMBER(10,2)</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Subclasses -->
+                                <div class="schema-subclasses-grid">
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('PERISHABLE_PRODUCT')" title="Click to view PERISHABLE_PRODUCT in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>PERISHABLE_PRODUCT</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER(10) &rarr; PRODUCT</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">SHELFLIFEDAYS</span></div><span class="col-type">NUMBER(5)</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">STORAGETEMPC</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('HAZARDOUS_PRODUCT')" title="Click to view HAZARDOUS_PRODUCT in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>HAZARDOUS_PRODUCT</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER(10) &rarr; PRODUCT</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">HAZARDCLASS</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">HANDLINGNOTE</span></div><span class="col-type">VARCHAR2(200)</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-blue">Disjoint Specialization {d}</div>
-                            <h4>EMPLOYEE Hierarchy</h4>
-                            <p class="hierarchy-desc">Total + disjoint specialization splitting <strong>EMPLOYEE</strong> into <strong>MANAGER</strong> (Level, Bonus) and <strong>DRIVER</strong> (LicenseNo, Expiry). Every employee is exactly one of these.</p>
+
+                        <!-- CLUSTER 2: EMPLOYEE HIERARCHY & RECURSION -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>👥</span> 2. EMPLOYEE Specialization Hierarchy & Recursive SUPERVISES</h3>
+                                <div class="isa-junction-bar">
+                                    <span class="isa-badge">{d}</span>
+                                    <span>Disjoint Specialization &middot; Total Participation &middot; ⟲ Recursive 1:N Supervision</span>
+                                </div>
+                            </div>
+                            <div class="schema-hierarchy-container">
+                                <!-- Superclass -->
+                                <div class="schema-table-card" onclick="openTableInExplorer('EMPLOYEE')" title="Click to view EMPLOYEE in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">SUPERCLASS ENTITY</span>
+                                            <h4>EMPLOYEE</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">EMPID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">ENAME</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">ROLE</span></div><span class="col-type">VARCHAR2(50)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">SALARY</span></div><span class="col-type">NUMBER(10,2)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER(10) &rarr; WAREHOUSE</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">SUPERVISORID</span></div><span class="col-type">NUMBER(10) &rarr; EMPLOYEE (Recursive)</span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Subclasses -->
+                                <div class="schema-subclasses-grid">
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('MANAGER')" title="Click to view MANAGER in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>MANAGER</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">EMPID</span></div><span class="col-type">NUMBER(10) &rarr; EMPLOYEE</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">LEVELNO</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">BONUS</span></div><span class="col-type">NUMBER(10,2)</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('DRIVER')" title="Click to view DRIVER in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>DRIVER</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">EMPID</span></div><span class="col-type">NUMBER(10) &rarr; EMPLOYEE</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">LICENSENO</span></div><span class="col-type">VARCHAR2(50)</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">EXPIRY</span></div><span class="col-type">DATE</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="schema-table-card" onclick="openTableInExplorer('DRIVER_CITY')" title="Click to view DRIVER_CITY in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-attr">MULTIVALUED ROUTE</span>
+                                                <h4>DRIVER_CITY</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">DRIVERID</span></div><span class="col-type">NUMBER(10) &rarr; DRIVER</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2(50) &rarr; CITY</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-amber">Partial Specialization {d}</div>
-                            <h4>PERISHABLE_PRODUCT</h4>
-                            <p class="hierarchy-desc">Partial specialization of <strong>PRODUCT</strong> with attributes <code>ShelfLifeDays</code> and <code>StorageTempC</code>. Most products are non-perishable.</p>
+
+                        <!-- CLUSTER 3: ORDERS & WEAK ENTITY ORDER_ITEM -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>🛒</span> 3. ORDERS & Identifying Weak Entity ORDER_ITEM</h3>
+                                <div class="isa-junction-bar">
+                                    <span class="isa-badge">Weak Entity</span>
+                                    <span>Identifying Relationship HAS (Double Diamond) &middot; Partial Key on PRODUCTID</span>
+                                </div>
+                            </div>
+                            <div class="schema-cards-row">
+                                <!-- Owner Entity -->
+                                <div class="schema-table-card" onclick="openTableInExplorer('ORDERS')" title="Click to view ORDERS in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">STRONG ENTITY · OWNER</span>
+                                            <h4>ORDERS</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">ORDERID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">ORDERDATE</span></div><span class="col-type">DATE</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">STATUS</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CUSTID</span></div><span class="col-type">NUMBER(10) &rarr; CUSTOMER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge derived-badge">DERIVED</span><span class="col-name">TOTALAMT</span></div><span class="col-type">NUMBER(12,2) [∑ Qty×Price]</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge">
+                                    <span class="relationship-diamond-pill">HAS</span>
+                                    <span>1 : N Identifying Composition (Double Diamond)</span>
+                                </div>
+
+                                <!-- Weak Entity -->
+                                <div class="schema-table-card is-weak" onclick="openTableInExplorer('ORDER_ITEM')" title="Click to view ORDER_ITEM in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-weak">WEAK ENTITY (Double Border)</span>
+                                            <h4>ORDER_ITEM</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">ORDERID</span></div><span class="col-type">NUMBER(10) &rarr; ORDERS</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER(10) &rarr; PRODUCT</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">QTY</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">PRICE</span></div><span class="col-type">NUMBER(10,2)</span></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="hierarchy-card">
-                            <div class="hierarchy-badge badge-purple">Attributes & Recursion</div>
-                            <h4>Advanced Attribute Constraints</h4>
-                            <ul class="eer-feature-list">
-                                <li><strong>Multivalued Attribute:</strong> <code>Phone</code> on SUPPLIER (double ellipse)</li>
-                                <li><strong>Composite Attribute:</strong> <code>Address</code> on CUSTOMER (Street, City, Pincode)</li>
-                                <li><strong>Derived Attribute:</strong> <code>TotalAmt</code> on ORDERS (dashed ellipse)</li>
-                                <li><strong>Recursive Relationship:</strong> <code>SUPERVISES</code> (1 supervisor, N subordinate on EMPLOYEE)</li>
-                            </ul>
+
+                        <!-- CLUSTER 4: GOODS_MOVEMENT HIERARCHY -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>🚚</span> 4. GOODS_MOVEMENT Specialization Hierarchy (Shipments & Returns)</h3>
+                                <div class="isa-junction-bar">
+                                    <span class="isa-badge">{d}</span>
+                                    <span>Disjoint Specialization splitting Movement into Outbound Delivery vs Inbound Return</span>
+                                </div>
+                            </div>
+                            <div class="schema-hierarchy-container">
+                                <div class="schema-table-card" onclick="openTableInExplorer('GOODS_MOVEMENT')" title="Click to view GOODS_MOVEMENT in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">SUPERCLASS ENTITY</span>
+                                            <h4>GOODS_MOVEMENT</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">MOVEMENTID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">ORDERID</span></div><span class="col-type">NUMBER(10) &rarr; ORDERS</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER(10) &rarr; WAREHOUSE</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">MOVEDATE</span></div><span class="col-type">DATE</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">STATUS</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-subclasses-grid">
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('SHIPMENT')" title="Click to view SHIPMENT in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>SHIPMENT</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">MOVEMENTID</span></div><span class="col-type">NUMBER(10) &rarr; GOODS_MOVEMENT</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">DELIVERYDATE</span></div><span class="col-type">DATE</span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="schema-table-card is-subclass" onclick="openTableInExplorer('GOODS_RETURN')" title="Click to view GOODS_RETURN in Data Explorer">
+                                        <div class="schema-card-header">
+                                            <div class="schema-header-title">
+                                                <span class="schema-type-pill pill-subclass">SUBCLASS {ISA}</span>
+                                                <h4>GOODS_RETURN</h4>
+                                            </div>
+                                            <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                        </div>
+                                        <div class="schema-card-body">
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">MOVEMENTID</span></div><span class="col-type">NUMBER(10) &rarr; GOODS_MOVEMENT</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">REASON</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                            <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">REFUNDAMT</span></div><span class="col-type">NUMBER(10,2)</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- CLUSTER 5: CORE PARTNERS & INVENTORY -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>🏭</span> 5. Supply Chain Partners, Inventory Storage & Master Lookups</h3>
+                                <div class="isa-junction-bar">
+                                    <span class="isa-badge">Relational Core</span>
+                                    <span>Multivalued Phone &middot; Associative Stock Storage &middot; Spatial City Domain</span>
+                                </div>
+                            </div>
+                            <div class="schema-cards-row">
+                                <div class="schema-table-card" onclick="openTableInExplorer('SUPPLIER')" title="Click to view SUPPLIER in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">STRONG ENTITY</span>
+                                            <h4>SUPPLIER</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">SUPPLIERID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">SNAME</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2(50) &rarr; CITY</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('SUPPLIER_PHONE')" title="Click to view SUPPLIER_PHONE in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-attr">MULTIVALUED ATTRIBUTE</span>
+                                            <h4>SUPPLIER_PHONE</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">SUPPLIERID</span></div><span class="col-type">NUMBER(10) &rarr; SUPPLIER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">PHONE</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('WAREHOUSE')" title="Click to view WAREHOUSE in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">STRONG ENTITY</span>
+                                            <h4>WAREHOUSE</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">WNAME</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2(50) &rarr; CITY</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">CAPACITY</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">MANAGERID</span></div><span class="col-type">NUMBER(10) &rarr; MANAGER</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('STOCK')" title="Click to view STOCK in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-attr">ASSOCIATIVE (STORED_IN)</span>
+                                            <h4>STOCK</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER(10) &rarr; WAREHOUSE</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-badge fk-badge">FK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER(10) &rarr; PRODUCT</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">QUANTITY</span></div><span class="col-type">NUMBER(10)</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('CUSTOMER')" title="Click to view CUSTOMER in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">STRONG ENTITY</span>
+                                            <h4>CUSTOMER</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">CUSTID</span></div><span class="col-type">NUMBER(10)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">CNAME</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">COMPOSITE</span><span class="col-name">STREET</span></div><span class="col-type">VARCHAR2(100)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2(50) &rarr; CITY</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">PHONE</span></div><span class="col-type">VARCHAR2(20)</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('CITY')" title="Click to view CITY in Data Explorer">
+                                    <div class="schema-card-header">
+                                        <div class="schema-header-title">
+                                            <span class="schema-type-pill pill-strong">DOMAIN ENTITY</span>
+                                            <h4>CITY</h4>
+                                        </div>
+                                        <button class="schema-inspect-badge">Inspect Live ↗</button>
+                                    </div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2(50)</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">STATE</span></div><span class="col-type">VARCHAR2(50)</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
+
+                    <!-- Expandable Reference Archive Sketch -->
+                    <details class="diagram-archive-accordion" style="margin: 20px 16px;">
+                        <summary>📷 View Original Reference Diagram (Hand-Drawn / Paper Sketch Archive)</summary>
+                        <div class="diagram-archive-box">
+                            <img src="images/eer_diagram.png" alt="Enhanced ER Model Original Sketch">
+                        </div>
+                    </details>
                 </section>
             </div>
 
             <!-- Classic Relational ER View (Chen Notation) -->
             <div id="relationalErView" class="eer-view-container hidden">
-                <section class="panel diagram-panel">
-                    <div class="panel-header">
-                        <div>
-                            <div class="panel-kicker">CHEN NOTATION · 7 ENTITIES & 7 RELATIONSHIPS</div>
-                            <h3>Classic Entity-Relationship (ER) Model</h3>
-                            <p>Formal Chen notation diagram displaying entities, attributes, primary keys, relationships, and participation constraints.</p>
-                        </div>
-                        <div class="canvas-actions">
-                            <button id="btnZoomInRel" class="button icon-btn" title="Zoom In">+</button>
-                            <button id="btnZoomOutRel" class="button icon-btn" title="Zoom Out">-</button>
-                            <button id="btnResetRelZoom" class="button icon-btn" title="Reset View">⊡</button>
-                        </div>
-                    </div>
-                    <div class="diagram-canvas-box" id="relErDiagramBox" style="display:flex; justify-content:center; align-items:center; overflow:auto; min-height:550px; padding:20px; background:#080d14;">
-                        <img id="erDiagramImg" src="images/er_diagram.png" alt="Classic ER Model" style="max-width:100%; height:auto; transition:transform 0.2s ease; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.6);">
-                    </div>
-                </section>
-
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <div class="panel-kicker">RELATIONSHIP MATRIX</div>
-                            <h3>The 7 Core System Relationships</h3>
+                            <div class="panel-kicker">CHEN NOTATION · 7 CORE ENTITIES & 7 RELATIONSHIPS</div>
+                            <h3>Classic Entity-Relationship (ER) Relational Schema</h3>
+                            <p>Formal 7-entity relational architecture. Click any table card below to open its live database view in Data Explorer.</p>
+                        </div>
+                        <div class="canvas-actions">
+                            <span class="badge badge-green">7 Core Entities Connected</span>
                         </div>
                     </div>
-                    <div style="padding:16px; overflow-x:auto;">
-                        <table class="report-table">
-                            <thead>
-                                <tr>
-                                    <th>Relationship</th>
-                                    <th>Participating Entities</th>
-                                    <th>Cardinality</th>
-                                    <th>Attributes / Participation Rules</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td><strong>SUPPLIES</strong></td><td>SUPPLIER — PRODUCT</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>LeadTimeDays</code></td></tr>
-                                <tr><td><strong>STORED_IN</strong></td><td>PRODUCT — WAREHOUSE</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>Quantity</code></td></tr>
-                                <tr><td><strong>CONTAINS</strong></td><td>PRODUCT — ORDERS</td><td><span class="badge badge-purple">M:N</span></td><td>Has attribute: <code>Qty</code> (Double line = ORDERS total participation)</td></tr>
-                                <tr><td><strong>WORKS_AT</strong></td><td>WAREHOUSE — EMPLOYEE</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = EMPLOYEE total participation</td></tr>
-                                <tr><td><strong>PLACES</strong></td><td>CUSTOMER — ORDERS</td><td><span class="badge badge-blue">1:N</span></td><td>Customer places 1 or many orders</td></tr>
-                                <tr><td><strong>SHIPPED_BY</strong></td><td>ORDERS — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td></tr>
-                                <tr><td><strong>DISPATCHED_FROM</strong></td><td>WAREHOUSE — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td></tr>
-                            </tbody>
-                        </table>
+
+                    <div class="schema-studio-wrap">
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>📊</span> 7 Core Relational Entities & Active Relationships</h3>
+                                <div class="isa-junction-bar">
+                                    <span>All 7 Entities map 1:1 with Oracle tables &middot; Click to inspect live rows</span>
+                                </div>
+                            </div>
+                            <div class="schema-cards-row">
+                                <div class="schema-table-card" onclick="openTableInExplorer('SUPPLIER')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>SUPPLIER</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">SUPPLIERID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">SNAME</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CITY</span></div><span class="col-type">VARCHAR2</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge"><span class="relationship-diamond-pill">SUPPLIES</span><span>M : N &middot; LeadTimeDays</span></div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('PRODUCT')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>PRODUCT</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">PRODUCTID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">PNAME</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">UNITPRICE</span></div><span class="col-type">NUMBER</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge"><span class="relationship-diamond-pill">STORED_IN</span><span>M : N &middot; Quantity</span></div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('WAREHOUSE')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>WAREHOUSE</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">WNAME</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">CAPACITY</span></div><span class="col-type">NUMBER</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge"><span class="relationship-diamond-pill">WORKS_AT</span><span>1 : N (Total)</span></div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('EMPLOYEE')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>EMPLOYEE</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">EMPID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">ENAME</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">WAREHOUSEID</span></div><span class="col-type">NUMBER</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('CUSTOMER')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>CUSTOMER</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">CUSTID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">CNAME</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">PHONE</span></div><span class="col-type">VARCHAR2</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge"><span class="relationship-diamond-pill">PLACES</span><span>1 : N</span></div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('ORDERS')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>ORDERS</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">ORDERID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">STATUS</span></div><span class="col-type">VARCHAR2</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge fk-badge">FK</span><span class="col-name">CUSTID</span></div><span class="col-type">NUMBER</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="relationship-connector-badge"><span class="relationship-diamond-pill">SHIPPED_BY</span><span>1 : N</span></div>
+
+                                <div class="schema-table-card" onclick="openTableInExplorer('SHIPMENT')">
+                                    <div class="schema-card-header"><div class="schema-header-title"><h4>SHIPMENT</h4></div><button class="schema-inspect-badge">Inspect Live ↗</button></div>
+                                    <div class="schema-card-body">
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge pk-badge">PK</span><span class="col-name">MOVEMENTID</span></div><span class="col-type">NUMBER</span></div>
+                                        <div class="schema-col-row"><div class="schema-col-left"><span class="col-badge attr-badge">ATTR</span><span class="col-name">DELIVERYDATE</span></div><span class="col-type">DATE</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Core Relationships Table -->
+                        <div class="schema-cluster">
+                            <div class="schema-cluster-header">
+                                <h3><span>📑</span> Formal Relational Constraints & Cardinality Matrix</h3>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Relationship</th>
+                                            <th>Participating Entities</th>
+                                            <th>Cardinality</th>
+                                            <th>Attributes / Participation Rules</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td><strong>SUPPLIES</strong></td><td>SUPPLIER — PRODUCT</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>LeadTimeDays</code></td><td><button class="button small secondary-button" onclick="openTableInExplorer('SUPPLIES')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>STORED_IN</strong></td><td>PRODUCT — WAREHOUSE</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>Quantity</code> (STOCK table)</td><td><button class="button small secondary-button" onclick="openTableInExplorer('STOCK')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>CONTAINS</strong></td><td>PRODUCT — ORDERS</td><td><span class="badge badge-purple">M:N</span></td><td>Has attribute: <code>Qty</code> (Double line = ORDERS total participation)</td><td><button class="button small secondary-button" onclick="openTableInExplorer('ORDER_ITEM')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>WORKS_AT</strong></td><td>WAREHOUSE — EMPLOYEE</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = EMPLOYEE total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('EMPLOYEE')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>PLACES</strong></td><td>CUSTOMER — ORDERS</td><td><span class="badge badge-blue">1:N</span></td><td>Customer places 1 or many orders</td><td><button class="button small secondary-button" onclick="openTableInExplorer('ORDERS')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>SHIPPED_BY</strong></td><td>ORDERS — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('SHIPMENT')">View Table ↗</button></td></tr>
+                                        <tr><td><strong>DISPATCHED_FROM</strong></td><td>WAREHOUSE — SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('GOODS_MOVEMENT')">View Table ↗</button></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Expandable Reference Archive Sketch -->
+                    <details class="diagram-archive-accordion" style="margin: 20px 16px;">
+                        <summary>📷 View Classic ER Paper Sketch Archive (Chen Notation Original)</summary>
+                        <div class="diagram-archive-box">
+                            <img src="images/er_diagram.png" alt="Classic ER Model Original Sketch">
+                        </div>
+                    </details>
                 </section>
             </div>
         </section>

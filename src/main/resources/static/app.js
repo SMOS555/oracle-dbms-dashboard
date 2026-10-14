@@ -367,8 +367,27 @@ async function loadTable(
         showToast(error.message);
 
     }
-
 }
+
+function openTableInExplorer(tableName) {
+    if (!tableName) return;
+    const cleanName = tableName.trim().toUpperCase();
+    showPage("explorer");
+    const select = $("tableSelect");
+    if (select) {
+        let opt = Array.from(select.options).find(o => o.value.toUpperCase() === cleanName);
+        if (!opt) {
+            opt = document.createElement("option");
+            opt.value = cleanName;
+            opt.textContent = cleanName;
+            select.appendChild(opt);
+        }
+        select.value = cleanName;
+    }
+    loadTable(cleanName);
+    showToast(`✓ Opened live table: ${cleanName}`);
+}
+window.openTableInExplorer = openTableInExplorer;
 
 
 /* =====================================================
@@ -1827,17 +1846,15 @@ const FALLBACK_GRAPH_LINKS = [
 
 const graphState = {
     initialized: false,
-    nodes: FALLBACK_GRAPH_NODES.map((n, i) => {
-        const angle = (i / FALLBACK_GRAPH_NODES.length) * Math.PI * 2;
-        return {
-            ...n,
-            x: 400 + Math.cos(angle) * 160,
-            y: 260 + Math.sin(angle) * 160,
-            vx: 0,
-            vy: 0,
-            radius: 17
-        };
-    }),
+    layout: "tiered",
+    nodes: FALLBACK_GRAPH_NODES.map(n => ({
+        ...n,
+        x: 400,
+        y: 260,
+        vx: 0,
+        vy: 0,
+        radius: 18
+    })),
     links: [...FALLBACK_GRAPH_LINKS],
     filter: "ALL",
     hoveredNode: null,
@@ -1853,6 +1870,21 @@ const graphState = {
     highlightedLinkKeys: null,
     animating: true
 };
+
+const TIER_CONFIG = [
+    { key: "supplier", label: "SUPPLIERS", color: "#8b5cf6", match: n => /supplier/i.test(n.type) || /^supplier_/i.test(n.id) },
+    { key: "product", label: "PRODUCTS", color: "#10b981", match: n => /product|perish|hazard/i.test(n.type) || /^product_/i.test(n.id) },
+    { key: "warehouse", label: "WAREHOUSES & HUBS", color: "#3b82f6", match: n => /warehouse|manager/i.test(n.type) || /^warehouse_|^manager_/i.test(n.id) },
+    { key: "customer", label: "CUSTOMERS", color: "#f59e0b", match: n => /customer/i.test(n.type) || /^customer_/i.test(n.id) },
+    { key: "order", label: "ORDERS", color: "#06b6d4", match: n => /order/i.test(n.type) || /^order_/i.test(n.id) },
+    { key: "driver", label: "FLEET LOGISTICS", color: "#f97316", match: n => /driver/i.test(n.type) || /^driver_/i.test(n.id) }
+];
+
+function getNodeTierIndex(node) {
+    if (!node) return 2;
+    const idx = TIER_CONFIG.findIndex(t => t.match(node));
+    return idx >= 0 ? idx : 2;
+}
 
 const NODE_COLORS = {
     Supplier: "#8b5cf6",
@@ -1956,6 +1988,117 @@ function resizeGraphCanvas() {
     }
 }
 
+function layoutTieredSupplyChain(nodes, width, height) {
+    if (!nodes || !nodes.length) return;
+
+    // Group nodes by tier
+    const groups = new Map();
+    TIER_CONFIG.forEach((_, i) => groups.set(i, []));
+
+    nodes.forEach(n => {
+        const tierIdx = getNodeTierIndex(n);
+        groups.get(tierIdx).push(n);
+    });
+
+    // Determine active tiers that contain nodes
+    const activeTierIndices = [];
+    TIER_CONFIG.forEach((_, i) => {
+        if (groups.get(i).length > 0) {
+            activeTierIndices.push(i);
+        }
+    });
+
+    const activeCount = activeTierIndices.length;
+    const marginX = Math.max(65, width * 0.08);
+    const topMargin = 55;
+    const bottomMargin = 40;
+    const availHeight = height - topMargin - bottomMargin;
+
+    activeTierIndices.forEach((tierIdx, rank) => {
+        const tierNodes = groups.get(tierIdx);
+        const colX = activeCount === 1
+            ? width / 2
+            : marginX + (rank / (activeCount - 1)) * (width - 2 * marginX);
+
+        // Sort nodes stably
+        tierNodes.sort((a, b) => (a.label || a.id).localeCompare(b.label || b.id));
+
+        const count = tierNodes.length;
+        tierNodes.forEach((n, i) => {
+            let targetY;
+            if (count === 1) {
+                targetY = topMargin + availHeight / 2;
+            } else {
+                targetY = topMargin + ((i + 0.5) / count) * availHeight;
+            }
+
+            n.targetX = colX;
+            n.targetY = targetY;
+            n.tierIndex = tierIdx;
+            n.colX = colX;
+            n.x = colX;
+            n.y = targetY;
+            n.vx = 0;
+            n.vy = 0;
+            n.radius = 18;
+        });
+    });
+}
+
+function layoutRadialRings(nodes, width, height) {
+    if (!nodes || !nodes.length) return;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    const groups = new Map();
+    TIER_CONFIG.forEach((_, i) => groups.set(i, []));
+    nodes.forEach(n => groups.get(getNodeTierIndex(n)).push(n));
+
+    const maxR = Math.min(width, height) * 0.42;
+    const ringRadii = {
+        2: maxR * 0.22, // Warehouses & Hubs
+        1: maxR * 0.48, // Products
+        4: maxR * 0.72, // Orders
+        0: maxR * 0.95, // Suppliers
+        3: maxR * 0.95, // Customers
+        5: maxR * 1.10  // Drivers
+    };
+
+    TIER_CONFIG.forEach((_, tierIdx) => {
+        const tierNodes = groups.get(tierIdx);
+        const count = tierNodes.length;
+        if (!count) return;
+
+        const r = ringRadii[tierIdx] || (maxR * 0.5);
+        let startAngle = 0;
+        let angleSpan = Math.PI * 2;
+
+        if (tierIdx === 0) { // Suppliers left arc
+            startAngle = Math.PI * 0.75;
+            angleSpan = Math.PI * 0.5;
+        } else if (tierIdx === 3) { // Customers top-right arc
+            startAngle = -Math.PI * 0.25;
+            angleSpan = Math.PI * 0.5;
+        } else if (tierIdx === 5) { // Drivers bottom-right arc
+            startAngle = Math.PI * 0.15;
+            angleSpan = Math.PI * 0.5;
+        }
+
+        tierNodes.forEach((n, i) => {
+            const angle = count === 1 ? startAngle + angleSpan / 2 : startAngle + (i / count) * angleSpan;
+            const tx = cx + Math.cos(angle) * r;
+            const ty = cy + Math.sin(angle) * r;
+            n.targetX = tx;
+            n.targetY = ty;
+            n.x = tx;
+            n.y = ty;
+            n.vx = 0;
+            n.vy = 0;
+            n.radius = 18;
+        });
+    });
+}
+
 function layoutVisibleNodes() {
     const canvas = $("graphCanvas");
     if (!canvas) return;
@@ -1963,23 +2106,32 @@ function layoutVisibleNodes() {
     const rect = container ? container.getBoundingClientRect() : { width: 800, height: 520 };
     const width = Math.max(400, Math.floor(rect.width || (container && container.clientWidth) || 800));
     const height = Math.max(300, Math.floor(rect.height || (container && container.clientHeight) || 520));
-    const cx = width / 2;
-    const cy = height / 2;
 
     const nodes = getVisibleNodes();
     if (!nodes || !nodes.length) return;
 
-    const count = nodes.length;
-    const orbitRadius = Math.max(90, Math.min(width, height) * 0.35);
-
-    nodes.forEach((n, i) => {
-        const angle = (i / count) * Math.PI * 2;
-        n.x = cx + Math.cos(angle) * orbitRadius;
-        n.y = cy + Math.sin(angle) * orbitRadius;
-        n.vx = 0;
-        n.vy = 0;
-        n.radius = n.radius || 17;
-    });
+    const layout = graphState.layout || "tiered";
+    if (layout === "tiered") {
+        layoutTieredSupplyChain(nodes, width, height);
+    } else if (layout === "radial") {
+        layoutRadialRings(nodes, width, height);
+    } else {
+        const cx = width / 2;
+        const cy = height / 2;
+        const orbitRadius = Math.max(90, Math.min(width, height) * 0.35);
+        nodes.forEach((n, i) => {
+            const angle = (i / nodes.length) * Math.PI * 2;
+            const tx = cx + Math.cos(angle) * orbitRadius;
+            const ty = cy + Math.sin(angle) * orbitRadius;
+            n.targetX = tx;
+            n.targetY = ty;
+            n.x = tx;
+            n.y = ty;
+            n.vx = 0;
+            n.vy = 0;
+            n.radius = 18;
+        });
+    }
 
     graphState.zoom = 1;
     graphState.panX = 0;
@@ -1992,27 +2144,12 @@ async function loadGraphData() {
         const rawNodes = (data && data.nodes && data.nodes.length) ? data.nodes : FALLBACK_GRAPH_NODES;
         const rawLinks = (data && data.links && data.links.length) ? data.links : FALLBACK_GRAPH_LINKS;
 
-        const canvas = $("graphCanvas");
-        const container = $("canvasContainer") || (canvas ? canvas.parentElement : null);
-        const rect = container ? container.getBoundingClientRect() : { width: 800, height: 520 };
-        const width = Math.max(400, Math.floor(rect.width || (container && container.clientWidth) || 800));
-        const height = Math.max(300, Math.floor(rect.height || (container && container.clientHeight) || 520));
-        const cx = width / 2;
-        const cy = height / 2;
-        const count = rawNodes.length;
-        const orbitRadius = Math.max(90, Math.min(width, height) * 0.35);
-
-        graphState.nodes = rawNodes.map((n, i) => {
-            const angle = (i / Math.max(1, count)) * Math.PI * 2;
-            return {
-                ...n,
-                x: cx + Math.cos(angle) * orbitRadius,
-                y: cy + Math.sin(angle) * orbitRadius,
-                vx: 0,
-                vy: 0,
-                radius: 17
-            };
-        });
+        graphState.nodes = rawNodes.map(n => ({
+            ...n,
+            vx: 0,
+            vy: 0,
+            radius: 18
+        }));
 
         graphState.links = rawLinks;
         graphState.highlightedNodeIds = null;
@@ -2022,16 +2159,21 @@ async function loadGraphData() {
         graphState.panY = 0;
 
         resizeGraphCanvas();
+        layoutVisibleNodes();
         startSimulation();
     } catch (e) {
         console.warn("Using fallback graph data:", e);
         if (!graphState.nodes || !graphState.nodes.length) {
-            graphState.nodes = FALLBACK_GRAPH_NODES.map((n, i) => {
-                const angle = (i / FALLBACK_GRAPH_NODES.length) * Math.PI * 2;
-                return { ...n, x: 400 + Math.cos(angle) * 160, y: 260 + Math.sin(angle) * 160, vx: 0, vy: 0, radius: 17 };
-            });
+            graphState.nodes = FALLBACK_GRAPH_NODES.map(n => ({
+                ...n,
+                vx: 0,
+                vy: 0,
+                radius: 18
+            }));
             graphState.links = [...FALLBACK_GRAPH_LINKS];
         }
+        resizeGraphCanvas();
+        layoutVisibleNodes();
         startSimulation();
     }
 }
@@ -2281,15 +2423,21 @@ function startSimulation() {
 
             // Physics step with strict stability & bounds
             if (graphState.animating && nodes.length > 0) {
-                // 1. Centering pull
+                const isTiered = graphState.layout === "tiered";
+                const isRadial = graphState.layout === "radial";
+
+                // 1. Anchor pull towards clean designated slot (prevents clumping in center)
                 nodes.forEach(n => {
                     if (n !== graphState.dragNode) {
-                        n.vx += (cx - n.x) * 0.012;
-                        n.vy += (cy - n.y) * 0.012;
+                        const tx = n.targetX !== undefined ? n.targetX : cx;
+                        const ty = n.targetY !== undefined ? n.targetY : cy;
+                        const pullFactor = isTiered ? 0.08 : (isRadial ? 0.05 : 0.012);
+                        n.vx += (tx - n.x) * pullFactor;
+                        n.vy += (ty - n.y) * pullFactor;
                     }
                 });
 
-                // 2. Node-node repulsion with safe minimum distance clamp
+                // 2. Strict collision prevention - hard repulsion when nodes come within 62px
                 for (let i = 0; i < nodes.length; i++) {
                     for (let j = i + 1; j < nodes.length; j++) {
                         const n1 = nodes[i];
@@ -2297,50 +2445,55 @@ function startSimulation() {
                         let dx = n1.x - n2.x;
                         let dy = n1.y - n2.y;
                         let dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = (n1.radius || 18) + (n2.radius || 18) + 26; // ~62px
                         if (dist < 1) {
-                            dx = (Math.random() - 0.5) * 6;
-                            dy = (Math.random() - 0.5) * 6;
+                            dx = (Math.random() - 0.5) * 4;
+                            dy = (Math.random() - 0.5) * 4;
                             dist = Math.sqrt(dx * dx + dy * dy) || 1;
                         }
-                        if (dist < 220) {
-                            const rep = Math.min(2.0, (220 - dist) / dist * 0.08);
-                            n1.vx += dx * rep;
-                            n1.vy += dy * rep;
-                            n2.vx -= dx * rep;
-                            n2.vy -= dy * rep;
+                        if (dist < minDist) {
+                            const rep = ((minDist - dist) / dist) * 0.4;
+                            if (n1 !== graphState.dragNode) {
+                                n1.vx += dx * rep;
+                                n1.vy += dy * rep;
+                            }
+                            if (n2 !== graphState.dragNode) {
+                                n2.vx -= dx * rep;
+                                n2.vy -= dy * rep;
+                            }
                         }
                     }
                 }
 
-                // 3. Link spring force
-                graphState.links.forEach(l => {
-                    const s = nodeMap.get(l.source);
-                    const t = nodeMap.get(l.target);
-                    if (s && t) {
-                        const dx = t.x - s.x;
-                        const dy = t.y - s.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                        const spring = Math.min(2.0, (dist - 110) * 0.02);
-                        s.vx += dx * spring;
-                        s.vy += dy * spring;
-                        t.vx -= dx * spring;
-                        t.vy -= dy * spring;
-                    }
-                });
+                // 3. Link spring force (only active in force mode so column structure remains undisturbed)
+                if (!isTiered) {
+                    graphState.links.forEach(l => {
+                        const s = nodeMap.get(l.source);
+                        const t = nodeMap.get(l.target);
+                        if (s && t) {
+                            const dx = t.x - s.x;
+                            const dy = t.y - s.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                            const spring = Math.min(2.0, (dist - 120) * 0.015);
+                            if (s !== graphState.dragNode) { s.vx += dx * spring; s.vy += dy * spring; }
+                            if (t !== graphState.dragNode) { t.vx -= dx * spring; t.vy -= dy * spring; }
+                        }
+                    });
+                }
 
                 // 4. Velocity cap, friction damping, and canvas boundary clamping
                 const pad = 35;
                 nodes.forEach(n => {
                     if (n !== graphState.dragNode) {
-                        const maxV = 6;
+                        const maxV = isTiered ? 4 : 6;
                         n.vx = Math.max(-maxV, Math.min(maxV, n.vx));
                         n.vy = Math.max(-maxV, Math.min(maxV, n.vy));
 
                         n.x += n.vx;
                         n.y += n.vy;
 
-                        n.vx *= 0.85;
-                        n.vy *= 0.85;
+                        n.vx *= 0.72;
+                        n.vy *= 0.72;
 
                         n.x = Math.max(pad, Math.min(width - pad, n.x));
                         n.y = Math.max(pad, Math.min(height - pad, n.y));
@@ -2358,6 +2511,48 @@ function startSimulation() {
             ctx.scale(zoom, zoom);
             ctx.translate(-width / 2, -height / 2);
 
+            // Tier Column Guidelines & Header Pills (Tiered Layout)
+            if (graphState.layout === "tiered") {
+                const drawnCols = new Set();
+                nodes.forEach(n => {
+                    if (n.colX !== undefined && !drawnCols.has(n.colX)) {
+                        drawnCols.add(n.colX);
+                        const tConfig = TIER_CONFIG[n.tierIndex] || { label: "TIER", color: "#64748b" };
+
+                        // Vertical guide line
+                        ctx.strokeStyle = "rgba(51, 65, 85, 0.28)";
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(n.colX, 36);
+                        ctx.lineTo(n.colX, height - 15);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // Header pill at top
+                        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        const textW = ctx.measureText(tConfig.label).width;
+
+                        ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+                        if (ctx.roundRect) {
+                            ctx.beginPath();
+                            ctx.roundRect(n.colX - textW / 2 - 8, 8, textW + 16, 20, 4);
+                            ctx.fill();
+                            ctx.strokeStyle = tConfig.color + "77";
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        } else {
+                            ctx.fillRect(n.colX - textW / 2 - 8, 8, textW + 16, 20);
+                        }
+
+                        ctx.fillStyle = tConfig.color;
+                        ctx.fillText(tConfig.label, n.colX, 18);
+                    }
+                });
+            }
+
             // Draw Links
             graphState.links.forEach(l => {
                 const s = nodeMap.get(l.source);
@@ -2370,19 +2565,39 @@ function startSimulation() {
                 ctx.beginPath();
                 ctx.moveTo(s.x, s.y);
                 ctx.lineTo(t.x, t.y);
-                ctx.lineWidth = isHighlighted ? 3.5 : 1.5;
-                ctx.strokeStyle = isHighlighted ? "#f59e0b" : (isDimmed ? "rgba(51, 65, 85, 0.25)" : "#334155");
+                ctx.lineWidth = isHighlighted ? 3 : 1.5;
+                ctx.strokeStyle = isHighlighted ? "#f59e0b" : (isDimmed ? "rgba(51, 65, 85, 0.2)" : "rgba(71, 85, 105, 0.55)");
                 ctx.stroke();
 
-                // Midpoint label
-                if (!isDimmed || isHighlighted) {
+                // Directional arrowhead at target node circumference
+                const angle = Math.atan2(t.y - s.y, t.x - s.x);
+                const arrowDist = (t.radius || 18) + 4;
+                const arrowX = t.x - Math.cos(angle) * arrowDist;
+                const arrowY = t.y - Math.sin(angle) * arrowDist;
+                const headLen = 7;
+
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY);
+                ctx.lineTo(arrowX - headLen * Math.cos(angle - Math.PI / 6), arrowY - headLen * Math.sin(angle - Math.PI / 6));
+                ctx.lineTo(arrowX - headLen * Math.cos(angle + Math.PI / 6), arrowY - headLen * Math.sin(angle + Math.PI / 6));
+                ctx.closePath();
+                ctx.fillStyle = isHighlighted ? "#f59e0b" : (isDimmed ? "rgba(51, 65, 85, 0.2)" : "#64748b");
+                ctx.fill();
+
+                // Edge label with pill background
+                if (l.label && (!isDimmed || isHighlighted)) {
                     const mx = (s.x + t.x) / 2;
                     const my = (s.y + t.y) / 2;
-                    ctx.fillStyle = isHighlighted ? "#fbbf24" : "#64748b";
-                    ctx.font = "9px 'JetBrains Mono', monospace";
+                    ctx.font = "8px 'JetBrains Mono', monospace";
+                    const lw = ctx.measureText(l.label).width;
+
+                    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+                    ctx.fillRect(mx - lw / 2 - 3, my - 6, lw + 6, 12);
+
+                    ctx.fillStyle = isHighlighted ? "#fbbf24" : "#94a3b8";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(l.label || "", mx, my - 5);
+                    ctx.fillText(l.label, mx, my);
                 }
             });
 
@@ -2395,24 +2610,25 @@ function startSimulation() {
                 const isDimmed = graphState.highlightedNodeIds && !isHighlighted;
                 const isHovered = n === graphState.hoveredNode;
                 const color = getNodeColor(n.type);
+                const radius = n.radius || 18;
 
                 ctx.save();
-                if (isDimmed) ctx.globalAlpha = 0.3;
+                if (isDimmed) ctx.globalAlpha = 0.25;
 
-                // Outer ring
+                // Outer highlight/hover ring
                 if (isHighlighted || isHovered) {
                     ctx.beginPath();
-                    ctx.arc(n.x, n.y, n.radius + 7, 0, Math.PI * 2);
-                    ctx.fillStyle = isHighlighted ? "rgba(245, 158, 11, 0.25)" : "rgba(255, 255, 255, 0.15)";
+                    ctx.arc(n.x, n.y, radius + 7, 0, Math.PI * 2);
+                    ctx.fillStyle = isHighlighted ? "rgba(245, 158, 11, 0.28)" : "rgba(255, 255, 255, 0.18)";
                     ctx.fill();
                     ctx.lineWidth = 2.5;
-                    ctx.strokeStyle = isHighlighted ? "#f59e0b" : "#fff";
+                    ctx.strokeStyle = isHighlighted ? "#f59e0b" : "#ffffff";
                     ctx.stroke();
                 }
 
                 // Node Circle
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+                ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
                 ctx.fillStyle = color;
                 ctx.fill();
                 ctx.lineWidth = 2;
@@ -2427,10 +2643,13 @@ function startSimulation() {
                 ctx.fillText(getNodeLetter(n.type), n.x, n.y);
 
                 // Label Below
+                const displayName = n.label || n.id;
                 ctx.fillStyle = isHighlighted ? "#fcd34d" : "#e2e8f0";
-                ctx.font = isHighlighted ? "bold 11px sans-serif" : "11px sans-serif";
+                ctx.font = isHighlighted ? "bold 10px 'Segoe UI', sans-serif" : "10px 'Segoe UI', sans-serif";
                 ctx.textAlign = "center";
-                ctx.fillText(n.label || n.id, n.x, n.y + n.radius + 14);
+                ctx.textBaseline = "top";
+                const truncated = displayName.length > 22 ? displayName.substring(0, 20) + "…" : displayName;
+                ctx.fillText(truncated, n.x, n.y + radius + 5);
 
                 ctx.restore();
             });
@@ -2452,6 +2671,25 @@ function setupGraphEventListeners() {
         filterEl.addEventListener("change", e => {
             graphState.filter = e.target.value;
             layoutVisibleNodes();
+        });
+    }
+
+    const layoutEl = $("graphLayoutSelect");
+    if (layoutEl) {
+        layoutEl.value = graphState.layout || "tiered";
+        layoutEl.addEventListener("change", e => {
+            graphState.layout = e.target.value;
+            layoutVisibleNodes();
+            showToast(`Layout changed to: ${e.target.options[e.target.selectedIndex].text}`);
+        });
+    }
+
+    if ($("btnAutoOrganize")) {
+        $("btnAutoOrganize").addEventListener("click", () => {
+            graphState.layout = "tiered";
+            if (layoutEl) layoutEl.value = "tiered";
+            layoutVisibleNodes();
+            showToast("⚡ Auto-organized graph into tiered supply chain flow!");
         });
     }
 
