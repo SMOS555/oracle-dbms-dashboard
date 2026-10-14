@@ -125,7 +125,11 @@ public class GraphDatabaseService {
     public Map<String, Object> getGraphData() {
         if (isLiveConnected) {
             try {
-                return fetchLiveGraphData();
+                Map<String, Object> live = fetchLiveGraphData();
+                List<?> liveNodes = (List<?>) live.get("nodes");
+                if (liveNodes != null && !liveNodes.isEmpty()) {
+                    return live;
+                }
             } catch (Exception e) {
                 // fall back to default
             }
@@ -146,41 +150,54 @@ public class GraphDatabaseService {
             while (result.hasNext()) {
                 Record record = result.next();
                 Node n = record.get("n").asNode();
-                addLiveNode(n, nodes, nodeIds);
+                String nId = addLiveNode(n, nodes, nodeIds);
 
                 if (!record.get("m").isNull() && !record.get("r").isNull()) {
                     Node m = record.get("m").asNode();
                     Relationship r = record.get("r").asRelationship();
-                    addLiveNode(m, nodes, nodeIds);
+                    String mId = addLiveNode(m, nodes, nodeIds);
 
-                    Map<String, Object> link = new LinkedHashMap<>();
-                    link.put("source", String.valueOf(n.id()));
-                    link.put("target", String.valueOf(m.id()));
-                    link.put("label", r.type());
-                    link.put("properties", r.asMap());
-                    links.add(link);
+                    if (nId != null && mId != null) {
+                        Map<String, Object> link = new LinkedHashMap<>();
+                        link.put("source", nId);
+                        link.put("target", mId);
+                        link.put("label", r.type());
+                        link.put("properties", r.asMap());
+                        links.add(link);
+                    }
                 }
             }
+        }
+
+        // If live database had no edges or only isolated nodes, merge with default supply chain edges
+        if (links.isEmpty() && !defaultLinks.isEmpty()) {
+            return Map.of("nodes", defaultNodes, "links", defaultLinks);
         }
 
         return Map.of("nodes", nodes, "links", links);
     }
 
-    private void addLiveNode(Node n, List<Map<String, Object>> nodes, Set<String> nodeIds) {
-        String idStr = String.valueOf(n.id());
+    private String addLiveNode(Node n, List<Map<String, Object>> nodes, Set<String> nodeIds) {
+        if (!n.labels().iterator().hasNext() && n.asMap().isEmpty()) {
+            return null; // Ignore ghost/blank nodes
+        }
+
+        String label = n.labels().iterator().hasNext() ? n.labels().iterator().next() : "Node";
+        Map<String, Object> props = n.asMap();
+        String idStr = props.containsKey("id") ? String.valueOf(props.get("id")) : String.valueOf(n.id());
+
         if (!nodeIds.contains(idStr)) {
             nodeIds.add(idStr);
             Map<String, Object> node = new LinkedHashMap<>();
             node.put("id", idStr);
-            String label = n.labels().iterator().hasNext() ? n.labels().iterator().next() : "Node";
             node.put("type", label);
-            Map<String, Object> props = n.asMap();
             String name = props.containsKey("name") ? String.valueOf(props.get("name")) :
                           props.containsKey("id") ? String.valueOf(props.get("id")) : label + " #" + idStr;
             node.put("label", name);
             node.put("properties", props);
             nodes.add(node);
         }
+        return idStr;
     }
 
     public Map<String, Object> executeCypher(String cypher) {

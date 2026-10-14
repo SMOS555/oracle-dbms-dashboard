@@ -838,6 +838,11 @@ function showPage(page) {
 
     if (page === "graph") {
         initGraphWorkbench();
+        setTimeout(() => {
+            if (typeof resizeGraphCanvas === "function") {
+                resizeGraphCanvas();
+            }
+        }, 60);
     } else if (page === "eer") {
         initEerStudio();
     } else if (page === "cloud") {
@@ -1844,6 +1849,54 @@ async function loadGraphStatus() {
     }
 }
 
+let animationFrameId = null;
+
+function resizeGraphCanvas() {
+    const canvas = $("graphCanvas");
+    if (!canvas) return;
+    const container = $("canvasContainer") || canvas.parentElement;
+    const rect = container ? container.getBoundingClientRect() : canvas.getBoundingClientRect();
+    const width = Math.max(300, Math.floor(rect.width || 800));
+    const height = Math.max(300, Math.floor(rect.height || 520));
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+}
+
+function layoutVisibleNodes() {
+    const canvas = $("graphCanvas");
+    const container = $("canvasContainer") || (canvas ? canvas.parentElement : null);
+    const rect = container ? container.getBoundingClientRect() : { width: 800, height: 520 };
+    const width = Math.max(300, Math.floor(rect.width || 800));
+    const height = Math.max(300, Math.floor(rect.height || 520));
+    const cx = width / 2;
+    const cy = height / 2;
+
+    const nodes = getVisibleNodes();
+    if (!nodes.length) return;
+
+    const count = nodes.length;
+    nodes.forEach((n, i) => {
+        const angle = (i / count) * Math.PI * 2;
+        const radius = Math.min(width, height) * 0.32;
+        n.x = cx + Math.cos(angle) * radius;
+        n.y = cy + Math.sin(angle) * radius;
+        n.vx = 0;
+        n.vy = 0;
+    });
+
+    graphState.zoom = 1;
+    graphState.panX = 0;
+    graphState.panY = 0;
+}
+
 async function loadGraphData() {
     try {
         const data = await api("/api/graph/data");
@@ -1851,18 +1904,20 @@ async function loadGraphData() {
         const rawLinks = data.links || [];
 
         const canvas = $("graphCanvas");
-        const width = canvas ? canvas.clientWidth : 800;
-        const height = canvas ? canvas.clientHeight : 520;
+        const container = $("canvasContainer") || (canvas ? canvas.parentElement : null);
+        const rect = container ? container.getBoundingClientRect() : { width: 800, height: 520 };
+        const width = Math.max(300, Math.floor(rect.width || 800));
+        const height = Math.max(300, Math.floor(rect.height || 520));
         const cx = width / 2;
         const cy = height / 2;
 
         graphState.nodes = rawNodes.map((n, i) => {
-            const angle = (i / rawNodes.length) * Math.PI * 2;
-            const radius = 140 + (i % 3) * 60;
+            const angle = (i / Math.max(1, rawNodes.length)) * Math.PI * 2;
+            const radius = Math.min(width, height) * 0.32;
             return {
                 ...n,
-                x: cx + Math.cos(angle) * radius + (Math.random() - 0.5) * 40,
-                y: cy + Math.sin(angle) * radius + (Math.random() - 0.5) * 40,
+                x: cx + Math.cos(angle) * radius,
+                y: cy + Math.sin(angle) * radius,
                 vx: 0,
                 vy: 0,
                 radius: 17
@@ -1872,6 +1927,11 @@ async function loadGraphData() {
         graphState.links = rawLinks;
         graphState.highlightedNodeIds = null;
         graphState.highlightedLinkKeys = null;
+        graphState.zoom = 1;
+        graphState.panX = 0;
+        graphState.panY = 0;
+
+        resizeGraphCanvas();
         startSimulation();
     } catch (e) {
         showToast("Error loading graph topology: " + e.message);
@@ -1882,17 +1942,8 @@ function setupGraphCanvas() {
     const canvas = $("graphCanvas");
     if (!canvas) return;
 
-    function resize() {
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        const ctx = canvas.getContext("2d");
-        ctx.scale(dpr, dpr);
-    }
-
-    resize();
-    window.addEventListener("resize", resize);
+    resizeGraphCanvas();
+    window.addEventListener("resize", resizeGraphCanvas);
 
     canvas.addEventListener("mousedown", onCanvasMouseDown);
     canvas.addEventListener("mousemove", onCanvasMouseMove);
@@ -1905,8 +1956,8 @@ function getCanvasMousePos(e) {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX;
     const clientY = e.clientY;
-    const width = rect.width;
-    const height = rect.height;
+    const width = rect.width || 800;
+    const height = rect.height || 520;
 
     const screenX = clientX - rect.left;
     const screenY = clientY - rect.top;
@@ -1931,10 +1982,18 @@ function findNodeAt(worldX, worldY) {
 }
 
 function getVisibleNodes() {
-    if (graphState.filter === "ALL") return graphState.nodes;
+    if (!graphState.nodes || !graphState.nodes.length) return [];
+    if (!graphState.filter || graphState.filter === "ALL") return graphState.nodes;
+
     return graphState.nodes.filter(n => {
-        if (graphState.filter === "Product") return String(n.type).includes("Product");
-        return n.type === graphState.filter;
+        const type = String(n.type || "");
+        if (graphState.filter === "Product") return type.toLowerCase().includes("product");
+        if (graphState.filter === "Driver") return type.toLowerCase().includes("driver");
+        if (graphState.filter === "Supplier") return type.toLowerCase().includes("supplier");
+        if (graphState.filter === "Warehouse") return type.toLowerCase().includes("warehouse");
+        if (graphState.filter === "Order") return type.toLowerCase().includes("order");
+        if (graphState.filter === "Customer") return type.toLowerCase().includes("customer");
+        return type.toLowerCase() === graphState.filter.toLowerCase();
     });
 }
 
@@ -2040,26 +2099,46 @@ function startSimulation() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
 
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+
     function tick() {
-        const rect = canvas.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
+        const container = $("canvasContainer") || canvas.parentElement;
+        const width = (container && container.clientWidth) || canvas.clientWidth || 800;
+        const height = (container && container.clientHeight) || canvas.clientHeight || 520;
         const cx = width / 2;
         const cy = height / 2;
+
         const nodes = getVisibleNodes();
         const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
-        // Physics step
-        if (graphState.animating) {
+        // Physics step with strict stability & bounds
+        if (graphState.animating && nodes.length > 0) {
+            // 1. Centering pull
+            nodes.forEach(n => {
+                if (n !== graphState.dragNode) {
+                    n.vx += (cx - n.x) * 0.012;
+                    n.vy += (cy - n.y) * 0.012;
+                }
+            });
+
+            // 2. Node-node repulsion with safe minimum distance clamp
             for (let i = 0; i < nodes.length; i++) {
                 for (let j = i + 1; j < nodes.length; j++) {
                     const n1 = nodes[i];
                     const n2 = nodes[j];
-                    const dx = n1.x - n2.x;
-                    const dy = n1.y - n2.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    if (dist < 260) {
-                        const rep = (260 - dist) / dist * 0.12;
+                    let dx = n1.x - n2.x;
+                    let dy = n1.y - n2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 1) {
+                        dx = (Math.random() - 0.5) * 6;
+                        dy = (Math.random() - 0.5) * 6;
+                        dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    }
+                    if (dist < 220) {
+                        const rep = Math.min(2.0, (220 - dist) / dist * 0.08);
                         n1.vx += dx * rep;
                         n1.vy += dy * rep;
                         n2.vx -= dx * rep;
@@ -2068,6 +2147,7 @@ function startSimulation() {
                 }
             }
 
+            // 3. Link spring force
             graphState.links.forEach(l => {
                 const s = nodeMap.get(l.source);
                 const t = nodeMap.get(l.target);
@@ -2075,7 +2155,7 @@ function startSimulation() {
                     const dx = t.x - s.x;
                     const dy = t.y - s.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const spring = (dist - 110) * 0.02;
+                    const spring = Math.min(2.0, (dist - 110) * 0.02);
                     s.vx += dx * spring;
                     s.vy += dy * spring;
                     t.vx -= dx * spring;
@@ -2083,20 +2163,39 @@ function startSimulation() {
                 }
             });
 
+            // 4. Velocity cap, friction damping, and canvas boundary clamping
+            const pad = 35;
             nodes.forEach(n => {
                 if (n !== graphState.dragNode) {
-                    n.vx += (cx - n.x) * 0.008;
-                    n.vy += (cy - n.y) * 0.008;
+                    const maxV = 6;
+                    n.vx = Math.max(-maxV, Math.min(maxV, n.vx));
+                    n.vy = Math.max(-maxV, Math.min(maxV, n.vy));
+
                     n.x += n.vx;
                     n.y += n.vy;
-                    n.vx *= 0.82;
-                    n.vy *= 0.82;
+
+                    n.vx *= 0.85;
+                    n.vy *= 0.85;
+
+                    n.x = Math.max(pad, Math.min(width - pad, n.x));
+                    n.y = Math.max(pad, Math.min(height - pad, n.y));
                 }
             });
         }
 
         // Render step
         ctx.clearRect(0, 0, width, height);
+
+        if (nodes.length === 0) {
+            ctx.fillStyle = "#94a3b8";
+            ctx.font = "14px 'Segoe UI', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("No entities match this filter. Select 'All Entities (Full Graph)'.", cx, cy);
+            animationFrameId = requestAnimationFrame(tick);
+            return;
+        }
+
         ctx.save();
         ctx.translate(width / 2 + graphState.panX, height / 2 + graphState.panY);
         ctx.scale(graphState.zoom, graphState.zoom);
@@ -2114,12 +2213,12 @@ function startSimulation() {
             ctx.beginPath();
             ctx.moveTo(s.x, s.y);
             ctx.lineTo(t.x, t.y);
-            ctx.lineWidth = isHighlighted ? 3 : 1.5;
+            ctx.lineWidth = isHighlighted ? 3.5 : 1.5;
             ctx.strokeStyle = isHighlighted ? "#f59e0b" : (isDimmed ? "rgba(51, 65, 85, 0.25)" : "#334155");
             ctx.stroke();
 
             // Midpoint label
-            if (!isDimmed) {
+            if (!isDimmed || isHighlighted) {
                 const mx = (s.x + t.x) / 2;
                 const my = (s.y + t.y) / 2;
                 ctx.fillStyle = isHighlighted ? "#fbbf24" : "#64748b";
@@ -2132,21 +2231,24 @@ function startSimulation() {
 
         // Draw Nodes
         nodes.forEach(n => {
-            const isHighlighted = graphState.highlightedNodeIds && graphState.highlightedNodeIds.has(n.id);
+            const isHighlighted = graphState.highlightedNodeIds && (
+                graphState.highlightedNodeIds.has(n.id) ||
+                (n.properties && graphState.highlightedNodeIds.has(String(n.properties.id)))
+            );
             const isDimmed = graphState.highlightedNodeIds && !isHighlighted;
             const isHovered = n === graphState.hoveredNode;
             const color = getNodeColor(n.type);
 
             ctx.save();
-            if (isDimmed) ctx.globalAlpha = 0.25;
+            if (isDimmed) ctx.globalAlpha = 0.3;
 
             // Outer ring
             if (isHighlighted || isHovered) {
                 ctx.beginPath();
-                ctx.arc(n.x, n.y, n.radius + 6, 0, Math.PI * 2);
-                ctx.fillStyle = isHighlighted ? "rgba(245, 158, 11, 0.2)" : "rgba(255, 255, 255, 0.15)";
+                ctx.arc(n.x, n.y, n.radius + 7, 0, Math.PI * 2);
+                ctx.fillStyle = isHighlighted ? "rgba(245, 158, 11, 0.25)" : "rgba(255, 255, 255, 0.15)";
                 ctx.fill();
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.strokeStyle = isHighlighted ? "#f59e0b" : "#fff";
                 ctx.stroke();
             }
@@ -2169,7 +2271,7 @@ function startSimulation() {
 
             // Label Below
             ctx.fillStyle = isHighlighted ? "#fcd34d" : "#e2e8f0";
-            ctx.font = "11px sans-serif";
+            ctx.font = isHighlighted ? "bold 11px sans-serif" : "11px sans-serif";
             ctx.textAlign = "center";
             ctx.fillText(n.label || n.id, n.x, n.y + n.radius + 14);
 
@@ -2177,15 +2279,16 @@ function startSimulation() {
         });
 
         ctx.restore();
-        requestAnimationFrame(tick);
+        animationFrameId = requestAnimationFrame(tick);
     }
 
-    requestAnimationFrame(tick);
+    animationFrameId = requestAnimationFrame(tick);
 }
 
 function setupGraphEventListeners() {
     $("graphFilter").addEventListener("change", e => {
         graphState.filter = e.target.value;
+        layoutVisibleNodes();
     });
 
     $("btnZoomIn").addEventListener("click", () => {
@@ -2197,24 +2300,52 @@ function setupGraphEventListeners() {
     });
 
     $("btnResetZoom").addEventListener("click", () => {
-        graphState.zoom = 1;
-        graphState.panX = 0;
-        graphState.panY = 0;
+        layoutVisibleNodes();
+        showToast("Centered graph view.");
     });
 
-    $("btnTracePath").addEventListener("click", async () => {
-        const supId = $("traceSupplierSelect").value;
+    async function executeTrace() {
+        const supId = $("traceSupplierSelect") ? $("traceSupplierSelect").value : "SUPPLIER_S01";
         try {
             const data = await api(`/api/graph/trace?supplierId=${encodeURIComponent(supId)}`);
             const pathNodes = data.nodes || [];
             const pathLinks = data.links || [];
-            graphState.highlightedNodeIds = new Set(pathNodes.map(n => n.id));
-            graphState.highlightedLinkKeys = new Set(pathLinks.map(l => l.source + "->" + l.target));
-            showToast(`Supply Chain trace completed across ${pathNodes.length} nodes and ${data.hops} hops!`);
+
+            const idSet = new Set();
+            pathNodes.forEach(n => {
+                idSet.add(n.id);
+                if (n.properties && n.properties.id) {
+                    idSet.add(String(n.properties.id));
+                    idSet.add("SUPPLIER_" + n.properties.id);
+                    idSet.add("PRODUCT_" + n.properties.id);
+                    idSet.add("WAREHOUSE_" + n.properties.id);
+                    idSet.add("CUSTOMER_" + n.properties.id);
+                    idSet.add("ORDER_" + n.properties.id);
+                    idSet.add("DRIVER_" + n.properties.id);
+                }
+            });
+
+            const linkSet = new Set();
+            pathLinks.forEach(l => {
+                linkSet.add(l.source + "->" + l.target);
+            });
+
+            graphState.highlightedNodeIds = idSet;
+            graphState.highlightedLinkKeys = linkSet;
+            graphState.filter = "ALL";
+            if ($("graphFilter")) $("graphFilter").value = "ALL";
+
+            showToast(`Supply chain trace completed across ${pathNodes.length} nodes!`);
         } catch (e) {
             showToast("Trace failed: " + e.message);
         }
-    });
+    }
+
+    $("btnTracePath").addEventListener("click", executeTrace);
+
+    if ($("traceSupplierSelect")) {
+        $("traceSupplierSelect").addEventListener("change", executeTrace);
+    }
 
     $("btnResetTrace").addEventListener("click", () => {
         graphState.highlightedNodeIds = null;
