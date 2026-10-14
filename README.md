@@ -268,19 +268,4 @@ HTML / CSS / JavaScript
    Oracle Database
 ```
 
-## Deployment
-
-The Spring Boot application can be deployed on AWS EC2.
-
-```text
-User
- ↓
-AWS EC2
- ↓
-Spring Boot
- ↓
-Oracle Database
-```
-
-```
 
