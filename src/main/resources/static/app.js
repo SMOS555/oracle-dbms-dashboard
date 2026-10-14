@@ -842,6 +842,10 @@ function showPage(page) {
         initEerStudio();
     } else if (page === "cloud") {
         checkCloudHealth();
+    } else if (page === "triggers") {
+        loadTriggers();
+    } else if (page === "cursors") {
+        loadAllCursors();
     }
 }
 
@@ -1366,28 +1370,23 @@ function renderCursorResult(
 ===================================================== */
 
 async function runCustomerCursor() {
-
+    const wrap = $("customerCursorResult");
+    if (wrap) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Executing Customer Cursor...</h3></div>`;
+    }
     try {
-
-        const data =
-            await api(
-                "/api/cursors/customers"
-            );
-
-
+        const data = await api("/api/cursors/customers");
         renderCursorResult(
             "customerCursorResult",
             data.rows,
             "No customers found."
         );
-
-
     } catch (error) {
-
+        if (wrap) {
+            wrap.innerHTML = `<div class="affected"><strong>Cursor Error: </strong>${escapeHtml(error.message)}</div>`;
+        }
         showToast(error.message);
-
     }
-
 }
 
 
@@ -1397,47 +1396,38 @@ async function runCustomerCursor() {
 ===================================================== */
 
 async function runOrderCursor() {
-
-    const customerId =
-        $("cursorCustomerId")
-            .value
-            .trim();
-
+    const customerId = $("cursorCustomerId") ? $("cursorCustomerId").value.trim() : "";
 
     if (!customerId) {
-
-        showToast(
-            "Enter a customer ID."
-        );
-
+        showToast("Enter a customer ID.");
         return;
-
     }
 
+    const wrap = $("orderCursorResult");
+    if (wrap) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Executing Order Cursor for ${escapeHtml(customerId)}...</h3></div>`;
+    }
 
     try {
-
-        const data =
-            await api(
-                `/api/cursors/orders?custId=${encodeURIComponent(
-                    customerId
-                )}`
-            );
-
+        const data = await api(
+            `/api/cursors/orders?custId=${encodeURIComponent(customerId)}`
+        );
+        const rows = data.rows || [];
+        const emptyMsg = rows.length
+            ? ""
+            : `No orders found for customer "${customerId}". Valid customers in database: C-01 (Shama Retail), C-03 (Metro Mart), C-05 (Anand Stores).`;
 
         renderCursorResult(
             "orderCursorResult",
-            data.rows,
-            `No orders found for ${customerId}.`
+            rows,
+            emptyMsg
         );
-
-
     } catch (error) {
-
+        if (wrap) {
+            wrap.innerHTML = `<div class="affected"><strong>Cursor Error: </strong>${escapeHtml(error.message)}</div>`;
+        }
         showToast(error.message);
-
     }
-
 }
 
 
@@ -1447,28 +1437,29 @@ async function runOrderCursor() {
 ===================================================== */
 
 async function runOrderTotalCursor() {
-
+    const wrap = $("orderTotalCursorResult");
+    if (wrap) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Executing Order Total Cursor...</h3></div>`;
+    }
     try {
-
-        const data =
-            await api(
-                "/api/cursors/order-totals"
-            );
-
-
+        const data = await api("/api/cursors/order-totals");
         renderCursorResult(
             "orderTotalCursorResult",
             data.rows,
             "No order totals found."
         );
-
-
     } catch (error) {
-
+        if (wrap) {
+            wrap.innerHTML = `<div class="affected"><strong>Cursor Error: </strong>${escapeHtml(error.message)}</div>`;
+        }
         showToast(error.message);
-
     }
+}
 
+async function loadAllCursors() {
+    runCustomerCursor();
+    runOrderCursor();
+    runOrderTotalCursor();
 }
 
 
@@ -1662,6 +1653,24 @@ if ($("runOrderCursor")) {
         );
 
 }
+
+if ($("cursorCustomerSelect")) {
+    $("cursorCustomerSelect").addEventListener("change", (e) => {
+        if ($("cursorCustomerId")) {
+            $("cursorCustomerId").value = e.target.value;
+        }
+        runOrderCursor();
+    });
+}
+
+document.querySelectorAll(".cursor-quick-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+        const val = pill.dataset.cust;
+        if ($("cursorCustomerId")) $("cursorCustomerId").value = val;
+        if ($("cursorCustomerSelect")) $("cursorCustomerSelect").value = val;
+        runOrderCursor();
+    });
+});
 
 
 /* ORDER TOTAL CURSOR */

@@ -657,27 +657,31 @@
                 </div>
 
 
-                <div class="cursor-controls">
-
-                    <label for="cursorCustomerId">
-                        Customer ID
-                    </label>
-
+                <div class="cursor-controls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <label for="cursorCustomerId">Customer ID:</label>
+                    <select id="cursorCustomerSelect" style="padding:8px 12px; background:var(--bg-dark); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px; font-size:0.88rem;">
+                        <option value="C-01">C-01 · Shama Retail (Chennai)</option>
+                        <option value="C-03">C-03 · Metro Mart (Mumbai)</option>
+                        <option value="C-05">C-05 · Anand Stores (Chennai)</option>
+                    </select>
                     <input
                         type="text"
                         id="cursorCustomerId"
-                        placeholder="Example: C-01"
+                        placeholder="Cust ID (e.g. C-01)"
                         value="C-01"
+                        style="width:130px;"
                     >
-
                     <button
                         id="runOrderCursor"
                         class="button primary-button">
-
                         ▶ Run Cursor
-
                     </button>
-
+                    <div style="width:100%; font-size:0.8rem; color:#94a3b8; margin-top:2px; display:flex; align-items:center; gap:8px;">
+                        <span>Quick select:</span>
+                        <button type="button" class="pill-btn cursor-quick-pill" data-cust="C-01">C-01</button>
+                        <button type="button" class="pill-btn cursor-quick-pill" data-cust="C-03">C-03</button>
+                        <button type="button" class="pill-btn cursor-quick-pill" data-cust="C-05">C-05</button>
+                    </div>
                 </div>
 
 

@@ -1678,24 +1678,26 @@ textarea::placeholder {
     background: #0b0f19;
     border: 1px solid #1e293b;
     border-radius: 8px;
-    padding: 18px;
-    position: relative;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .hierarchy-badge {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    font-size: 0.8rem;
+    align-self: flex-start;
+    font-size: 0.75rem;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 9999px;
+    margin-bottom: 10px;
+    white-space: nowrap;
 }
 
 .hierarchy-card h4 {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
+    margin: 0 0 10px 0;
+    font-size: 1.05rem;
     color: #f8fafc;
+    line-height: 1.35;
 }
 
 .hierarchy-tree {
