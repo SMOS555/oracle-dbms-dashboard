@@ -2230,3 +2230,155 @@ textarea::placeholder {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 }
 
+/* =====================================================
+   NATIVE INTERACTIVE CHEN & EER SVG DIAGRAMS
+===================================================== */
+
+.diagram-viewport-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 740px;
+    background: radial-gradient(circle at 50% 30%, #0f172a 0%, #060913 100%);
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.diagram-viewport-toolbar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}
+
+.diagram-live-hint {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(8px);
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.diagram-live-hint .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.diagram-svg-container {
+    width: 100%;
+    height: 100%;
+    min-height: 740px;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 10px;
+    cursor: grab;
+    user-select: none;
+}
+
+.diagram-svg-container:active {
+    cursor: grabbing;
+}
+
+.diagram-svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    transform-origin: 50% 50%;
+    transition: transform 0.15s ease-out;
+}
+
+/* Interactive Entity Styling */
+.svg-entity {
+    cursor: pointer;
+}
+
+.svg-entity rect {
+    transition: all 0.2s ease;
+}
+
+.svg-entity:hover rect.entity-box {
+    stroke: #38bdf8 !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.7));
+}
+
+.svg-entity:hover rect.subclass-box {
+    stroke: #34d399 !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.7));
+}
+
+.svg-entity:hover rect.weak-box {
+    stroke: #22d3ee !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.7));
+}
+
+.svg-entity:hover text.entity-title {
+    fill: #ffffff !important;
+    font-weight: 800;
+}
+
+/* Interactive Relationship Diamond */
+.svg-rel {
+    cursor: pointer;
+}
+
+.svg-rel polygon {
+    transition: all 0.2s ease;
+}
+
+.svg-rel:hover polygon {
+    stroke: #f59e0b !important;
+    stroke-width: 2.5px !important;
+    filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.7));
+}
+
+.svg-rel:hover text {
+    fill: #fbbf24 !important;
+}
+
+.cardinality-tag {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    fill: #ef4444;
+}
+
+.annotation-text {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-size: 11px;
+    fill: #34d399;
+}
+

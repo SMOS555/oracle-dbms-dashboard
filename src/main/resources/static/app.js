@@ -845,7 +845,6 @@ function showPage(page) {
     const titles = {
         explorer: "Data Explorer",
         sql: "SQL Console",
-        graph: "Neo4j Graph Workbench (Modern DB)",
         triggers: "Database Triggers",
         cursors: "Database Cursors",
         eer: "ER & Enhanced ER (EER) Studio",
@@ -855,14 +854,7 @@ function showPage(page) {
     $("pageTitle").textContent =
         titles[page] || "Data Explorer";
 
-    if (page === "graph") {
-        initGraphWorkbench();
-        setTimeout(() => {
-            if (typeof resizeGraphCanvas === "function") {
-                resizeGraphCanvas();
-            }
-        }, 60);
-    } else if (page === "eer") {
+    if (page === "eer") {
         initEerStudio();
     } else if (page === "cloud") {
         checkCloudHealth();
@@ -3104,10 +3096,66 @@ let relRendered = false;
 function applyDiagramZoom(type) {
     const isEer = type === "eer";
     const zoom = isEer ? eerZoom : relZoom;
-    const target = $(isEer ? "eerDiagramImg" : "erDiagramImg") || $(isEer ? "eerMermaidSvg" : "relMermaidSvg");
+    const target = $(isEer ? "eerSvgDiagram" : "relSvgDiagram") || $(isEer ? "eerDiagramImg" : "erDiagramImg") || $(isEer ? "eerMermaidSvg" : "relMermaidSvg");
     if (target) {
         target.style.transform = `scale(${zoom})`;
     }
+}
+
+function setupDiagramPanAndZoom(containerId, svgId, type) {
+    const container = $(containerId);
+    const svg = $(svgId);
+    if (!container || !svg) return;
+
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollLeft = 0;
+    let scrollTop = 0;
+
+    container.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".svg-entity") || e.target.closest(".svg-rel")) return;
+        isPanning = true;
+        startX = e.pageX - container.offsetLeft;
+        startY = e.pageY - container.offsetTop;
+        scrollLeft = container.scrollLeft;
+        scrollTop = container.scrollTop;
+    });
+
+    window.addEventListener("mouseup", () => {
+        isPanning = false;
+    });
+
+    container.addEventListener("mousemove", (e) => {
+        if (!isPanning) return;
+        e.preventDefault();
+        const x = e.pageX - container.offsetLeft;
+        const y = e.pageY - container.offsetTop;
+        const walkX = (x - startX) * 1.5;
+        const walkY = (y - startY) * 1.5;
+        container.scrollLeft = scrollLeft - walkX;
+        container.scrollTop = scrollTop - walkY;
+    });
+
+    container.addEventListener("wheel", (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                if (type === "eer") {
+                    eerZoom = Math.min(2.5, +(eerZoom + 0.1).toFixed(2));
+                } else {
+                    relZoom = Math.min(2.5, +(relZoom + 0.1).toFixed(2));
+                }
+            } else {
+                if (type === "eer") {
+                    eerZoom = Math.max(0.4, +(eerZoom - 0.1).toFixed(2));
+                } else {
+                    relZoom = Math.max(0.4, +(relZoom - 0.1).toFixed(2));
+                }
+            }
+            applyDiagramZoom(type);
+        }
+    }, { passive: false });
 }
 
 async function renderEerSvgDiagram() {
@@ -3121,6 +3169,9 @@ async function renderRelationalErSvgDiagram() {
 function initEerStudio() {
     if (!eerStudioInitialized) {
         eerStudioInitialized = true;
+
+        setupDiagramPanAndZoom("eerSvgContainer", "eerSvgDiagram", "eer");
+        setupDiagramPanAndZoom("relSvgContainer", "relSvgDiagram", "rel");
 
         // View toggle buttons
         if ($("btnViewEer")) {
