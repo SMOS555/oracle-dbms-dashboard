@@ -699,6 +699,23 @@ public class GraphDatabaseService {
     // GRAPH TELEMETRY & WORKBENCH VISUALIZATION
     // ==========================================
 
+    public List<Map<String, Object>> getSupplyChainNodes() {
+        Set<String> supplyPrefixes = Set.of("SUPPLIER_S", "PRODUCT_P", "WAREHOUSE_W", "CUSTOMER_C", "ORDER_O", "DRIVER_D", "MANAGER_M");
+        return defaultNodes.stream()
+            .filter(n -> {
+                String id = String.valueOf(n.get("id"));
+                return supplyPrefixes.stream().anyMatch(id::startsWith);
+            })
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getSupplyChainLinks() {
+        Set<String> validIds = getSupplyChainNodes().stream().map(n -> String.valueOf(n.get("id"))).collect(Collectors.toSet());
+        return defaultLinks.stream()
+            .filter(l -> validIds.contains(String.valueOf(l.get("source"))) && validIds.contains(String.valueOf(l.get("target"))))
+            .collect(Collectors.toList());
+    }
+
     public Map<String, Object> getGraphData() {
         if (isLiveConnected) {
             try {
@@ -711,8 +728,8 @@ public class GraphDatabaseService {
             }
         }
         return Map.of(
-            "nodes", defaultNodes,
-            "links", defaultLinks
+            "nodes", getSupplyChainNodes(),
+            "links", getSupplyChainLinks()
         );
     }
 
@@ -722,7 +739,10 @@ public class GraphDatabaseService {
         Set<String> nodeIds = new HashSet<>();
 
         try (Session session = driver.session()) {
-            Result result = session.run("MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 300");
+            String cypher = "MATCH (n) WHERE any(l IN labels(n) WHERE toUpper(l) IN ['SUPPLIER','PRODUCT','PERISHABLE_PRODUCT','HAZARDOUS_PRODUCT','WAREHOUSE','MANAGER','CUSTOMER','ORDERS','ORDER','DRIVER']) " +
+                            "OPTIONAL MATCH (n)-[r]->(m) WHERE any(l IN labels(m) WHERE toUpper(l) IN ['SUPPLIER','PRODUCT','PERISHABLE_PRODUCT','HAZARDOUS_PRODUCT','WAREHOUSE','MANAGER','CUSTOMER','ORDERS','ORDER','DRIVER']) " +
+                            "RETURN n, r, m LIMIT 300";
+            Result result = session.run(cypher);
             while (result.hasNext()) {
                 Record record = result.next();
                 Node n = record.get("n").asNode();
@@ -745,8 +765,8 @@ public class GraphDatabaseService {
             }
         }
 
-        if (links.isEmpty() && !defaultLinks.isEmpty()) {
-            return Map.of("nodes", defaultNodes, "links", defaultLinks);
+        if (links.isEmpty() || nodes.isEmpty()) {
+            return Map.of("nodes", getSupplyChainNodes(), "links", getSupplyChainLinks());
         }
 
         return Map.of("nodes", nodes, "links", links);
@@ -758,6 +778,10 @@ public class GraphDatabaseService {
         }
 
         String label = n.labels().iterator().hasNext() ? n.labels().iterator().next() : "Node";
+        String upperLabel = label.toUpperCase(Locale.ROOT);
+        if (!Set.of("SUPPLIER","PRODUCT","PERISHABLE_PRODUCT","HAZARDOUS_PRODUCT","WAREHOUSE","MANAGER","CUSTOMER","ORDERS","ORDER","DRIVER").contains(upperLabel)) {
+            return null;
+        }
         Map<String, Object> props = n.asMap();
         String idStr = props.containsKey("id") ? String.valueOf(props.get("id")) :
                        props.containsKey("SUPPLIERID") ? String.valueOf(props.get("SUPPLIERID")) :

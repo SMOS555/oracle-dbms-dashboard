@@ -63,7 +63,7 @@ public class DatabaseService {
     }
 
     // =========================
-    // UNIFIED QUERY CONSOLE (CYPHER & SQL)
+    // SQL QUERY CONSOLE
     // =========================
 
     public Map<String, Object> executeQuery(String query) {
@@ -71,7 +71,8 @@ public class DatabaseService {
             throw new IllegalArgumentException("Query cannot be empty.");
         }
 
-        String u = query.trim().toUpperCase(Locale.ROOT);
+        String q = query.trim();
+        String u = q.toUpperCase(Locale.ROOT);
 
         // Security check
         if (u.startsWith("DROP ") || u.startsWith("ALTER ") || u.startsWith("TRUNCATE ") ||
@@ -79,7 +80,39 @@ public class DatabaseService {
             throw new IllegalArgumentException("DDL/security commands are restricted in this studio.");
         }
 
-        return graphService.executeUnifiedQuery(query);
+        // If Cypher syntax is passed, route to Neo4j
+        if (u.startsWith("MATCH") || u.startsWith("CREATE") || u.startsWith("MERGE") ||
+            u.startsWith("RETURN") || u.startsWith("CALL") || u.startsWith("SHOW")) {
+            return graphService.executeCypher(q);
+        }
+
+        // Standard SQL Console query (SELECT, INSERT, UPDATE, DELETE)
+        if (jdbc != null) {
+            try {
+                if (u.startsWith("SELECT") || u.startsWith("WITH")) {
+                    List<Map<String, Object>> rows = jdbc.queryForList(q);
+                    return Map.of(
+                        "type", "result",
+                        "rows", rows,
+                        "rowCount", rows.size()
+                    );
+                } else if (u.startsWith("INSERT") || u.startsWith("UPDATE") || u.startsWith("DELETE")) {
+                    int count = jdbc.update(q);
+                    return Map.of(
+                        "type", "update",
+                        "affectedRows", count
+                    );
+                }
+            } catch (Exception e) {
+                try {
+                    return graphService.executeUnifiedQuery(q);
+                } catch (Exception ignored) {
+                    throw new RuntimeException("SQL Execution Error: " + e.getMessage(), e);
+                }
+            }
+        }
+
+        return graphService.executeUnifiedQuery(q);
     }
 
     // =========================

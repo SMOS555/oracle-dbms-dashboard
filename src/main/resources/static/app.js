@@ -1566,15 +1566,6 @@ $("refresh")
             } else {
 
                 await 
-document.querySelectorAll(".cypher-quick-pill").forEach(pill => {
-    pill.addEventListener("click", () => {
-        if ($("sqlInput")) {
-            $("sqlInput").value = pill.dataset.cypher;
-            $("sqlInput").focus();
-        }
-    });
-});
-
 loadTables();
 
             }
@@ -1858,12 +1849,12 @@ const FALLBACK_GRAPH_LINKS = [
 ];
 
 const TIER_CONFIG = [
-    { key: "supplier", label: "SUPPLIERS", color: "#8b5cf6", match: n => /supplier/i.test(n.type) || /^supplier_/i.test(n.id) },
-    { key: "product", label: "PRODUCTS", color: "#10b981", match: n => /product|perish|hazard/i.test(n.type) || /^product_/i.test(n.id) },
-    { key: "warehouse", label: "WAREHOUSES & HUBS", color: "#3b82f6", match: n => /warehouse|manager/i.test(n.type) || /^warehouse_|^manager_/i.test(n.id) },
-    { key: "customer", label: "CUSTOMERS", color: "#f59e0b", match: n => /customer/i.test(n.type) || /^customer_/i.test(n.id) },
-    { key: "order", label: "ORDERS", color: "#06b6d4", match: n => /order/i.test(n.type) || /^order_/i.test(n.id) },
-    { key: "driver", label: "FLEET LOGISTICS", color: "#f97316", match: n => /driver/i.test(n.type) || /^driver_/i.test(n.id) }
+    { key: "supplier", label: "SUPPLIERS", color: "#8b5cf6", match: n => /^SUPPLIER_S/i.test(n.id) },
+    { key: "product", label: "PRODUCTS", color: "#10b981", match: n => /^PRODUCT_P/i.test(n.id) },
+    { key: "warehouse", label: "WAREHOUSES & HUBS", color: "#3b82f6", match: n => /^(WAREHOUSE_W|MANAGER_M)/i.test(n.id) },
+    { key: "customer", label: "CUSTOMERS", color: "#f59e0b", match: n => /^CUSTOMER_C/i.test(n.id) },
+    { key: "order", label: "ORDERS", color: "#06b6d4", match: n => /^ORDER_O/i.test(n.id) },
+    { key: "driver", label: "FLEET LOGISTICS", color: "#f97316", match: n => /^DRIVER_D/i.test(n.id) }
 ];
 
 function getNodeTierIndex(node) {
@@ -2022,18 +2013,16 @@ function layoutTieredSupplyChain(nodes, width, height) {
         groups.get(tierIdx).push(n);
     });
 
-    // Determine active tiers that contain nodes
+    // Active tiers
     const activeTierIndices = [];
     TIER_CONFIG.forEach((_, i) => {
-        if (groups.get(i).length > 0) {
-            activeTierIndices.push(i);
-        }
+        if (groups.get(i).length > 0) activeTierIndices.push(i);
     });
 
     const activeCount = activeTierIndices.length;
-    const marginX = Math.max(65, width * 0.08);
-    const topMargin = 55;
-    const bottomMargin = 40;
+    const marginX = Math.max(70, width * 0.08);
+    const topMargin = 60;
+    const bottomMargin = 50;
     const availHeight = height - topMargin - bottomMargin;
 
     activeTierIndices.forEach((tierIdx, rank) => {
@@ -2042,8 +2031,8 @@ function layoutTieredSupplyChain(nodes, width, height) {
             ? width / 2
             : marginX + (rank / (activeCount - 1)) * (width - 2 * marginX);
 
-        // Sort nodes stably
-        tierNodes.sort((a, b) => (a.label || a.id).localeCompare(b.label || b.id));
+        // Sort nodes cleanly by id
+        tierNodes.sort((a, b) => String(a.id || "").localeCompare(String(b.id || "")));
 
         const count = tierNodes.length;
         tierNodes.forEach((n, i) => {
@@ -2146,14 +2135,30 @@ async function loadGraphData() {
         const rawNodes = (data && data.nodes && data.nodes.length) ? data.nodes : FALLBACK_GRAPH_NODES;
         const rawLinks = (data && data.links && data.links.length) ? data.links : FALLBACK_GRAPH_LINKS;
 
-        graphState.nodes = rawNodes.map(n => ({
+        // Strictly retain only the core 23 Supply Chain Pipeline nodes
+        const supplyChainIds = new Set([
+            "SUPPLIER_S01", "SUPPLIER_S03", "SUPPLIER_S05",
+            "PRODUCT_P100", "PRODUCT_P104", "PRODUCT_P108", "PRODUCT_P210", "PRODUCT_P301",
+            "WAREHOUSE_W01", "WAREHOUSE_W02", "MANAGER_M01",
+            "CUSTOMER_C01", "CUSTOMER_C03", "CUSTOMER_C05",
+            "ORDER_O101", "ORDER_O102", "ORDER_O103", "ORDER_O104", "ORDER_O105", "ORDER_O106",
+            "DRIVER_D05", "DRIVER_D09", "DRIVER_D11"
+        ]);
+
+        const filteredNodes = rawNodes.filter(n => supplyChainIds.has(n.id));
+        const finalNodes = filteredNodes.length >= 10 ? filteredNodes : FALLBACK_GRAPH_NODES;
+
+        const validNodeIds = new Set(finalNodes.map(n => n.id));
+        const filteredLinks = rawLinks.filter(l => validNodeIds.has(l.source) && validNodeIds.has(l.target));
+
+        graphState.nodes = finalNodes.map(n => ({
             ...n,
             vx: 0,
             vy: 0,
             radius: 18
         }));
 
-        graphState.links = rawLinks;
+        graphState.links = filteredLinks.length ? filteredLinks : [...FALLBACK_GRAPH_LINKS];
         graphState.highlightedNodeIds = null;
         graphState.highlightedLinkKeys = null;
         graphState.zoom = 1;
@@ -2165,15 +2170,13 @@ async function loadGraphData() {
         startSimulation();
     } catch (e) {
         console.warn("Using fallback graph data:", e);
-        if (!graphState.nodes || !graphState.nodes.length) {
-            graphState.nodes = FALLBACK_GRAPH_NODES.map(n => ({
-                ...n,
-                vx: 0,
-                vy: 0,
-                radius: 18
-            }));
-            graphState.links = [...FALLBACK_GRAPH_LINKS];
-        }
+        graphState.nodes = FALLBACK_GRAPH_NODES.map(n => ({
+            ...n,
+            vx: 0,
+            vy: 0,
+            radius: 18
+        }));
+        graphState.links = [...FALLBACK_GRAPH_LINKS];
         resizeGraphCanvas();
         layoutVisibleNodes();
         startSimulation();

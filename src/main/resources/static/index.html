@@ -14,7 +14,7 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=20261014_graphfix3">
+    <link rel="stylesheet" href="style.css?v=20261015_cleanflow">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
         if (window.mermaid) {
@@ -67,7 +67,7 @@
 
                 <span class="nav-icon">⌘</span>
 
-                <span>Cypher / SQL</span>
+                <span>SQL Console</span>
 
             </button>
 
@@ -329,11 +329,11 @@
                 <div>
 
                     <div class="section-label">
-                        CYPHER & GRAPH WORKSPACE
+                        SQL WORKSPACE
                     </div>
 
                     <h2>
-                        Cypher & Query Console
+                        SQL Console
                     </h2>
 
                 </div>
@@ -363,7 +363,7 @@
                         </div>
 
                         <h3>
-                            Cypher Graph Query / SQL Bridge
+                            SQL statement
                         </h3>
 
                     </div>
@@ -381,14 +381,6 @@
 
 
                 
-                <div style="display:flex; gap:8px; flex-wrap:wrap; padding:10px 16px; background:#0b1120; border-bottom:1px solid #1e293b;">
-                    <span style="font-size:0.75rem; color:#94a3b8; align-self:center; font-weight:600;">CYPHER SHORTCUTS:</span>
-                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (s:SUPPLIER)-[:SUPPLIES]->(p:PRODUCT) RETURN s.SNAME AS Supplier, p.PNAME AS Product, p.UNITPRICE AS Price LIMIT 25;">📦 Suppliers & Products</button>
-                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS) RETURN c.CNAME AS Customer, o.ORDERID AS OrderId, o.STATUS AS Status, o.AMOUNT AS Amount;">🛒 Customer Orders</button>
-                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (w:WAREHOUSE)-[:STOCKS]->(p:PRODUCT) RETURN w.WNAME AS Warehouse, p.PNAME AS Product, p.CATEGORY AS Category;">🏭 Warehouse Stocks</button>
-                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (d:DRIVER)-[:DELIVERS]->(o:ORDERS) RETURN d.id AS Driver, o.ORDERID AS OrderId, o.STATUS AS Status;">🚚 Delivery Logistics</button>
-                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (n) RETURN labels(n)[0] AS Label, count(n) AS NodeCount ORDER BY NodeCount DESC;">📊 Node Label Summary</button>
-                </div>
                 <div class="editor-wrapper">
 
                     <div class="editor-line-numbers">
@@ -410,7 +402,7 @@
                     <textarea
                         id="sqlInput"
                         spellcheck="false"
-                        placeholder="MATCH (s:SUPPLIER)-[:SUPPLIES]->(p:PRODUCT) RETURN s.SNAME AS Supplier, p.PNAME AS Product, p.UNITPRICE AS Price LIMIT 25;"></textarea>
+                        placeholder="SELECT * FROM CUSTOMER ORDER BY CUSTID;"></textarea>
 
                 </div>
 
@@ -427,7 +419,7 @@
 
 
                     <small>
-                        Executes native Neo4j Cypher (MATCH, RETURN, CREATE, MERGE) & automated SQL SELECT bridge.
+                        DROP, ALTER, TRUNCATE, GRANT and REVOKE are blocked.
                     </small>
 
                 </div>
@@ -864,12 +856,12 @@
                 </div>
 
                 <div class="cypher-shortcuts">
-                    <span class="shortcut-label">Sample Queries:</span>
-                    <button class="pill-btn" data-cypher="MATCH (n) RETURN labels(n)[0] AS EntityType, count(n) AS Count ORDER BY Count DESC">Node Counts</button>
-                    <button class="pill-btn" data-cypher="MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) RETURN s.name AS Supplier, s.city AS City, p.name AS Product, p.unitPrice AS Price">Suppliers &amp; Products</button>
-                    <button class="pill-btn" data-cypher="MATCH (w:Warehouse)-[:STOCKS]->(p:Product) RETURN w.name AS Warehouse, p.name AS Product, p.category AS Category">Warehouse Inventory</button>
-                    <button class="pill-btn" data-cypher="MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN c.name AS Customer, o.id AS OrderID, p.name AS Item">Customer Orders</button>
-                    <button class="pill-btn" data-cypher="MATCH path = (s:Supplier)-[:SUPPLIES]->(p:Product)&lt;-[:STOCKS]-(w:Warehouse) RETURN s.name AS Supplier, p.name AS Product, w.name AS Warehouse LIMIT 10">Full Supply Trace</button>
+                    <span class="shortcut-label">Sample Cypher Queries:</span>
+                    <button type="button" class="pill-btn" data-cypher="MATCH (s:SUPPLIER)-[:SUPPLIES]->(p:PRODUCT) RETURN s.SNAME AS Supplier, p.PNAME AS Product, p.UNITPRICE AS Price LIMIT 25;">📦 Suppliers &amp; Products</button>
+                    <button type="button" class="pill-btn" data-cypher="MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS) RETURN c.CNAME AS Customer, o.ORDERID AS OrderId, o.STATUS AS Status, o.AMOUNT AS Amount;">🛒 Customer Orders</button>
+                    <button type="button" class="pill-btn" data-cypher="MATCH (w:WAREHOUSE)-[:STOCKS]->(p:PRODUCT) RETURN w.WNAME AS Warehouse, p.PNAME AS Product, p.CATEGORY AS Category;">🏭 Warehouse Inventory</button>
+                    <button type="button" class="pill-btn" data-cypher="MATCH (d:DRIVER)-[:DELIVERS]->(o:ORDERS) RETURN d.id AS Driver, o.ORDERID AS OrderId, o.STATUS AS Status;">🚚 Delivery Logistics</button>
+                    <button type="button" class="pill-btn" data-cypher="MATCH (n) RETURN labels(n)[0] AS EntityLabel, count(n) AS TotalNodes ORDER BY TotalNodes DESC;">📊 Node Counts</button>
                 </div>
 
                 <div class="editor-wrapper">
@@ -2102,7 +2094,7 @@
 <div id="toast" class="toast hidden"></div>
 
 
-<script src="app.js?v=20261014_graphfix3"></script>
+<script src="app.js?v=20261015_cleanflow"></script>
 
 </body>
 
