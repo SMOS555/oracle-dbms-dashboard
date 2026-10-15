@@ -72,7 +72,10 @@
             </button>
 
 
-            <!-- Neo4j Graph removed per user request -->
+            <button class="nav-button" data-page="graph">
+                <span class="nav-icon">🕸️</span>
+                <span>Neo4j Graph</span>
+            </button>
 
 
             <button class="nav-button" data-page="triggers">
@@ -765,7 +768,144 @@
         </section>
 
 
-        <!-- Unorganized Neo4j Graph Workbench removed per user request -->
+        <!-- ================= MODERN DATABASE: NEO4J GRAPH WORKBENCH ================= -->
+        <section id="graphPage" class="page">
+            <div class="workspace-toolbar">
+                <div>
+                    <div class="section-label">MODERN DATABASE EXTENSION · GRAPH DB</div>
+                    <h2>Neo4j Supply Chain Graph (Organized Pipeline)</h2>
+                </div>
+                <div class="toolbar-controls">
+                    <span id="graphEngineBadge" class="badge badge-purple">Engine: Standby</span>
+                    <button id="refreshGraph" class="button secondary-button">↻ Refresh Network</button>
+                </div>
+            </div>
+
+            <!-- Graph Canvas Panel -->
+            <section class="panel">
+                <div class="panel-header compact">
+                    <div class="graph-legend-bar">
+                        <span class="legend-item"><span class="dot dot-supplier"></span> Supplier</span>
+                        <span class="legend-item"><span class="dot dot-product"></span> Product</span>
+                        <span class="legend-item"><span class="dot dot-warehouse"></span> Warehouse</span>
+                        <span class="legend-item"><span class="dot dot-customer"></span> Customer</span>
+                        <span class="legend-item"><span class="dot dot-order"></span> Order</span>
+                        <span class="legend-item"><span class="dot dot-driver"></span> Driver</span>
+                    </div>
+                </div>
+
+                <div class="graph-toolbar-bar">
+                    <div class="filter-group">
+                        <label>Filter Nodes:</label>
+                        <select id="graphFilter">
+                            <option value="ALL">All Entities (Full Graph)</option>
+                            <option value="Supplier">Suppliers Only</option>
+                            <option value="Product">Products (Standard, Perishable, Hazmat)</option>
+                            <option value="Warehouse">Warehouses &amp; Stock</option>
+                            <option value="Order">Orders &amp; Items</option>
+                            <option value="Customer">Retail Customers</option>
+                            <option value="Driver">Drivers &amp; Fleets</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group layout-group">
+                        <span class="badge badge-purple" style="font-weight:600;"><span style="color:#10b981;">●</span> Organized Supply Chain Pipeline</span>
+                        <button id="btnAutoOrganize" class="button secondary-button small" title="Re-align all nodes into clean non-overlapping supply chain columns">⚡ Re-Align Flow</button>
+                    </div>
+
+                    <div class="filter-group path-finder">
+                        <label>Supply Chain Pathfinder:</label>
+                        <select id="traceSupplierSelect">
+                            <option value="SUPPLIER_S01">S01 - Apex Agro Supplies</option>
+                            <option value="SUPPLIER_S03">S03 - Metro Wholesale Mills</option>
+                            <option value="SUPPLIER_S05">S05 - Delta Cold &amp; Chemicals</option>
+                        </select>
+                        <button id="btnTracePath" class="button primary-button small">Trace Supply Chain</button>
+                        <button id="btnResetTrace" class="button secondary-button small">Reset Path</button>
+                    </div>
+
+                    <div class="canvas-actions">
+                        <button id="btnZoomIn" class="button icon-btn" title="Zoom In">+</button>
+                        <button id="btnZoomOut" class="button icon-btn" title="Zoom Out">-</button>
+                        <button id="btnResetZoom" class="button icon-btn" title="Center View">⊡</button>
+                    </div>
+                </div>
+
+                <div class="canvas-container" id="canvasContainer">
+                    <canvas id="graphCanvas"></canvas>
+                    <div id="graphTooltip" class="graph-tooltip hidden"></div>
+                    <div id="nodeDetailDrawer" class="node-detail-drawer hidden">
+                        <div class="drawer-header">
+                            <h4 id="drawerNodeTitle">Node Details</h4>
+                            <button id="closeDrawer" class="close-button">&times;</button>
+                        </div>
+                        <div id="drawerNodeBody" class="drawer-body"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cypher Query Workspace -->
+            <section class="panel">
+                <div class="panel-header compact">
+                    <div>
+                        <div class="panel-kicker">GRAPH QUERY LANGUAGE</div>
+                        <h3>Cypher Console</h3>
+                        <p>Execute declarative Cypher graph pattern matching queries.</p>
+                    </div>
+                </div>
+
+                <div class="cypher-shortcuts">
+                    <span class="shortcut-label">Sample Queries:</span>
+                    <button class="pill-btn" data-cypher="MATCH (n) RETURN labels(n)[0] AS EntityType, count(n) AS Count ORDER BY Count DESC">Node Counts</button>
+                    <button class="pill-btn" data-cypher="MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) RETURN s.name AS Supplier, s.city AS City, p.name AS Product, p.unitPrice AS Price">Suppliers &amp; Products</button>
+                    <button class="pill-btn" data-cypher="MATCH (w:Warehouse)-[:STOCKS]->(p:Product) RETURN w.name AS Warehouse, p.name AS Product, p.category AS Category">Warehouse Inventory</button>
+                    <button class="pill-btn" data-cypher="MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(p:Product) RETURN c.name AS Customer, o.id AS OrderID, p.name AS Item">Customer Orders</button>
+                    <button class="pill-btn" data-cypher="MATCH path = (s:Supplier)-[:SUPPLIES]->(p:Product)&lt;-[:STOCKS]-(w:Warehouse) RETURN s.name AS Supplier, p.name AS Product, w.name AS Warehouse LIMIT 10">Full Supply Trace</button>
+                </div>
+
+                <div class="editor-wrapper">
+                    <textarea id="cypherInput" spellcheck="false" placeholder="MATCH (n) RETURN n LIMIT 25;"></textarea>
+                </div>
+
+                <div class="sql-actions">
+                    <button id="runCypher" class="button primary-button">▶ Execute Cypher</button>
+                    <small>Declarative graph pattern matching executed via Neo4j Driver</small>
+                </div>
+
+                <div id="cypherResultWrap" class="result-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">🕸️</div>
+                        <h3>Waiting for Cypher query</h3>
+                        <p>Click a sample query above or type a Cypher statement to inspect graph records.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottleneck & Risk Analysis -->
+            <section class="panel">
+                <div class="panel-header compact">
+                    <div>
+                        <div class="panel-kicker">NETWORK TELEMETRY</div>
+                        <h3>Supply Chain Bottlenecks &amp; Single Point of Failure (SPOF)</h3>
+                    </div>
+                    <button id="btnRefreshBottlenecks" class="button secondary-button small">Analyze Topology</button>
+                </div>
+                <div id="bottleneckWrap" class="bottlenecks-grid">
+                    <div class="telemetry-card">
+                        <h4>Single Source Vulnerabilities</h4>
+                        <div id="singleSourceList">Loading analysis...</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <h4>Driver Workload Centrality</h4>
+                        <div id="driverLoadList">Loading analysis...</div>
+                    </div>
+                    <div class="telemetry-card">
+                        <h4>Graph Density &amp; Topology</h4>
+                        <div id="topologyMetrics">Loading analysis...</div>
+                    </div>
+                </div>
+            </section>
+        </section>
         <!-- ================= ER & EER STUDIO ================= -->
         <section id="eerPage" class="page">
             <div class="workspace-toolbar">

@@ -845,6 +845,7 @@ function showPage(page) {
     const titles = {
         explorer: "Data Explorer",
         sql: "SQL Console",
+        graph: "Neo4j Graph (Organized Supply Chain)",
         triggers: "Database Triggers",
         cursors: "Database Cursors",
         eer: "ER & Enhanced ER (EER) Studio",
@@ -854,7 +855,17 @@ function showPage(page) {
     $("pageTitle").textContent =
         titles[page] || "Data Explorer";
 
-    if (page === "eer") {
+    if (page === "graph") {
+        initGraphWorkbench();
+        setTimeout(() => {
+            if (typeof resizeGraphCanvas === "function") {
+                resizeGraphCanvas();
+            }
+            if (typeof layoutVisibleNodes === "function") {
+                layoutVisibleNodes();
+            }
+        }, 60);
+    } else if (page === "eer") {
         initEerStudio();
     } else if (page === "cloud") {
         checkCloudHealth();
@@ -1836,17 +1847,41 @@ const FALLBACK_GRAPH_LINKS = [
     { source: "MANAGER_M01", target: "WAREHOUSE_W01", label: "MANAGES", properties: { since: "2024" } }
 ];
 
+const TIER_CONFIG = [
+    { key: "supplier", label: "SUPPLIERS", color: "#8b5cf6", match: n => /supplier/i.test(n.type) || /^supplier_/i.test(n.id) },
+    { key: "product", label: "PRODUCTS", color: "#10b981", match: n => /product|perish|hazard/i.test(n.type) || /^product_/i.test(n.id) },
+    { key: "warehouse", label: "WAREHOUSES & HUBS", color: "#3b82f6", match: n => /warehouse|manager/i.test(n.type) || /^warehouse_|^manager_/i.test(n.id) },
+    { key: "customer", label: "CUSTOMERS", color: "#f59e0b", match: n => /customer/i.test(n.type) || /^customer_/i.test(n.id) },
+    { key: "order", label: "ORDERS", color: "#06b6d4", match: n => /order/i.test(n.type) || /^order_/i.test(n.id) },
+    { key: "driver", label: "FLEET LOGISTICS", color: "#f97316", match: n => /driver/i.test(n.type) || /^driver_/i.test(n.id) }
+];
+
+function getNodeTierIndex(node) {
+    if (!node) return 2;
+    const idx = TIER_CONFIG.findIndex(t => t.match(node));
+    return idx >= 0 ? idx : 2;
+}
+
 const graphState = {
     initialized: false,
     layout: "tiered",
-    nodes: FALLBACK_GRAPH_NODES.map(n => ({
-        ...n,
-        x: 400,
-        y: 260,
-        vx: 0,
-        vy: 0,
-        radius: 18
-    })),
+    nodes: FALLBACK_GRAPH_NODES.map((n, i) => {
+        const tierIdx = getNodeTierIndex(n);
+        const colX = 80 + tierIdx * 145;
+        const targetY = 90 + ((i % 4) + 1) * 80;
+        return {
+            ...n,
+            x: colX,
+            y: targetY,
+            targetX: colX,
+            targetY: targetY,
+            colX: colX,
+            tierIndex: tierIdx,
+            vx: 0,
+            vy: 0,
+            radius: 18
+        };
+    }),
     links: [...FALLBACK_GRAPH_LINKS],
     filter: "ALL",
     hoveredNode: null,
@@ -1862,21 +1897,6 @@ const graphState = {
     highlightedLinkKeys: null,
     animating: true
 };
-
-const TIER_CONFIG = [
-    { key: "supplier", label: "SUPPLIERS", color: "#8b5cf6", match: n => /supplier/i.test(n.type) || /^supplier_/i.test(n.id) },
-    { key: "product", label: "PRODUCTS", color: "#10b981", match: n => /product|perish|hazard/i.test(n.type) || /^product_/i.test(n.id) },
-    { key: "warehouse", label: "WAREHOUSES & HUBS", color: "#3b82f6", match: n => /warehouse|manager/i.test(n.type) || /^warehouse_|^manager_/i.test(n.id) },
-    { key: "customer", label: "CUSTOMERS", color: "#f59e0b", match: n => /customer/i.test(n.type) || /^customer_/i.test(n.id) },
-    { key: "order", label: "ORDERS", color: "#06b6d4", match: n => /order/i.test(n.type) || /^order_/i.test(n.id) },
-    { key: "driver", label: "FLEET LOGISTICS", color: "#f97316", match: n => /driver/i.test(n.type) || /^driver_/i.test(n.id) }
-];
-
-function getNodeTierIndex(node) {
-    if (!node) return 2;
-    const idx = TIER_CONFIG.findIndex(t => t.match(node));
-    return idx >= 0 ? idx : 2;
-}
 
 const NODE_COLORS = {
     Supplier: "#8b5cf6",
@@ -2102,28 +2122,8 @@ function layoutVisibleNodes() {
     const nodes = getVisibleNodes();
     if (!nodes || !nodes.length) return;
 
-    const layout = graphState.layout || "tiered";
-    if (layout === "tiered") {
-        layoutTieredSupplyChain(nodes, width, height);
-    } else if (layout === "radial") {
-        layoutRadialRings(nodes, width, height);
-    } else {
-        const cx = width / 2;
-        const cy = height / 2;
-        const orbitRadius = Math.max(90, Math.min(width, height) * 0.35);
-        nodes.forEach((n, i) => {
-            const angle = (i / nodes.length) * Math.PI * 2;
-            const tx = cx + Math.cos(angle) * orbitRadius;
-            const ty = cy + Math.sin(angle) * orbitRadius;
-            n.targetX = tx;
-            n.targetY = ty;
-            n.x = tx;
-            n.y = ty;
-            n.vx = 0;
-            n.vy = 0;
-            n.radius = 18;
-        });
-    }
+    graphState.layout = "tiered";
+    layoutTieredSupplyChain(nodes, width, height);
 
     graphState.zoom = 1;
     graphState.panX = 0;
@@ -2413,19 +2413,15 @@ function startSimulation() {
 
             const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
-            // Physics step with strict stability & bounds
+            // Physics step with strict stability & bounds (Organized Tiered Supply Chain)
             if (graphState.animating && nodes.length > 0) {
-                const isTiered = graphState.layout === "tiered";
-                const isRadial = graphState.layout === "radial";
-
-                // 1. Anchor pull towards clean designated slot (prevents clumping in center)
+                // 1. Strong anchor pull towards clean designated slot (maintains organized column tiers)
                 nodes.forEach(n => {
                     if (n !== graphState.dragNode) {
                         const tx = n.targetX !== undefined ? n.targetX : cx;
                         const ty = n.targetY !== undefined ? n.targetY : cy;
-                        const pullFactor = isTiered ? 0.08 : (isRadial ? 0.05 : 0.012);
-                        n.vx += (tx - n.x) * pullFactor;
-                        n.vy += (ty - n.y) * pullFactor;
+                        n.vx += (tx - n.x) * 0.14;
+                        n.vy += (ty - n.y) * 0.14;
                     }
                 });
 
@@ -2457,35 +2453,18 @@ function startSimulation() {
                     }
                 }
 
-                // 3. Link spring force (only active in force mode so column structure remains undisturbed)
-                if (!isTiered) {
-                    graphState.links.forEach(l => {
-                        const s = nodeMap.get(l.source);
-                        const t = nodeMap.get(l.target);
-                        if (s && t) {
-                            const dx = t.x - s.x;
-                            const dy = t.y - s.y;
-                            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                            const spring = Math.min(2.0, (dist - 120) * 0.015);
-                            if (s !== graphState.dragNode) { s.vx += dx * spring; s.vy += dy * spring; }
-                            if (t !== graphState.dragNode) { t.vx -= dx * spring; t.vy -= dy * spring; }
-                        }
-                    });
-                }
-
-                // 4. Velocity cap, friction damping, and canvas boundary clamping
+                // 3. Velocity cap, friction damping, and canvas boundary clamping
                 const pad = 35;
                 nodes.forEach(n => {
                     if (n !== graphState.dragNode) {
-                        const maxV = isTiered ? 4 : 6;
-                        n.vx = Math.max(-maxV, Math.min(maxV, n.vx));
-                        n.vy = Math.max(-maxV, Math.min(maxV, n.vy));
+                        n.vx = Math.max(-4, Math.min(4, n.vx));
+                        n.vy = Math.max(-4, Math.min(4, n.vy));
 
                         n.x += n.vx;
                         n.y += n.vy;
 
-                        n.vx *= 0.72;
-                        n.vy *= 0.72;
+                        n.vx *= 0.65;
+                        n.vy *= 0.65;
 
                         n.x = Math.max(pad, Math.min(width - pad, n.x));
                         n.y = Math.max(pad, Math.min(height - pad, n.y));
