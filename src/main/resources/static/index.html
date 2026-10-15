@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Oracle Data Studio</title>
+    <title>Neo4j Graph Database Studio</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,16 +34,16 @@
         <div class="brand">
 
             <div class="logo">
-                OD
+                NG
             </div>
 
             <div>
                 <div class="brand-title">
-                    Oracle Data Studio
+                    Neo4j Graph Studio
                 </div>
 
                 <div class="brand-subtitle">
-                    Database Workbench
+                    Graph & Supply Chain
                 </div>
             </div>
 
@@ -67,7 +67,7 @@
 
                 <span class="nav-icon">⌘</span>
 
-                <span>SQL Console</span>
+                <span>Cypher / SQL</span>
 
             </button>
 
@@ -145,7 +145,7 @@
 
                 <strong>Connected</strong>
 
-                <small>Oracle Database</small>
+                <small>Neo4j Graph Database</small>
 
             </div>
 
@@ -329,11 +329,11 @@
                 <div>
 
                     <div class="section-label">
-                        SQL WORKSPACE
+                        CYPHER & GRAPH WORKSPACE
                     </div>
 
                     <h2>
-                        SQL Console
+                        Cypher & Query Console
                     </h2>
 
                 </div>
@@ -363,7 +363,7 @@
                         </div>
 
                         <h3>
-                            SQL statement
+                            Cypher Graph Query / SQL Bridge
                         </h3>
 
                     </div>
@@ -380,6 +380,15 @@
                 </div>
 
 
+                
+                <div style="display:flex; gap:8px; flex-wrap:wrap; padding:10px 16px; background:#0b1120; border-bottom:1px solid #1e293b;">
+                    <span style="font-size:0.75rem; color:#94a3b8; align-self:center; font-weight:600;">CYPHER SHORTCUTS:</span>
+                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (s:SUPPLIER)-[:SUPPLIES]->(p:PRODUCT) RETURN s.SNAME AS Supplier, p.PNAME AS Product, p.UNITPRICE AS Price LIMIT 25;">📦 Suppliers & Products</button>
+                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS) RETURN c.CNAME AS Customer, o.ORDERID AS OrderId, o.STATUS AS Status, o.AMOUNT AS Amount;">🛒 Customer Orders</button>
+                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (w:WAREHOUSE)-[:STOCKS]->(p:PRODUCT) RETURN w.WNAME AS Warehouse, p.PNAME AS Product, p.CATEGORY AS Category;">🏭 Warehouse Stocks</button>
+                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (d:DRIVER)-[:DELIVERS]->(o:ORDERS) RETURN d.id AS Driver, o.ORDERID AS OrderId, o.STATUS AS Status;">🚚 Delivery Logistics</button>
+                    <button type="button" class="cypher-quick-pill button secondary-button" style="padding:4px 10px; font-size:0.75rem;" data-cypher="MATCH (n) RETURN labels(n)[0] AS Label, count(n) AS NodeCount ORDER BY NodeCount DESC;">📊 Node Label Summary</button>
+                </div>
                 <div class="editor-wrapper">
 
                     <div class="editor-line-numbers">
@@ -401,7 +410,7 @@
                     <textarea
                         id="sqlInput"
                         spellcheck="false"
-                        placeholder="SELECT * FROM CUSTOMER ORDER BY CUSTID;"></textarea>
+                        placeholder="MATCH (s:SUPPLIER)-[:SUPPLIES]->(p:PRODUCT) RETURN s.SNAME AS Supplier, p.PNAME AS Product, p.UNITPRICE AS Price LIMIT 25;"></textarea>
 
                 </div>
 
@@ -418,7 +427,7 @@
 
 
                     <small>
-                        DROP, ALTER, TRUNCATE, GRANT and REVOKE are blocked.
+                        Executes native Neo4j Cypher (MATCH, RETURN, CREATE, MERGE) & automated SQL SELECT bridge.
                     </small>
 
                 </div>
@@ -518,7 +527,7 @@
                         </h3>
 
                         <p>
-                            View the triggers created in the Oracle database and their current status.
+                            View the triggers created in the Neo4j Graph Database and their current status.
                         </p>
 
                     </div>

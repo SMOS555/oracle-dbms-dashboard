@@ -160,12 +160,12 @@ public class DatabaseController {
             String engine = db.getDatabaseEngineName();
             return Map.of(
                 "status", "UP",
-                "database", engine != null ? engine : "Oracle"
+                "database", engine != null ? engine : "Neo4j Graph Database"
             );
         } catch (Exception e) {
             return Map.of(
                 "status", "DOWN",
-                "database", "Oracle",
+                "database", "Neo4j Graph Database",
                 "error",
                 e.getMessage() == null
                     ? "Connection failed."

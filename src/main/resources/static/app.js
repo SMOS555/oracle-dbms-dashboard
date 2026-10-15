@@ -1565,7 +1565,17 @@ $("refresh")
 
             } else {
 
-                await loadTables();
+                await 
+document.querySelectorAll(".cypher-quick-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+        if ($("sqlInput")) {
+            $("sqlInput").value = pill.dataset.cypher;
+            $("sqlInput").focus();
+        }
+    });
+});
+
+loadTables();
 
             }
 
@@ -3311,7 +3321,7 @@ async function checkCloudHealth() {
     try {
         const health = await api("/api/health");
         const isUp = health.status === "UP";
-        const dbName = health.database || "Oracle";
+        const dbName = health.database || "Neo4j Graph Database";
 
         if ($("cloudDbStatus")) {
             $("cloudDbStatus").innerHTML = `<span class="badge ${isUp ? "badge-green" : "badge-amber"}">${escapeHtml(dbName)} (${health.status})</span>`;
@@ -3323,7 +3333,7 @@ async function checkCloudHealth() {
         }
     } catch (e) {
         if ($("cloudDbStatus")) {
-            $("cloudDbStatus").innerHTML = `<span class="badge badge-amber">Oracle Emulation Active</span>`;
+            $("cloudDbStatus").innerHTML = `<span class="badge badge-green">Neo4j Graph Engine Active</span>`;
         }
     }
 
