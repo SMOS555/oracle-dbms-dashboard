@@ -283,8 +283,7 @@
 
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <button
-                            id="addRecordBtn"
-                            class="button primary-button">
+                            id="addRecordBtn" class="button primary-button" onclick="openAddModal()">
                             + Add Record
                         </button>
 
@@ -2120,8 +2119,7 @@
             </div>
 
             <button
-                id="closeAddModal"
-                class="close-button">
+                id="closeAddModal" class="close-button" onclick="closeAddModal()">
                 ×
             </button>
 
@@ -2135,14 +2133,12 @@
         <div class="modal-actions">
 
             <button
-                id="cancelAdd"
-                class="button secondary-button">
+                id="cancelAdd" class="button secondary-button" onclick="closeAddModal()">
                 Cancel
             </button>
 
             <button
-                id="saveAdd"
-                class="button primary-button">
+                id="saveAdd" class="button primary-button" onclick="saveAdd()">
                 Save Record
             </button>
 
@@ -2157,7 +2153,7 @@
 <div id="toast" class="toast hidden"></div>
 
 
-<script src="app.js?v=20261015_cleanflow"></script>
+<script src="app.js?v=20261021_add_record_v6"></script>
 
 </body>
 

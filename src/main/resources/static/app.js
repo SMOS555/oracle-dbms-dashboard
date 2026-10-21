@@ -665,57 +665,131 @@ async function saveEdit() {
    ADD RECORD MODAL & SAVE
 ===================================================== */
 
-function openAddModal() {
-    if (!state.table) {
-        showToast("Please choose a table first from the explorer.");
+function closeAddModal() {
+    const modal = $("addModal");
+    if (modal) modal.classList.add("hidden");
+}
+window.closeAddModal = closeAddModal;
+
+async function openAddModal(tableName) {
+    let targetTable = (typeof tableName === "string" && tableName.trim()) ? tableName.trim() : state.table;
+    if (!targetTable && $("tableSelect") && $("tableSelect").value) {
+        targetTable = $("tableSelect").value;
+    }
+    if (!targetTable) {
+        targetTable = (state.tables && state.tables.length > 0)
+            ? (state.tables.includes("PRODUCT") ? "PRODUCT" : state.tables[0])
+            : "PRODUCT";
+    }
+    state.table = targetTable;
+    if ($("tableSelect")) $("tableSelect").value = targetTable;
+
+    const modal = $("addModal");
+    if (!modal) {
+        showToast("Error: Add Record modal not found.");
         return;
     }
 
     if ($("addModalTitle")) {
-        $("addModalTitle").textContent = `Add Record to ${state.table}`;
+        $("addModalTitle").textContent = `Add Record to ${targetTable}`;
     }
 
     const fieldsContainer = $("addFields");
     if (!fieldsContainer) return;
 
-    fieldsContainer.innerHTML = state.columns
-        .filter(column => {
-            const name = getColumnName(column);
-            return name !== "id" && name !== "name";
-        })
-        .map(column => {
-            const name = getColumnName(column);
-            const isPrimaryKey = state.primaryKeys.includes(name);
-            const colType = column.type || "STRING";
+    const availableTables = (state.tables && state.tables.length > 0) ? state.tables : [targetTable];
 
-            return `
-                <div class="field ${isPrimaryKey ? "required-pk" : ""}">
-                    <label>
-                        ${escapeHtml(name)}
-                        ${isPrimaryKey ? '<span style="color: var(--red); font-weight: 700; margin-left: 6px;">· REQUIRED (PRIMARY KEY)</span>' : ''}
-                    </label>
-                    <input
-                        data-add-field="${escapeHtml(name)}"
-                        placeholder="Enter ${escapeHtml(name)} (${escapeHtml(colType)})"
-                        ${isPrimaryKey ? "required" : ""}
-                    />
-                </div>
-            `;
-        }).join("");
+    fieldsContainer.innerHTML = `
+        <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+            <label style="color: var(--blue); font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">TARGET TABLE</label>
+            <select id="modalTableSelect" onchange="changeAddModalTable(this.value)" style="width: 100%; padding: 9px 12px; background: #0c131a; color: #f2f6fa; border: 1px solid #293746; border-radius: 6px; font-weight: 600;">
+                ${availableTables.map(t => `
+                    <option value="${escapeHtml(t)}" ${t.toUpperCase() === targetTable.toUpperCase() ? "selected" : ""}>
+                        ${escapeHtml(t)}
+                    </option>
+                `).join("")}
+            </select>
+        </div>
+        <div id="addFieldsInputs" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div style="grid-column: 1 / -1; color: #718398; font-size: 13px; padding: 12px 0;">Loading columns for ${escapeHtml(targetTable)}...</div>
+        </div>
+    `;
 
-    $("addModal").classList.remove("hidden");
+    modal.classList.remove("hidden");
+
+    await renderAddModalInputs(targetTable);
+}
+window.openAddModal = openAddModal;
+
+async function changeAddModalTable(newTable) {
+    if (!newTable) return;
+    state.table = newTable;
+    if ($("tableSelect")) $("tableSelect").value = newTable;
+    if ($("addModalTitle")) $("addModalTitle").textContent = `Add Record to ${newTable}`;
+    await renderAddModalInputs(newTable);
+}
+window.changeAddModalTable = changeAddModalTable;
+
+async function renderAddModalInputs(table) {
+    const container = $("addFieldsInputs");
+    if (!container) return;
+
+    try {
+        const data = await api(`/api/tables/${encodeURIComponent(table)}/columns`);
+        const columns = data.columns || [];
+        const primaryKeys = data.primaryKeys || [];
+
+        state.columns = columns;
+        state.primaryKeys = primaryKeys;
+
+        if (columns.length === 0) {
+            container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--yellow);">No columns defined for ${escapeHtml(table)}.</div>`;
+            return;
+        }
+
+        container.innerHTML = columns
+            .filter(column => {
+                const name = getColumnName(column);
+                return name !== "id" && name !== "name";
+            })
+            .map(column => {
+                const name = getColumnName(column);
+                const isPrimaryKey = primaryKeys.includes(name);
+                const colType = column.type || "STRING";
+
+                return `
+                    <div class="field ${isPrimaryKey ? "required-pk" : ""}">
+                        <label>
+                            ${escapeHtml(name)}
+                            ${isPrimaryKey ? '<span style="color: var(--red); font-weight: 700; margin-left: 6px;">· REQUIRED (PRIMARY KEY)</span>' : ''}
+                        </label>
+                        <input
+                            data-add-field="${escapeHtml(name)}"
+                            placeholder="Enter ${escapeHtml(name)} (${escapeHtml(colType)})"
+                            ${isPrimaryKey ? "required" : ""}
+                        />
+                    </div>
+                `;
+            }).join("");
+    } catch (e) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; color: var(--red);">Error loading schema: ${escapeHtml(e.message)}</div>`;
+    }
 }
 
 async function saveAdd() {
-    if (!state.table) return;
+    const table = state.table || ($("modalTableSelect") ? $("modalTableSelect").value : "");
+    if (!table) {
+        showToast("Error: No table selected.");
+        return;
+    }
 
     const newValues = {};
     let missingPk = false;
 
-    document.querySelectorAll("#addFields input").forEach(input => {
+    document.querySelectorAll("#addFieldsInputs input").forEach(input => {
         const field = input.dataset.addField;
         const val = input.value.trim();
-        if (state.primaryKeys.includes(field) && !val) {
+        if (state.primaryKeys && state.primaryKeys.includes(field) && !val) {
             missingPk = true;
         }
         if (val !== "") {
@@ -724,29 +798,29 @@ async function saveAdd() {
     });
 
     if (missingPk) {
-        showToast("Error: Primary key values are required to add a record.");
+        showToast("Error: Primary key values are required.");
         return;
     }
 
     if (Object.keys(newValues).length === 0) {
-        showToast("Error: Please provide at least one field value.");
+        showToast("Error: Please provide values to insert.");
         return;
     }
 
     try {
-        const res = await api(`/api/tables/${encodeURIComponent(state.table)}`, {
+        const res = await api(`/api/tables/${encodeURIComponent(table)}`, {
             method: "POST",
             body: JSON.stringify(newValues)
         });
 
-        $("addModal").classList.add("hidden");
-        showToast(res.message || `Record added successfully to ${state.table}.`);
-        await loadTable(state.table);
+        closeAddModal();
+        showToast(res.message || `Record added successfully to ${table}.`);
+        await loadTable(table);
     } catch (error) {
         showToast("Add failed: " + error.message);
     }
 }
-
+window.saveAdd = saveAdd;
 
 /* =====================================================
    CASCADING DELETE ROW
