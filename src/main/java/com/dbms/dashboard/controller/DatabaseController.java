@@ -42,31 +42,59 @@ public class DatabaseController {
         );
     }
 
+    @PostMapping("/tables/{table}")
+    public ResponseEntity<?> insert(
+        @PathVariable String table,
+        @RequestBody Map<String, Object> values
+    ) {
+        try {
+            int count = db.insert(table, values);
+            return ResponseEntity.ok(Map.of(
+                "message", "Record inserted successfully.",
+                "affectedRows", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", e.getMessage() != null ? e.getMessage() : "Insert failed."
+            ));
+        }
+    }
+
     @PutMapping("/tables/{table}")
-    public Map<String, Object> update(
+    public ResponseEntity<?> update(
         @PathVariable String table,
         @RequestParam Map<String, String> where,
         @RequestBody Map<String, Object> values
     ) {
-        int count = db.update(table, values, where);
-
-        return Map.of(
-            "message", "Updated successfully.",
-            "affectedRows", count
-        );
+        try {
+            int count = db.update(table, values, where);
+            return ResponseEntity.ok(Map.of(
+                "message", "Updated successfully.",
+                "affectedRows", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", e.getMessage() != null ? e.getMessage() : "Update failed."
+            ));
+        }
     }
 
     @DeleteMapping("/tables/{table}")
-    public Map<String, Object> delete(
+    public ResponseEntity<?> delete(
         @PathVariable String table,
         @RequestParam Map<String, String> where
     ) {
-        int count = db.delete(table, where);
-
-        return Map.of(
-            "message", "Deleted successfully.",
-            "affectedRows", count
-        );
+        try {
+            int count = db.delete(table, where);
+            return ResponseEntity.ok(Map.of(
+                "message", "Deleted successfully (" + count + " related records updated/removed across all tables).",
+                "affectedRows", count
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", e.getMessage() != null ? e.getMessage() : "Delete failed."
+            ));
+        }
     }
 
     // =========================

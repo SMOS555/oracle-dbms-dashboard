@@ -353,6 +353,132 @@ public class GraphDatabaseService {
         return CANONICAL_LABELS;
     }
 
+    public static final Map<String, List<Map<String, Object>>> CANONICAL_TABLE_COLUMNS = new LinkedHashMap<>();
+    static {
+        CANONICAL_TABLE_COLUMNS.put("CITY", List.of(
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "STATE", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("SUPPLIER", List.of(
+            Map.of("name", "SUPPLIERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "SNAME", "type", "STRING", "length", 100, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "RATING", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "PHONE", "type", "STRING", "length", 20, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("SUPPLIER_PHONE", List.of(
+            Map.of("name", "SUPPLIERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "PHONE", "type", "STRING", "length", 20, "nullable", false, "isPrimaryKey", true)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("PRODUCT", List.of(
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "PNAME", "type", "STRING", "length", 100, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "CATEGORY", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "UNITPRICE", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("PERISHABLE_PRODUCT", List.of(
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "SHELFLIFEDAYS", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "STORAGETEMPC", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("HAZARDOUS_PRODUCT", List.of(
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "HAZARDCLASS", "type", "STRING", "length", 100, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "HANDLINGNOTE", "type", "STRING", "length", 200, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("SUPPLIES", List.of(
+            Map.of("name", "SUPPLIERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "LEADTIMEDAYS", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("INSPECTION", List.of(
+            Map.of("name", "INSPID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "SUPPLIERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "INSPDATE", "type", "DATE", "length", 20, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "RESULT", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("WAREHOUSE", List.of(
+            Map.of("name", "WAREHOUSEID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "WNAME", "type", "STRING", "length", 100, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "CAPACITY", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "MANAGERID", "type", "STRING", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("STOCK", List.of(
+            Map.of("name", "WAREHOUSEID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "QUANTITY", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("EMPLOYEE", List.of(
+            Map.of("name", "EMPID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "ENAME", "type", "STRING", "length", 100, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "ROLE", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "SALARY", "type", "NUMBER", "length", 12, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "WAREHOUSEID", "type", "STRING", "length", 10, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "SUPERVISORID", "type", "STRING", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("MANAGER", List.of(
+            Map.of("name", "EMPID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "LEVELNO", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "BONUS", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("DRIVER", List.of(
+            Map.of("name", "EMPID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "LICENSENO", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "EXPIRY", "type", "DATE", "length", 20, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("DRIVER_CITY", List.of(
+            Map.of("name", "DRIVERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", true)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("CUSTOMER", List.of(
+            Map.of("name", "CUSTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "CNAME", "type", "STRING", "length", 100, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "STREET", "type", "STRING", "length", 100, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "PHONE", "type", "STRING", "length", 20, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("ORDERS", List.of(
+            Map.of("name", "ORDERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "ORDERDATE", "type", "DATE", "length", 20, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "STATUS", "type", "STRING", "length", 30, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "CUSTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "AMOUNT", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("ORDER_ITEM", List.of(
+            Map.of("name", "ORDERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "PRODUCTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "QTY", "type", "NUMBER", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "PRICE", "type", "NUMBER", "length", 10, "nullable", false, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("ORDER_DRIVER", List.of(
+            Map.of("name", "ORDERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "DRIVERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("DELIVERY_DUTY", List.of(
+            Map.of("name", "ORDERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "DRIVERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "CITY", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", true)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("GOODS_MOVEMENT", List.of(
+            Map.of("name", "MOVEMENTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "ORDERID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "WAREHOUSEID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", false),
+            Map.of("name", "MOVEDATE", "type", "DATE", "length", 20, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "STATUS", "type", "STRING", "length", 30, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("SHIPMENT", List.of(
+            Map.of("name", "MOVEMENTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "DELIVERYDATE", "type", "DATE", "length", 20, "nullable", true, "isPrimaryKey", false)
+        ));
+        CANONICAL_TABLE_COLUMNS.put("GOODS_RETURN", List.of(
+            Map.of("name", "MOVEMENTID", "type", "STRING", "length", 10, "nullable", false, "isPrimaryKey", true),
+            Map.of("name", "REASON", "type", "STRING", "length", 200, "nullable", true, "isPrimaryKey", false),
+            Map.of("name", "REFUNDAMT", "type", "NUMBER", "length", 10, "nullable", true, "isPrimaryKey", false)
+        ));
+    }
+
     public List<Map<String, Object>> getNodesByLabel(String label) {
         String cleanLabel = (label == null) ? "SUPPLIER" : label.trim();
 
@@ -365,6 +491,8 @@ public class GraphDatabaseService {
                 while (result.hasNext()) {
                     Record rec = result.next();
                     Map<String, Object> props = new LinkedHashMap<>(rec.get("props").asMap());
+                    props.remove("id");
+                    props.remove("name");
                     rows.add(props);
                 }
                 if (!rows.isEmpty()) {
@@ -383,17 +511,24 @@ public class GraphDatabaseService {
             })
             .map(n -> {
                 Map<String, Object> props = new LinkedHashMap<>((Map<String, Object>) n.get("properties"));
+                props.remove("id");
+                props.remove("name");
                 return props;
             })
             .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> getLabelProperties(String label) {
+        String upper = (label == null) ? "" : label.toUpperCase(Locale.ROOT).trim();
+        if (CANONICAL_TABLE_COLUMNS.containsKey(upper)) {
+            return CANONICAL_TABLE_COLUMNS.get(upper);
+        }
+
         List<Map<String, Object>> rows = getNodesByLabel(label);
         if (rows.isEmpty()) {
             return List.of(
-                Map.of("name", "ID", "type", "STRING", "length", 50, "nullable", false),
-                Map.of("name", "NAME", "type", "STRING", "length", 100, "nullable", true)
+                Map.of("name", "ID", "type", "STRING", "length", 50, "nullable", false, "isPrimaryKey", true),
+                Map.of("name", "NAME", "type", "STRING", "length", 100, "nullable", true, "isPrimaryKey", false)
             );
         }
 
@@ -401,6 +536,7 @@ public class GraphDatabaseService {
         for (Map<String, Object> row : rows) {
             for (Map.Entry<String, Object> entry : row.entrySet()) {
                 String key = entry.getKey();
+                if ("id".equalsIgnoreCase(key) || "name".equalsIgnoreCase(key)) continue;
                 if (!types.containsKey(key)) {
                     Object val = entry.getValue();
                     if (val instanceof Number) {
@@ -421,6 +557,7 @@ public class GraphDatabaseService {
             col.put("type", colType);
             col.put("length", 100);
             col.put("nullable", true);
+            col.put("isPrimaryKey", false);
             cols.add(col);
         });
         return cols;
@@ -428,6 +565,13 @@ public class GraphDatabaseService {
 
     public List<String> getPrimaryKeys(String label) {
         String upper = (label == null) ? "" : label.toUpperCase(Locale.ROOT).trim();
+        if (CANONICAL_TABLE_COLUMNS.containsKey(upper)) {
+            return CANONICAL_TABLE_COLUMNS.get(upper).stream()
+                .filter(c -> Boolean.TRUE.equals(c.get("isPrimaryKey")))
+                .map(c -> String.valueOf(c.get("name")))
+                .collect(Collectors.toList());
+        }
+
         return switch (upper) {
             case "CITY" -> List.of("CITY");
             case "SUPPLIER" -> List.of("SUPPLIERID");
@@ -449,33 +593,170 @@ public class GraphDatabaseService {
         };
     }
 
+    public Map<String, Object> cleanAndCastValues(String label, Map<String, Object> values) {
+        Map<String, Object> cleaned = new LinkedHashMap<>();
+        if (values == null || values.isEmpty()) return cleaned;
+
+        String upperLabel = (label == null) ? "" : label.toUpperCase(Locale.ROOT).trim();
+        List<Map<String, Object>> canonicalCols = CANONICAL_TABLE_COLUMNS.getOrDefault(upperLabel, List.of());
+        Map<String, String> colTypes = new HashMap<>();
+        for (Map<String, Object> col : canonicalCols) {
+            colTypes.put(String.valueOf(col.get("name")).toUpperCase(Locale.ROOT), String.valueOf(col.get("type")));
+        }
+
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isBlank()) continue;
+            String upperKey = key.trim().toUpperCase(Locale.ROOT);
+            if ("ID".equals(upperKey) || "NAME".equals(upperKey)) {
+                // Ignore internal visual aliases unless table has that exact column
+                if (!colTypes.containsKey(upperKey)) continue;
+            }
+
+            Object val = entry.getValue();
+            if (val == null) continue;
+            String strVal = String.valueOf(val).trim();
+            if (strVal.isEmpty() || "null".equalsIgnoreCase(strVal)) continue;
+
+            String type = colTypes.getOrDefault(upperKey, "STRING");
+            if ("NUMBER".equals(type)) {
+                try {
+                    if (strVal.contains(".")) {
+                        cleaned.put(upperKey, Double.parseDouble(strVal));
+                    } else {
+                        cleaned.put(upperKey, Long.parseLong(strVal));
+                    }
+                } catch (Exception ex) {
+                    cleaned.put(upperKey, strVal);
+                }
+            } else {
+                cleaned.put(upperKey, strVal);
+            }
+        }
+        return cleaned;
+    }
+
+    public int insertNode(String label, Map<String, Object> values) {
+        if (values == null || values.isEmpty()) return 0;
+        String cleanLabel = (label == null) ? "Node" : label.toUpperCase(Locale.ROOT).trim();
+        Map<String, Object> cleanVals = cleanAndCastValues(cleanLabel, values);
+        if (cleanVals.isEmpty()) return 0;
+
+        if (isLiveConnected) {
+            try (Session session = driver.session()) {
+                String cypher = "CREATE (n:" + cleanLabel + ") SET n = $vals RETURN count(n) AS c";
+                session.run(cypher, Map.of("vals", cleanVals));
+            } catch (Exception e) {
+                log.error("Live Neo4j insert failed: {}", e.getMessage());
+            }
+        }
+
+        // Always also add to in-memory store
+        String pkVal = extractPrimaryKeyValue(cleanLabel, cleanVals);
+        String nodeId = cleanLabel + "_" + pkVal;
+        String displayLabel = cleanLabel + " [" + pkVal + "]";
+        if (cleanVals.containsKey("PNAME")) displayLabel = String.valueOf(cleanVals.get("PNAME")) + " [" + pkVal + "]";
+        else if (cleanVals.containsKey("SNAME")) displayLabel = String.valueOf(cleanVals.get("SNAME")) + " [" + pkVal + "]";
+        else if (cleanVals.containsKey("CNAME")) displayLabel = String.valueOf(cleanVals.get("CNAME")) + " [" + pkVal + "]";
+        else if (cleanVals.containsKey("ENAME")) displayLabel = String.valueOf(cleanVals.get("ENAME")) + " [" + pkVal + "]";
+        else if (cleanVals.containsKey("WNAME")) displayLabel = String.valueOf(cleanVals.get("WNAME")) + " [" + pkVal + "]";
+        else if (cleanVals.containsKey("CITY")) displayLabel = String.valueOf(cleanVals.get("CITY"));
+
+        addNode(nodeId, displayLabel, cleanLabel, cleanVals);
+        autoLinkNode(nodeId, cleanLabel, cleanVals);
+        return 1;
+    }
+
+    private String extractPrimaryKeyValue(String label, Map<String, Object> vals) {
+        List<String> pks = getPrimaryKeys(label);
+        List<String> parts = new ArrayList<>();
+        for (String pk : pks) {
+            Object v = vals.get(pk);
+            if (v != null) parts.add(String.valueOf(v));
+        }
+        if (parts.isEmpty()) {
+            return vals.values().stream().findFirst().map(String::valueOf).orElse(UUID.randomUUID().toString().substring(0, 8));
+        }
+        return String.join("_", parts);
+    }
+
+    private void autoLinkNode(String nodeId, String label, Map<String, Object> vals) {
+        switch (label) {
+            case "SUPPLIER" -> {
+                if (vals.containsKey("CITY")) {
+                    addLink(nodeId, "CITY_" + vals.get("CITY"), "LOCATED_IN", Map.of());
+                }
+            }
+            case "WAREHOUSE" -> {
+                if (vals.containsKey("CITY")) {
+                    addLink(nodeId, "CITY_" + vals.get("CITY"), "LOCATED_IN", Map.of());
+                }
+            }
+            case "CUSTOMER" -> {
+                if (vals.containsKey("CITY")) {
+                    addLink(nodeId, "CITY_" + vals.get("CITY"), "LOCATED_IN", Map.of());
+                }
+            }
+            case "ORDERS" -> {
+                if (vals.containsKey("CUSTID")) {
+                    addLink("CUSTOMER_" + vals.get("CUSTID"), nodeId, "PLACED", Map.of());
+                }
+            }
+            case "ORDER_ITEM" -> {
+                if (vals.containsKey("ORDERID") && vals.containsKey("PRODUCTID")) {
+                    addLink("ORDER_" + vals.get("ORDERID"), "PRODUCT_" + vals.get("PRODUCTID"), "CONTAINS", Map.of());
+                }
+            }
+            case "STOCK" -> {
+                if (vals.containsKey("WAREHOUSEID") && vals.containsKey("PRODUCTID")) {
+                    addLink("WAREHOUSE_" + vals.get("WAREHOUSEID"), "PRODUCT_" + vals.get("PRODUCTID"), "STOCKS", Map.of());
+                }
+            }
+            case "SUPPLIES" -> {
+                if (vals.containsKey("SUPPLIERID") && vals.containsKey("PRODUCTID")) {
+                    addLink("SUPPLIER_" + vals.get("SUPPLIERID"), "PRODUCT_" + vals.get("PRODUCTID"), "SUPPLIES", Map.of());
+                }
+            }
+            default -> {}
+        }
+    }
+
     public int updateNode(String label, Map<String, Object> values, Map<String, String> where) {
         if (values == null || values.isEmpty()) return 0;
-        String cleanLabel = (label == null) ? "Node" : label.trim();
+        String cleanLabel = (label == null) ? "Node" : label.toUpperCase(Locale.ROOT).trim();
+        Map<String, Object> cleanVals = cleanAndCastValues(cleanLabel, values);
+        if (cleanVals.isEmpty()) return 0;
 
         if (isLiveConnected) {
             try (Session session = driver.session()) {
                 StringBuilder whereClause = new StringBuilder();
                 Map<String, Object> params = new HashMap<>();
                 params.put("label", cleanLabel);
-                params.put("vals", values);
+                params.put("vals", cleanVals);
 
                 int i = 0;
                 for (Map.Entry<String, String> e : where.entrySet()) {
                     String pKey = "w_" + i++;
-                    whereClause.append(" AND (toString(n.").append(e.getKey()).append(") = $").append(pKey).append(")");
+                    whereClause.append(" AND (toString(n.").append(e.getKey().toUpperCase(Locale.ROOT)).append(") = $").append(pKey).append(")");
                     params.put(pKey, e.getValue());
                 }
 
                 String cypher = "MATCH (n) WHERE any(l IN labels(n) WHERE toUpper(l) = toUpper($label)) " +
                                 whereClause + " SET n += $vals RETURN count(n) AS c";
-                return session.run(cypher, params).single().get("c").asInt();
+                int c = session.run(cypher, params).single().get("c").asInt();
+                if (c > 0) {
+                    updateInMemoryNode(cleanLabel, cleanVals, where);
+                    return c;
+                }
             } catch (Exception e) {
                 log.error("Live Neo4j update failed: {}", e.getMessage());
             }
         }
 
-        // In-memory fallback
+        return updateInMemoryNode(cleanLabel, cleanVals, where);
+    }
+
+    private int updateInMemoryNode(String cleanLabel, Map<String, Object> cleanVals, Map<String, String> where) {
         int updated = 0;
         for (Map<String, Object> n : defaultNodes) {
             String type = String.valueOf(n.get("type"));
@@ -483,13 +764,17 @@ public class GraphDatabaseService {
                 Map<String, Object> props = (Map<String, Object>) n.get("properties");
                 boolean match = true;
                 for (Map.Entry<String, String> w : where.entrySet()) {
-                    if (!String.valueOf(props.get(w.getKey())).equals(w.getValue())) {
+                    Object pVal = props.get(w.getKey().toUpperCase(Locale.ROOT));
+                    if (pVal == null && props.containsKey(w.getKey())) {
+                        pVal = props.get(w.getKey());
+                    }
+                    if (pVal == null || !String.valueOf(pVal).equalsIgnoreCase(w.getValue())) {
                         match = false;
                         break;
                     }
                 }
                 if (match) {
-                    props.putAll(values);
+                    props.putAll(cleanVals);
                     updated++;
                 }
             }
@@ -499,7 +784,7 @@ public class GraphDatabaseService {
 
     public int deleteNode(String label, Map<String, String> where) {
         if (where == null || where.isEmpty()) return 0;
-        String cleanLabel = (label == null) ? "Node" : label.trim();
+        String cleanLabel = (label == null) ? "Node" : label.toUpperCase(Locale.ROOT).trim();
 
         if (isLiveConnected) {
             try (Session session = driver.session()) {
@@ -510,19 +795,19 @@ public class GraphDatabaseService {
                 int i = 0;
                 for (Map.Entry<String, String> e : where.entrySet()) {
                     String pKey = "w_" + i++;
-                    whereClause.append(" AND (toString(n.").append(e.getKey()).append(") = $").append(pKey).append(")");
+                    whereClause.append(" AND (toString(n.").append(e.getKey().toUpperCase(Locale.ROOT)).append(") = $").append(pKey).append(")");
                     params.put(pKey, e.getValue());
                 }
 
                 String cypher = "MATCH (n) WHERE any(l IN labels(n) WHERE toUpper(l) = toUpper($label)) " +
                                 whereClause + " DETACH DELETE n RETURN count(n) AS c";
-                return session.run(cypher, params).single().get("c").asInt();
+                session.run(cypher, params);
             } catch (Exception e) {
                 log.error("Live Neo4j delete failed: {}", e.getMessage());
             }
         }
 
-        // In-memory fallback
+        // In-memory removal
         List<Map<String, Object>> toRemove = new ArrayList<>();
         for (Map<String, Object> n : defaultNodes) {
             String type = String.valueOf(n.get("type"));
@@ -530,7 +815,11 @@ public class GraphDatabaseService {
                 Map<String, Object> props = (Map<String, Object>) n.get("properties");
                 boolean match = true;
                 for (Map.Entry<String, String> w : where.entrySet()) {
-                    if (!String.valueOf(props.get(w.getKey())).equals(w.getValue())) {
+                    Object pVal = props.get(w.getKey().toUpperCase(Locale.ROOT));
+                    if (pVal == null && props.containsKey(w.getKey())) {
+                        pVal = props.get(w.getKey());
+                    }
+                    if (pVal == null || !String.valueOf(pVal).equalsIgnoreCase(w.getValue())) {
                         match = false;
                         break;
                     }
@@ -540,7 +829,7 @@ public class GraphDatabaseService {
         }
         toRemove.forEach(n -> {
             String id = (String) n.get("id");
-            defaultLinks.removeIf(l -> l.get("source").equals(id) || l.get("target").equals(id));
+            defaultLinks.removeIf(l -> String.valueOf(l.get("source")).equals(id) || String.valueOf(l.get("target")).equals(id));
             defaultNodes.remove(n);
         });
         return toRemove.size();
@@ -1217,7 +1506,10 @@ public class GraphDatabaseService {
         node.put("id", id);
         node.put("label", label);
         node.put("type", type);
-        node.put("properties", properties);
+        Map<String, Object> cleanProps = new LinkedHashMap<>(properties);
+        cleanProps.remove("id");
+        cleanProps.remove("name");
+        node.put("properties", cleanProps);
         defaultNodes.add(node);
     }
 
@@ -1226,7 +1518,7 @@ public class GraphDatabaseService {
         link.put("source", source);
         link.put("target", target);
         link.put("label", label);
-        link.put("properties", properties);
+        link.put("properties", new LinkedHashMap<>(properties));
         defaultLinks.add(link);
     }
 }

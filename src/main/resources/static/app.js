@@ -582,84 +582,42 @@ function renderTable() {
 ===================================================== */
 
 function openEditModal(index) {
+    state.currentRow = state.rows[index];
+    $("modalTitle").textContent = `Edit ${state.table} Record`;
 
-    state.currentRow =
-        state.rows[index];
-
-
-    $("modalTitle").textContent =
-        `Edit ${state.table}`;
-
-
-    $("editFields").innerHTML =
-        state.columns.map(column => {
-
-            const name =
-                getColumnName(column);
-
-
-            const isPrimaryKey =
-                state.primaryKeys.includes(name);
-
-
-            let value =
-                state.currentRow[name] ?? "";
-
+    $("editFields").innerHTML = state.columns
+        .filter(column => {
+            const name = getColumnName(column);
+            return name !== "id" && name !== "name";
+        })
+        .map(column => {
+            const name = getColumnName(column);
+            const isPrimaryKey = state.primaryKeys.includes(name);
+            let value = state.currentRow[name] ?? "";
 
             if (isDateColumn(name) && value) {
-
                 const date = new Date(value);
-
                 if (!Number.isNaN(date.getTime())) {
-                    value = date.toISOString();
+                    value = date.toISOString().slice(0, 10);
                 }
-
             }
 
-
             return `
-
-                <div
-                    class="field ${
-                        isPrimaryKey
-                            ? "locked"
-                            : ""
-                    }">
-
+                <div class="field ${isPrimaryKey ? "locked" : ""}">
                     <label>
-
                         ${escapeHtml(name)}
-
-                        ${
-                            isPrimaryKey
-                                ? " · PRIMARY KEY"
-                                : ""
-                        }
-
+                        ${isPrimaryKey ? '<span style="color: var(--blue); font-weight: 700; margin-left: 6px;">· PRIMARY KEY (LOCKED)</span>' : ''}
                     </label>
-
-
                     <input
                         data-field="${escapeHtml(name)}"
                         value="${escapeHtml(value)}"
-                        ${
-                            isPrimaryKey
-                                ? "disabled"
-                                : ""
-                        }
+                        ${isPrimaryKey ? "disabled" : ""}
                     />
-
                 </div>
-
             `;
-
         }).join("");
 
-
-    $("modal")
-        .classList
-        .remove("hidden");
-
+    $("modal").classList.remove("hidden");
 }
 
 
@@ -668,149 +626,168 @@ function openEditModal(index) {
 ===================================================== */
 
 async function saveEdit() {
+    if (!state.currentRow) return;
 
-    if (!state.currentRow) {
-        return;
-    }
-
-
-    const queryParams =
-        new URLSearchParams();
-
-
-    state.primaryKeys.forEach(
-        key => {
-
-            queryParams.set(
-                key,
-                state.currentRow[key]
-            );
-
+    const queryParams = new URLSearchParams();
+    state.primaryKeys.forEach(key => {
+        if (state.currentRow[key] !== undefined && state.currentRow[key] !== null) {
+            queryParams.set(key, state.currentRow[key]);
         }
-    );
-
+    });
 
     const updatedValues = {};
-
-
-    document
-        .querySelectorAll("#editFields input")
-        .forEach(input => {
-
-            updatedValues[
-                input.dataset.field
-            ] = input.value;
-
-        });
-
+    document.querySelectorAll("#editFields input").forEach(input => {
+        const field = input.dataset.field;
+        if (field && field !== "id" && field !== "name") {
+            updatedValues[field] = input.value;
+        }
+    });
 
     try {
-
-        await api(
-            `/api/tables/${encodeURIComponent(
-                state.table
-            )}?${queryParams}`,
-
+        const res = await api(
+            `/api/tables/${encodeURIComponent(state.table)}?${queryParams}`,
             {
                 method: "PUT",
                 body: JSON.stringify(updatedValues)
             }
         );
 
-
-        $("modal")
-            .classList
-            .add("hidden");
-
-
-        showToast(
-            "Record updated successfully."
-        );
-
-
+        $("modal").classList.add("hidden");
+        showToast(res.message || "Record updated successfully.");
         await loadTable(state.table);
-
-
     } catch (error) {
-
-        showToast(error.message);
-
+        showToast("Update failed: " + error.message);
     }
-
 }
 
 
 /* =====================================================
-   DELETE ROW
+   ADD RECORD MODAL & SAVE
+===================================================== */
+
+function openAddModal() {
+    if (!state.table) {
+        showToast("Please choose a table first from the explorer.");
+        return;
+    }
+
+    if ($("addModalTitle")) {
+        $("addModalTitle").textContent = `Add Record to ${state.table}`;
+    }
+
+    const fieldsContainer = $("addFields");
+    if (!fieldsContainer) return;
+
+    fieldsContainer.innerHTML = state.columns
+        .filter(column => {
+            const name = getColumnName(column);
+            return name !== "id" && name !== "name";
+        })
+        .map(column => {
+            const name = getColumnName(column);
+            const isPrimaryKey = state.primaryKeys.includes(name);
+            const colType = column.type || "STRING";
+
+            return `
+                <div class="field ${isPrimaryKey ? "required-pk" : ""}">
+                    <label>
+                        ${escapeHtml(name)}
+                        ${isPrimaryKey ? '<span style="color: var(--red); font-weight: 700; margin-left: 6px;">· REQUIRED (PRIMARY KEY)</span>' : ''}
+                    </label>
+                    <input
+                        data-add-field="${escapeHtml(name)}"
+                        placeholder="Enter ${escapeHtml(name)} (${escapeHtml(colType)})"
+                        ${isPrimaryKey ? "required" : ""}
+                    />
+                </div>
+            `;
+        }).join("");
+
+    $("addModal").classList.remove("hidden");
+}
+
+async function saveAdd() {
+    if (!state.table) return;
+
+    const newValues = {};
+    let missingPk = false;
+
+    document.querySelectorAll("#addFields input").forEach(input => {
+        const field = input.dataset.addField;
+        const val = input.value.trim();
+        if (state.primaryKeys.includes(field) && !val) {
+            missingPk = true;
+        }
+        if (val !== "") {
+            newValues[field] = val;
+        }
+    });
+
+    if (missingPk) {
+        showToast("Error: Primary key values are required to add a record.");
+        return;
+    }
+
+    if (Object.keys(newValues).length === 0) {
+        showToast("Error: Please provide at least one field value.");
+        return;
+    }
+
+    try {
+        const res = await api(`/api/tables/${encodeURIComponent(state.table)}`, {
+            method: "POST",
+            body: JSON.stringify(newValues)
+        });
+
+        $("addModal").classList.add("hidden");
+        showToast(res.message || `Record added successfully to ${state.table}.`);
+        await loadTable(state.table);
+    } catch (error) {
+        showToast("Add failed: " + error.message);
+    }
+}
+
+
+/* =====================================================
+   CASCADING DELETE ROW
 ===================================================== */
 
 async function deleteRow(index) {
-
     if (!state.primaryKeys.length) {
-
-        showToast(
-            "Delete requires a primary key."
-        );
-
+        showToast("Delete requires a primary key.");
         return;
-
     }
 
+    const row = state.rows[index];
+    const queryParams = new URLSearchParams();
+    const pkDetails = [];
 
-    const row =
-        state.rows[index];
-
-
-    const queryParams =
-        new URLSearchParams();
-
-
-    state.primaryKeys.forEach(
-        key => {
-
-            queryParams.set(
-                key,
-                row[key]
-            );
-
+    state.primaryKeys.forEach(key => {
+        if (row[key] !== undefined && row[key] !== null) {
+            queryParams.set(key, row[key]);
+            pkDetails.push(`${key}=${row[key]}`);
         }
-    );
+    });
 
-
-    if (!confirm("Delete this record?")) {
+    const confirmMsg = `Delete this ${state.table} record (${pkDetails.join(", ")})?\n\nThis will automatically cascade and delete all associated records across related tables.`;
+    if (!confirm(confirmMsg)) {
         return;
     }
-
 
     try {
-
-        await api(
-            `/api/tables/${encodeURIComponent(
-                state.table
-            )}?${queryParams}`,
-
+        const res = await api(
+            `/api/tables/${encodeURIComponent(state.table)}?${queryParams}`,
             {
                 method: "DELETE"
             }
         );
 
-
-        showToast(
-            "Record deleted successfully."
-        );
-
-
+        showToast(res.message || "Record and related dependencies deleted successfully.");
         await loadTable(state.table);
-
-
     } catch (error) {
-
-        showToast(error.message);
-
+        showToast("Delete failed: " + error.message);
     }
-
 }
-
 
 /* =====================================================
    PAGE NAVIGATION
@@ -1751,6 +1728,21 @@ $("save")
         "click",
         saveEdit
     );
+
+/* ADD RECORD MODAL EVENT LISTENERS */
+if ($("addRecordBtn")) {
+    $("addRecordBtn").addEventListener("click", openAddModal);
+}
+if ($("closeAddModal")) {
+    $("closeAddModal").addEventListener("click", () => $("addModal").classList.add("hidden"));
+}
+if ($("cancelAdd")) {
+    $("cancelAdd").addEventListener("click", () => $("addModal").classList.add("hidden"));
+}
+if ($("saveAdd")) {
+    $("saveAdd").addEventListener("click", saveAdd);
+}
+
 
 
 /* CTRL + ENTER */

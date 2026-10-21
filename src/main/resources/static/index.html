@@ -281,13 +281,19 @@
                     </div>
 
 
-                    <button
-                        id="insertSql"
-                        class="button secondary-button">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button
+                            id="addRecordBtn"
+                            class="button primary-button">
+                            + Add Record
+                        </button>
 
-                        + Insert with SQL
-
-                    </button>
+                        <button
+                            id="insertSql"
+                            class="button secondary-button">
+                            + Insert with SQL
+                        </button>
+                    </div>
 
                 </div>
 
@@ -2088,6 +2094,63 @@
 
 
 
+
+
+
+<!-- ================= ADD RECORD MODAL ================= -->
+
+<div id="addModal" class="modal hidden">
+
+    <div class="modal-backdrop"></div>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="panel-kicker">
+                    RECORD CREATOR
+                </div>
+
+                <h2 id="addModalTitle">
+                    Add new record
+                </h2>
+
+            </div>
+
+            <button
+                id="closeAddModal"
+                class="close-button">
+                ×
+            </button>
+
+        </div>
+
+        <div
+            id="addFields"
+            class="edit-fields">
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                id="cancelAdd"
+                class="button secondary-button">
+                Cancel
+            </button>
+
+            <button
+                id="saveAdd"
+                class="button primary-button">
+                Save Record
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
 
 <!-- TOAST -->
 
