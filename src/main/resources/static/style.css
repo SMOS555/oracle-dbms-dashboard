@@ -1052,7 +1052,7 @@ textarea::placeholder {
 
     inset: 0;
 
-    z-index: 20;
+    z-index: 1000;
 
     display: grid;
 
@@ -1223,7 +1223,7 @@ textarea::placeholder {
 
     font-size: 13px;
 
-    z-index: 30;
+    z-index: 2000;
 
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
 }
