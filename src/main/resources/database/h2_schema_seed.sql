@@ -180,33 +180,96 @@ CREATE TABLE IF NOT EXISTS GOODS_RETURN (
 );
 
 -- SEED DATA
-MERGE INTO CITY KEY(CITY) VALUES ('Chennai', 'Tamil Nadu'), ('Mumbai', 'Maharashtra');
+MERGE INTO CITY KEY(CITY) VALUES 
+('Chennai', 'Tamil Nadu'), 
+('Mumbai', 'Maharashtra'),
+('Bengaluru', 'Karnataka'),
+('Hyderabad', 'Telangana'),
+('Delhi', 'Delhi');
 
 MERGE INTO SUPPLIER KEY(SUPPLIERID) VALUES 
 ('S01', 'Apex Agro Supplies', 'Chennai'),
 ('S03', 'Metro Wholesale Mills', 'Mumbai'),
-('S05', 'Delta Cold & Chemicals', 'Chennai');
+('S05', 'Delta Cold & Chemicals', 'Chennai'),
+('S07', 'Deccan Spice Exporters', 'Hyderabad'),
+('S09', 'Karnataka Harvest Corp', 'Bengaluru');
 
 MERGE INTO SUPPLIER_PHONE KEY(SUPPLIERID, PHONE) VALUES 
 ('S01', '9845012345'),
 ('S01', '08022334455'),
 ('S03', '9820011122'),
 ('S05', '9840199887'),
-('S05', '04424851212');
+('S05', '04424851212'),
+('S07', '9849012345'),
+('S09', '9880123456');
 
 MERGE INTO PRODUCT KEY(PRODUCTID) VALUES 
-('P-100', 'Basmati Rice', 'Staples', 480.00),
+('P-100', 'Basmati Royal Rice', 'Staples', 480.00),
 ('P-104', 'Sunflower Oil', 'Oils', 132.00),
 ('P-108', 'Sona Masoori', 'Staples', 445.00),
-('P-210', 'Frozen Peas', 'Frozen', 96.00);
+('P-210', 'Frozen Peas', 'Frozen', 96.00),
+('P-315', 'Organic Turmeric Powder', 'Spices', 210.00),
+('P-420', 'Industrial Sanitizer', 'Chemicals', 350.00),
+('P-530', 'Alphonso Mango Pulp', 'Fruit Pulp', 280.00);
 
 MERGE INTO PERISHABLE_PRODUCT KEY(PRODUCTID) VALUES 
-('P-210', 90, '-18°C');
+('P-210', 90, '-18C'),
+('P-530', 120, '4C');
+
+MERGE INTO HAZARDOUS_PRODUCT KEY(PRODUCTID) VALUES 
+('P-420', 'Class 3 Flammable Liquid', 'Keep away from heat and open flame');
+
+MERGE INTO EMPLOYEE KEY(EMPID) VALUES 
+('M-01', 'Kavita Sharma', 'Manager', 85000, NULL, NULL),
+('M-02', 'Arun Nair', 'Manager', 82000, NULL, NULL),
+('D-05', 'Ramesh Kumar', 'Driver', 32000, NULL, 'M-01'),
+('D-09', 'Suresh Patil', 'Driver', 34000, NULL, 'M-01'),
+('D-11', 'Venkatesh Rao', 'Driver', 31000, NULL, 'M-02'),
+('E-21', 'Pooja Verma', 'Supervisor', 48000, NULL, 'M-01');
+
+MERGE INTO MANAGER KEY(EMPID) VALUES 
+('M-01', 'Senior L3', 15000.00),
+('M-02', 'Regional L2', 12000.00);
+
+MERGE INTO DRIVER KEY(EMPID) VALUES 
+('D-05', 'TN-02-2021-998', DATE '2028-12-31'),
+('D-09', 'MH-01-2020-412', DATE '2027-08-15'),
+('D-11', 'KA-03-2022-771', DATE '2029-05-20');
+
+MERGE INTO DRIVER_CITY KEY(DRIVERID, CITY) VALUES 
+('D-05', 'Chennai'),
+('D-09', 'Mumbai'),
+('D-11', 'Bengaluru');
+
+MERGE INTO WAREHOUSE KEY(WAREHOUSEID) VALUES 
+('W-01', 'Central Chennai Depot', 'Chennai', 15000, 'M-01'),
+('W-02', 'Navi Mumbai Hub', 'Mumbai', 22000, 'M-02'),
+('W-03', 'Whitefield Logistics Center', 'Bengaluru', 18000, 'M-01');
+
+MERGE INTO STOCK KEY(WAREHOUSEID, PRODUCTID) VALUES 
+('W-01', 'P-100', 450),
+('W-01', 'P-104', 600),
+('W-01', 'P-210', 300),
+('W-02', 'P-100', 800),
+('W-02', 'P-108', 520),
+('W-03', 'P-315', 400);
+
+MERGE INTO SUPPLIES KEY(SUPPLIERID, PRODUCTID) VALUES 
+('S01', 'P-100', 3),
+('S05', 'P-210', 4),
+('S07', 'P-315', 5);
+
+MERGE INTO INSPECTION KEY(INSPID) VALUES 
+('INS-01', 'S01', 'P-100', DATE '2026-04-01', 'PASSED'),
+('INS-02', 'S05', 'P-210', DATE '2026-04-04', 'PASSED'),
+('INS-03', 'S07', 'P-315', DATE '2026-04-05', 'PENDING');
 
 MERGE INTO CUSTOMER KEY(CUSTID) VALUES 
 ('C-01', 'Shama Retail', '12 MG Rd', 'Chennai', '9840011223'),
 ('C-03', 'Metro Mart', '5 Link Rd', 'Mumbai', '9820044556'),
-('C-05', 'Anand Stores', '7 Anna Salai', 'Chennai', '9845567788');
+('C-05', 'Anand Stores', '7 Anna Salai', 'Chennai', '9845567788'),
+('C-07', 'Bangalore Bazaar', '88 Brigade Rd', 'Bengaluru', '9880199221'),
+('C-09', 'Deccan Supermarket', '14 Banjara Hills', 'Hyderabad', '9849033445');
 
 MERGE INTO ORDERS KEY(ORDERID) VALUES 
 ('O-101', DATE '2026-04-02', 'SHIPPED', 'C-01'),
@@ -214,7 +277,9 @@ MERGE INTO ORDERS KEY(ORDERID) VALUES
 ('O-103', DATE '2026-04-09', 'SHIPPED', 'C-01'),
 ('O-104', DATE '2026-04-11', 'NEW', 'C-05'),
 ('O-105', DATE '2026-04-14', 'SHIPPED', 'C-03'),
-('O-106', DATE '2026-04-16', 'NEW', 'C-05');
+('O-106', DATE '2026-04-16', 'NEW', 'C-05'),
+('O-107', DATE '2026-04-18', 'NEW', 'C-07'),
+('O-108', DATE '2026-04-20', 'NEW', 'C-09');
 
 MERGE INTO ORDER_ITEM KEY(ORDERID, PRODUCTID) VALUES 
 ('O-101', 'P-100', 20, 480.00),
@@ -224,21 +289,9 @@ MERGE INTO ORDER_ITEM KEY(ORDERID, PRODUCTID) VALUES
 ('O-104', 'P-108', 12, 445.00),
 ('O-105', 'P-104', 25, 132.00),
 ('O-105', 'P-210', 40, 96.00),
-('O-106', 'P-100', 18, 480.00);
-
-MERGE INTO EMPLOYEE KEY(EMPID) VALUES 
-('D-05', 'Ramesh Kumar', 'Driver', 32000, NULL, NULL),
-('D-09', 'Suresh Patil', 'Driver', 34000, NULL, NULL),
-('D-11', 'Venkatesh Rao', 'Driver', 31000, NULL, NULL),
-('M-01', 'Kavita Sharma', 'Manager', 85000, NULL, NULL);
-
-MERGE INTO DRIVER KEY(EMPID) VALUES 
-('D-05', 'TN-02-2021-998', DATE '2028-12-31'),
-('D-09', 'MH-01-2020-412', DATE '2027-08-15'),
-('D-11', 'TN-05-2022-771', DATE '2029-05-20');
-
-MERGE INTO MANAGER KEY(EMPID) VALUES 
-('M-01', 'L3', 15000.00);
+('O-106', 'P-100', 18, 480.00),
+('O-107', 'P-315', 35, 210.00),
+('O-108', 'P-100', 12, 480.00);
 
 MERGE INTO ORDER_DRIVER KEY(ORDERID, DRIVERID) VALUES 
 ('O-101', 'D-05'),
@@ -246,7 +299,9 @@ MERGE INTO ORDER_DRIVER KEY(ORDERID, DRIVERID) VALUES
 ('O-103', 'D-05'),
 ('O-104', 'D-05'),
 ('O-105', 'D-09'),
-('O-106', 'D-11');
+('O-106', 'D-11'),
+('O-107', 'D-11'),
+('O-108', 'D-05');
 
 MERGE INTO DELIVERY_DUTY KEY(ORDERID, CITY) VALUES 
 ('O-101', 'D-05', 'Chennai'),
@@ -255,4 +310,19 @@ MERGE INTO DELIVERY_DUTY KEY(ORDERID, CITY) VALUES
 ('O-103', 'D-05', 'Chennai'),
 ('O-104', 'D-05', 'Chennai'),
 ('O-105', 'D-09', 'Mumbai'),
-('O-106', 'D-11', 'Chennai');
+('O-106', 'D-11', 'Chennai'),
+('O-107', 'D-11', 'Bengaluru');
+
+MERGE INTO GOODS_MOVEMENT KEY(MOVEMENTID) VALUES 
+('M-01', 'O-101', 'W-01', DATE '2026-04-03', 'DISPATCHED'),
+('M-02', 'O-103', 'W-01', DATE '2026-04-10', 'DISPATCHED'),
+('M-03', 'O-105', 'W-02', DATE '2026-04-15', 'DISPATCHED'),
+('M-04', 'O-107', 'W-03', DATE '2026-04-19', 'IN_TRANSIT');
+
+MERGE INTO SHIPMENT KEY(MOVEMENTID) VALUES 
+('M-01', DATE '2026-04-04'),
+('M-02', DATE '2026-04-11'),
+('M-03', DATE '2026-04-16');
+
+MERGE INTO GOODS_RETURN KEY(MOVEMENTID) VALUES 
+('M-02', 'Damaged packaging during transit', 480.00);

@@ -208,5 +208,130 @@ VALUES ('O-105', 'D-09', 'Mumbai');
 INSERT INTO DELIVERY_DUTY (ORDERID, DRIVERID, CITY)
 VALUES ('O-106', 'D-11', 'Chennai');
 
+INSERT INTO DELIVERY_DUTY (ORDERID, DRIVERID, CITY)
+VALUES ('O-107', 'D-11', 'Bengaluru');
+
+
+-- =========================================================
+-- MANAGER
+-- =========================================================
+
+INSERT INTO EMPLOYEE (EMPID, ENAME, ROLE, SALARY)
+VALUES ('M-01', 'Kavita Sharma', 'Manager', 85000);
+
+INSERT INTO EMPLOYEE (EMPID, ENAME, ROLE, SALARY)
+VALUES ('M-02', 'Arun Nair', 'Manager', 82000);
+
+INSERT INTO MANAGER (EMPID, LEVELNO, BONUS)
+VALUES ('M-01', 'Senior L3', 15000.00);
+
+INSERT INTO MANAGER (EMPID, LEVELNO, BONUS)
+VALUES ('M-02', 'Regional L2', 12000.00);
+
+
+-- =========================================================
+-- WAREHOUSE
+-- =========================================================
+
+INSERT INTO WAREHOUSE (WAREHOUSEID, WNAME, CITY, CAPACITY, MANAGERID)
+VALUES ('W-01', 'Central Chennai Depot', 'Chennai', 15000, 'M-01');
+
+INSERT INTO WAREHOUSE (WAREHOUSEID, WNAME, CITY, CAPACITY, MANAGERID)
+VALUES ('W-02', 'Navi Mumbai Hub', 'Mumbai', 22000, 'M-02');
+
+INSERT INTO WAREHOUSE (WAREHOUSEID, WNAME, CITY, CAPACITY, MANAGERID)
+VALUES ('W-03', 'Whitefield Logistics Center', 'Bengaluru', 18000, 'M-01');
+
+
+-- =========================================================
+-- DRIVER_CITY
+-- =========================================================
+
+INSERT INTO DRIVER_CITY (DRIVERID, CITY)
+VALUES ('D-05', 'Chennai');
+
+INSERT INTO DRIVER_CITY (DRIVERID, CITY)
+VALUES ('D-09', 'Mumbai');
+
+INSERT INTO DRIVER_CITY (DRIVERID, CITY)
+VALUES ('D-11', 'Bengaluru');
+
+
+-- =========================================================
+-- PRODUCT SUBTYPES
+-- =========================================================
+
+INSERT INTO PERISHABLE_PRODUCT (PRODUCTID, SHELFLIFEDAYS, STORAGETEMPC)
+VALUES ('P-210', 90, '-18C');
+
+INSERT INTO PRODUCT (PRODUCTID, PNAME, CATEGORY, UNITPRICE)
+VALUES ('P-420', 'Industrial Sanitizer', 'Chemicals', 350.00);
+
+INSERT INTO HAZARDOUS_PRODUCT (PRODUCTID, HAZARDCLASS, HANDLINGNOTE)
+VALUES ('P-420', 'Class 3 Flammable Liquid', 'Keep away from heat and open flame');
+
+
+-- =========================================================
+-- STOCK
+-- =========================================================
+
+INSERT INTO STOCK (WAREHOUSEID, PRODUCTID, QUANTITY)
+VALUES ('W-01', 'P-100', 450);
+
+INSERT INTO STOCK (WAREHOUSEID, PRODUCTID, QUANTITY)
+VALUES ('W-01', 'P-104', 600);
+
+INSERT INTO STOCK (WAREHOUSEID, PRODUCTID, QUANTITY)
+VALUES ('W-01', 'P-210', 300);
+
+INSERT INTO STOCK (WAREHOUSEID, PRODUCTID, QUANTITY)
+VALUES ('W-02', 'P-100', 800);
+
+INSERT INTO STOCK (WAREHOUSEID, PRODUCTID, QUANTITY)
+VALUES ('W-02', 'P-108', 520);
+
+
+-- =========================================================
+-- SUPPLIES & INSPECTION
+-- =========================================================
+
+INSERT INTO SUPPLIES (SUPPLIERID, PRODUCTID, LEADTIMEDAYS)
+VALUES ('S01', 'P-100', 3);
+
+INSERT INTO SUPPLIES (SUPPLIERID, PRODUCTID, LEADTIMEDAYS)
+VALUES ('S05', 'P-210', 4);
+
+INSERT INTO INSPECTION (INSPID, SUPPLIERID, PRODUCTID, INSPDATE, RESULT)
+VALUES ('INS-01', 'S01', 'P-100', DATE '2026-04-01', 'PASSED');
+
+INSERT INTO INSPECTION (INSPID, SUPPLIERID, PRODUCTID, INSPDATE, RESULT)
+VALUES ('INS-02', 'S05', 'P-210', DATE '2026-04-04', 'PASSED');
+
+
+-- =========================================================
+-- GOODS MOVEMENT, SHIPMENT, RETURN
+-- =========================================================
+
+INSERT INTO GOODS_MOVEMENT (MOVEMENTID, ORDERID, WAREHOUSEID, MOVEDATE, STATUS)
+VALUES ('M-01', 'O-101', 'W-01', DATE '2026-04-03', 'DISPATCHED');
+
+INSERT INTO GOODS_MOVEMENT (MOVEMENTID, ORDERID, WAREHOUSEID, MOVEDATE, STATUS)
+VALUES ('M-02', 'O-103', 'W-01', DATE '2026-04-10', 'DISPATCHED');
+
+INSERT INTO GOODS_MOVEMENT (MOVEMENTID, ORDERID, WAREHOUSEID, MOVEDATE, STATUS)
+VALUES ('M-03', 'O-105', 'W-02', DATE '2026-04-15', 'DISPATCHED');
+
+INSERT INTO SHIPMENT (MOVEMENTID, DELIVERYDATE)
+VALUES ('M-01', DATE '2026-04-04');
+
+INSERT INTO SHIPMENT (MOVEMENTID, DELIVERYDATE)
+VALUES ('M-02', DATE '2026-04-11');
+
+INSERT INTO SHIPMENT (MOVEMENTID, DELIVERYDATE)
+VALUES ('M-03', DATE '2026-04-16');
+
+INSERT INTO GOODS_RETURN (MOVEMENTID, REASON, REFUNDAMT)
+VALUES ('M-02', 'Damaged packaging during transit', 480.00);
+
 
 COMMIT;
