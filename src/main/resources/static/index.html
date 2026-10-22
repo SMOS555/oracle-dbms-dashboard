@@ -224,6 +224,15 @@
 
 
                     <button
+                        id="toolbarAddBtn"
+                        class="button secondary-button">
+
+                        + Add Record
+
+                    </button>
+
+
+                    <button
                         class="button secondary-button"
                         onclick="document.querySelector('[data-page=\'sql\']').click()">
 
@@ -259,13 +268,25 @@
                     </div>
 
 
-                    <button
-                        id="insertSql"
-                        class="button secondary-button">
+                    <div style="display: flex; gap: 8px; align-items: center;">
 
-                        + Insert with SQL
+                        <button
+                            id="addRecordBtn"
+                            class="button primary-button">
 
-                    </button>
+                            + Add Record
+
+                        </button>
+
+                        <button
+                            id="insertSql"
+                            class="button secondary-button">
+
+                            + Insert with SQL
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -808,6 +829,80 @@
             </button>
 
         </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= ADD RECORD MODAL ================= -->
+
+<div id="addModal" class="modal hidden">
+
+    <div class="modal-backdrop"></div>
+
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="panel-kicker">
+                    RECORD CREATOR
+                </div>
+
+                <h2 id="addModalTitle">
+                    Add new record
+                </h2>
+
+            </div>
+
+
+            <button
+                id="closeAddModal"
+                class="close-button">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+        <form id="addRecordForm" onsubmit="event.preventDefault(); saveAddRecord();">
+
+            <div
+                id="addFields"
+                class="edit-fields">
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    id="cancelAdd"
+                    class="button secondary-button">
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="submit"
+                    id="saveAdd"
+                    class="button primary-button">
+
+                    + Add Record
+
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 

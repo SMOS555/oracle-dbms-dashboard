@@ -399,9 +399,23 @@ function renderTable() {
                     This table is currently empty.
                 </p>
 
+                <button
+                    id="addRecordEmptyBtn"
+                    class="button primary-button"
+                    style="margin-top: 14px;">
+
+                    + Add Record
+
+                </button>
+
             </div>
 
         `;
+
+        const emptyBtn = $("addRecordEmptyBtn");
+        if (emptyBtn) {
+            emptyBtn.addEventListener("click", openAddModal);
+        }
 
         return;
 
@@ -555,6 +569,118 @@ function renderTable() {
 
         });
 
+}
+
+
+/* =====================================================
+   ADD RECORD MODAL
+===================================================== */
+
+function openAddModal() {
+
+    if (!state.table) {
+        showToast("Choose a table first.");
+        return;
+    }
+
+    $("addModalTitle").textContent =
+        `Add Record to ${state.table}`;
+
+    $("addFields").innerHTML =
+        state.columns.map(column => {
+
+            const name = getColumnName(column);
+            const isPrimaryKey = state.primaryKeys.includes(name);
+            const colType = (column.type || "VARCHAR2").toUpperCase();
+            const isNullable = column.nullable !== false;
+            const isDate = isDateColumn(name) || colType.includes("DATE");
+            const isNumeric = colType.includes("NUMBER") || colType.includes("DECIMAL") || colType.includes("INT") || colType.includes("FLOAT");
+
+            let placeholder = "";
+            let inputType = "text";
+
+            if (isDate) {
+                placeholder = "YYYY-MM-DD (e.g. 2026-04-22)";
+                inputType = "date";
+            } else if (isNumeric) {
+                placeholder = isPrimaryKey ? "e.g. 1" : "e.g. 100.00";
+                inputType = "number";
+            } else {
+                placeholder = isPrimaryKey ? `Enter ${name} (PK)` : `Enter ${name}`;
+            }
+
+            const badge = isPrimaryKey
+                ? " · PRIMARY KEY (Required)"
+                : (!isNullable ? " · Required" : " · Optional");
+
+            return `
+                <div class="field">
+                    <label>
+                        ${escapeHtml(name)}
+                        <span style="color: ${isPrimaryKey ? 'var(--blue)' : 'inherit'}; font-weight: normal;">${escapeHtml(badge)}</span>
+                    </label>
+
+                    <input
+                        type="${inputType}"
+                        data-add-field="${escapeHtml(name)}"
+                        placeholder="${escapeHtml(placeholder)}"
+                        ${isPrimaryKey || !isNullable ? 'required' : ''}
+                    />
+                </div>
+            `;
+        }).join("");
+
+    $("addModal").classList.remove("hidden");
+}
+
+function closeAddModal() {
+    $("addModal").classList.add("hidden");
+}
+
+async function saveAddRecord() {
+    if (!state.table) return;
+
+    const values = {};
+    const missingRequired = [];
+
+    document.querySelectorAll("#addFields input").forEach(input => {
+        const field = input.dataset.addField;
+        const val = input.value.trim();
+        const isRequired = input.hasAttribute("required");
+
+        if (!val && isRequired) {
+            missingRequired.push(field);
+        } else if (val !== "") {
+            values[field] = val;
+        }
+    });
+
+    if (missingRequired.length > 0) {
+        showToast(`Please fill required: ${missingRequired.join(", ")}`);
+        return;
+    }
+
+    if (Object.keys(values).length === 0) {
+        showToast("Please enter at least one field value.");
+        return;
+    }
+
+    try {
+        await api(
+            `/api/tables/${encodeURIComponent(state.table)}`,
+            {
+                method: "POST",
+                body: JSON.stringify(values)
+            }
+        );
+
+        closeAddModal();
+        showToast("Record added successfully.");
+        await loadTable(state.table);
+
+    } catch (error) {
+        showToast(error.message);
+    }
 }
 
 
@@ -758,7 +884,7 @@ async function deleteRow(index) {
     );
 
 
-    if (!confirm("Delete this record?")) {
+    if (!confirm(`Delete this record from ${state.table}?\n\nNOTE: Any referencing records across other tables will also be automatically deleted (Cascade Delete).`)) {
         return;
     }
 
@@ -777,7 +903,7 @@ async function deleteRow(index) {
 
 
         showToast(
-            "Record deleted successfully."
+            "Record and all related records deleted successfully."
         );
 
 
@@ -1716,6 +1842,44 @@ $("save")
         "click",
         saveEdit
     );
+
+
+/* ADD RECORD BUTTONS & MODAL CONTROLS */
+
+if ($("addRecordBtn")) {
+    $("addRecordBtn").addEventListener("click", openAddModal);
+}
+
+if ($("toolbarAddBtn")) {
+    $("toolbarAddBtn").addEventListener("click", openAddModal);
+}
+
+if ($("closeAddModal")) {
+    $("closeAddModal").addEventListener("click", closeAddModal);
+}
+
+if ($("cancelAdd")) {
+    $("cancelAdd").addEventListener("click", closeAddModal);
+}
+
+const addModalBackdrop = $("addModal") ? $("addModal").querySelector(".modal-backdrop") : null;
+if (addModalBackdrop) {
+    addModalBackdrop.addEventListener("click", closeAddModal);
+}
+
+const editModalBackdrop = $("modal") ? $("modal").querySelector(".modal-backdrop") : null;
+if (editModalBackdrop) {
+    editModalBackdrop.addEventListener("click", () => {
+        $("modal").classList.add("hidden");
+    });
+}
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        closeAddModal();
+        if ($("modal")) $("modal").classList.add("hidden");
+    }
+});
 
 
 /* CTRL + ENTER */

@@ -42,6 +42,19 @@ public class DatabaseController {
         );
     }
 
+    @PostMapping("/tables/{table}")
+    public Map<String, Object> insert(
+        @PathVariable String table,
+        @RequestBody Map<String, Object> values
+    ) {
+        int count = db.insert(table, values);
+
+        return Map.of(
+            "message", "Record inserted successfully.",
+            "affectedRows", count
+        );
+    }
+
     @PutMapping("/tables/{table}")
     public Map<String, Object> update(
         @PathVariable String table,
