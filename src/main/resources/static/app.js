@@ -269,6 +269,14 @@ async function loadTables() {
             });
 
 
+        /* Auto-open first table */
+        if (state.tables.length > 0) {
+            const defaultTable = state.tables.includes("CUSTOMER") ? "CUSTOMER" : state.tables[0];
+            $("tableSelect").value = defaultTable;
+            loadTable(defaultTable);
+        }
+
+
     } catch (error) {
 
         showToast(error.message);
@@ -1481,19 +1489,38 @@ document
 
 
                 /* Load trigger data when opened */
-
                 if (
                     button.dataset.page === "triggers"
                 ) {
-
                     loadTriggers();
+                }
 
+                /* Load cursor data when opened */
+                if (
+                    button.dataset.page === "cursors"
+                ) {
+                    runCustomerCursor();
+                    if ($("orderCustId") && !$("orderCustId").value) {
+                        $("orderCustId").value = "C-01";
+                    }
+                    runOrderCursor();
+                    runOrderTotalCursor();
                 }
 
             }
         );
 
     });
+
+
+/* AUTO-LOAD ON DROPDOWN CHANGE */
+if ($("tableSelect")) {
+    $("tableSelect").addEventListener("change", () => {
+        if ($("tableSelect").value) {
+            loadTable($("tableSelect").value);
+        }
+    });
+}
 
 
 /* OPEN TABLE */
