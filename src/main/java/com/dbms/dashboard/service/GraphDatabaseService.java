@@ -506,6 +506,18 @@ public class GraphDatabaseService {
         ));
     }
 
+    public static Object getPropertyCaseInsensitive(Map<String, ?> map, String key) {
+        if (map == null || key == null) return null;
+        Object val = map.get(key);
+        if (val != null) return val;
+        for (Map.Entry<String, ?> entry : map.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
     public List<Map<String, Object>> getNodesByLabel(String label) {
         String cleanLabel = (label == null) ? "SUPPLIER" : label.trim();
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -550,8 +562,7 @@ public class GraphDatabaseService {
         for (Map<String, Object> row : rows) {
             List<String> keyParts = new ArrayList<>();
             for (String pk : pks) {
-                Object v = row.get(pk);
-                if (v == null) v = row.get(pk.toLowerCase(Locale.ROOT));
+                Object v = getPropertyCaseInsensitive(row, pk);
                 if (v != null) keyParts.add(String.valueOf(v).trim().toUpperCase(Locale.ROOT));
             }
             String compositeKey = keyParts.isEmpty() ? row.toString() : String.join("||", keyParts);
@@ -733,9 +744,9 @@ public class GraphDatabaseService {
                 Map<String, Object> props = (Map<String, Object>) node.get("properties");
                 boolean allPkMatch = !pks.isEmpty();
                 for (String pk : pks) {
-                    Object existingPk = props.get(pk);
-                    Object newPk = cleanVals.get(pk);
-                    if (existingPk == null || newPk == null || !String.valueOf(existingPk).equalsIgnoreCase(String.valueOf(newPk))) {
+                    Object existingPk = getPropertyCaseInsensitive(props, pk);
+                    Object newPk = getPropertyCaseInsensitive(cleanVals, pk);
+                    if (existingPk == null || newPk == null || !String.valueOf(existingPk).trim().equalsIgnoreCase(String.valueOf(newPk).trim())) {
                         allPkMatch = false;
                         break;
                     }
@@ -760,8 +771,8 @@ public class GraphDatabaseService {
         List<String> pks = getPrimaryKeys(label);
         List<String> parts = new ArrayList<>();
         for (String pk : pks) {
-            Object v = vals.get(pk);
-            if (v != null) parts.add(String.valueOf(v));
+            Object v = getPropertyCaseInsensitive(vals, pk);
+            if (v != null) parts.add(String.valueOf(v).trim());
         }
         if (parts.isEmpty()) {
             return vals.values().stream().findFirst().map(String::valueOf).orElse(UUID.randomUUID().toString().substring(0, 8));

@@ -256,3 +256,13 @@ MERGE INTO DELIVERY_DUTY KEY(ORDERID, CITY) VALUES
 ('O-104', 'D-05', 'Chennai'),
 ('O-105', 'D-09', 'Mumbai'),
 ('O-106', 'D-11', 'Chennai');
+
+MERGE INTO WAREHOUSE KEY(WAREHOUSEID) VALUES
+('W-01', 'Chennai Central Hub', 'Chennai', 50000, 'M-01'),
+('W-02', 'Mumbai Port Depot', 'Mumbai', 75000, 'M-01');
+
+MERGE INTO STOCK KEY(WAREHOUSEID, PRODUCTID) VALUES
+('W-01', 'P-100', 1200),
+('W-01', 'P-210', 400),
+('W-02', 'P-104', 2500);
+

@@ -157,7 +157,7 @@ function escapeHtml(value) {
    TOAST
 ===================================================== */
 
-function showToast(message) {
+function showToast(message, duration = 2800) {
 
     const toast = $("toast");
 
@@ -169,10 +169,15 @@ function showToast(message) {
 
     toast.classList.remove("hidden");
 
-    setTimeout(() => {
+    if (window._toastTimeout) {
+        clearTimeout(window._toastTimeout);
+    }
+
+    window._toastTimeout = setTimeout(() => {
         toast.classList.add("hidden");
-    }, 2500);
+    }, duration);
 }
+
 
 
 /* =====================================================
@@ -341,14 +346,31 @@ async function loadTable(
         state.columns =
             columns.columns || columns || [];
 
-
-        state.rows =
-            rows.rows || rows || [];
-
-
         state.primaryKeys =
             columns.primaryKeys || [];
 
+        const rawRows =
+            rows.rows || rows || [];
+
+        // Deduplicate rows client-side by primary keys to ensure zero duplicate rendering
+        const seenKeys = new Set();
+        const pks = state.primaryKeys;
+        state.rows = rawRows.filter(r => {
+            if (!pks || !pks.length) return true;
+            const keyParts = pks.map(k => {
+                let v = r[k];
+                if (v === undefined || v === null) {
+                    const foundKey = Object.keys(r).find(x => x.toLowerCase() === k.toLowerCase());
+                    v = foundKey ? r[foundKey] : "";
+                }
+                return String(v).trim().toUpperCase();
+            });
+            if (keyParts.every(p => p === "")) return true;
+            const compositeKey = keyParts.join("||");
+            if (seenKeys.has(compositeKey)) return false;
+            seenKeys.add(compositeKey);
+            return true;
+        });
 
         $("tableTitle").textContent =
             tableName;
@@ -617,6 +639,12 @@ function openEditModal(index) {
             `;
         }).join("");
 
+    const errBox = $("editModalError");
+    if (errBox) {
+        errBox.textContent = "";
+        errBox.classList.add("hidden");
+    }
+
     $("modal").classList.remove("hidden");
 }
 
@@ -628,6 +656,12 @@ function openEditModal(index) {
 let isSavingEdit = false;
 async function saveEdit() {
     if (isSavingEdit || !state.currentRow) return;
+
+    const errBox = $("editModalError");
+    if (errBox) {
+        errBox.textContent = "";
+        errBox.classList.add("hidden");
+    }
 
     const saveBtn = $("save");
     const origText = saveBtn ? saveBtn.textContent : "Save Changes";
@@ -665,7 +699,12 @@ async function saveEdit() {
         showToast(res.message || "Record updated successfully.");
         await loadTable(state.table);
     } catch (error) {
-        showToast("Update failed: " + error.message);
+        const msg = error.message || "Update failed.";
+        if (errBox) {
+            errBox.innerHTML = `<strong>⚠️ Operation Blocked:</strong> ${escapeHtml(msg)}`;
+            errBox.classList.remove("hidden");
+        }
+        showToast("⚠️ " + msg, 6500);
     } finally {
         isSavingEdit = false;
         if (saveBtn) {
@@ -705,6 +744,12 @@ async function openAddModal(tableName) {
         return;
     }
 
+    const errBox = $("addModalError");
+    if (errBox) {
+        errBox.textContent = "";
+        errBox.classList.add("hidden");
+    }
+
     if ($("addModalTitle")) {
         $("addModalTitle").textContent = `Add Record to ${targetTable}`;
     }
@@ -741,6 +786,11 @@ async function changeAddModalTable(newTable) {
     state.table = newTable;
     if ($("tableSelect")) $("tableSelect").value = newTable;
     if ($("addModalTitle")) $("addModalTitle").textContent = `Add Record to ${newTable}`;
+    const errBox = $("addModalError");
+    if (errBox) {
+        errBox.textContent = "";
+        errBox.classList.add("hidden");
+    }
     await renderAddModalInputs(newTable);
 }
 window.changeAddModalTable = changeAddModalTable;
@@ -795,6 +845,12 @@ let isSavingAdd = false;
 async function saveAdd() {
     if (isSavingAdd) return;
 
+    const errBox = $("addModalError");
+    if (errBox) {
+        errBox.textContent = "";
+        errBox.classList.add("hidden");
+    }
+
     const table = state.table || ($("modalTableSelect") ? $("modalTableSelect").value : "");
     if (!table) {
         showToast("Error: No table selected.");
@@ -816,12 +872,22 @@ async function saveAdd() {
     });
 
     if (missingPk) {
-        showToast("Error: Primary key values are required.");
+        const msg = "Primary key values are required.";
+        if (errBox) {
+            errBox.innerHTML = `<strong>⚠️ Validation Failed:</strong> ${escapeHtml(msg)}`;
+            errBox.classList.remove("hidden");
+        }
+        showToast("⚠️ " + msg, 4000);
         return;
     }
 
     if (Object.keys(newValues).length === 0) {
-        showToast("Error: Please provide values to insert.");
+        const msg = "Please provide values to insert.";
+        if (errBox) {
+            errBox.innerHTML = `<strong>⚠️ Validation Failed:</strong> ${escapeHtml(msg)}`;
+            errBox.classList.remove("hidden");
+        }
+        showToast("⚠️ " + msg, 4000);
         return;
     }
 
@@ -843,7 +909,12 @@ async function saveAdd() {
         showToast(res.message || `Record added successfully to ${table}.`);
         await loadTable(table);
     } catch (error) {
-        showToast("Add failed: " + error.message);
+        const msg = error.message || "Failed to add record.";
+        if (errBox) {
+            errBox.innerHTML = `<strong>⚠️ Operation Blocked:</strong> ${escapeHtml(msg)}`;
+            errBox.classList.remove("hidden");
+        }
+        showToast("⚠️ " + msg, 6500);
     } finally {
         isSavingAdd = false;
         if (saveAddBtn) {

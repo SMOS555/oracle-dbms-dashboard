@@ -2382,3 +2382,25 @@ textarea::placeholder {
     fill: #34d399;
 }
 
+/* Modal Error Banner for Trigger & Constraint Violations */
+.modal-error-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #fca5a5;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+}
+
+.modal-error-banner.hidden {
+    display: none !important;
+}
+
+

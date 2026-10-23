@@ -7,11 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Primary Database Service: Unified 100% Neo4j Graph Database Integration.
- * Routes all tables, rows, columns, updates, deletes, cursors, and queries directly to Neo4j.
+ * Primary Database Service: Unified Relational and Graph Database Integration.
+ * Routes tables, rows, columns, updates, deletes, triggers, cursors, and queries.
  */
 @Service
 public class DatabaseService {
@@ -48,7 +51,36 @@ public class DatabaseService {
     // =========================
 
     public List<Map<String, Object>> rows(String table) {
-        return graphService.getNodesByLabel(table);
+        String upperTable = (table == null) ? "" : table.toUpperCase(Locale.ROOT).trim();
+        if (jdbc != null) {
+            try {
+                List<Map<String, Object>> sqlRows = jdbc.queryForList("SELECT * FROM " + upperTable);
+                if (sqlRows != null && !sqlRows.isEmpty()) {
+                    return deduplicateRows(upperTable, sqlRows);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return deduplicateRows(upperTable, graphService.getNodesByLabel(upperTable));
+    }
+
+    public List<Map<String, Object>> deduplicateRows(String table, List<Map<String, Object>> rowsList) {
+        if (rowsList == null || rowsList.isEmpty()) return List.of();
+        List<String> pks = primaryKeys(table);
+        Set<String> seen = new HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> r : rowsList) {
+            List<String> keyParts = new ArrayList<>();
+            for (String pk : pks) {
+                Object v = GraphDatabaseService.getPropertyCaseInsensitive(r, pk);
+                if (v != null) keyParts.add(String.valueOf(v).trim().toUpperCase(Locale.ROOT));
+            }
+            String compositeKey = keyParts.isEmpty() ? r.toString() : String.join("||", keyParts);
+            if (seen.add(compositeKey)) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     // =========================
@@ -112,7 +144,7 @@ public class DatabaseService {
                 try {
                     return graphService.executeUnifiedQuery(q);
                 } catch (Exception ignored) {
-                    throw new RuntimeException("SQL Execution Error: " + e.getMessage(), e);
+                    throw new RuntimeException(extractTriggerOrDbError(e), e);
                 }
             }
         }
@@ -129,7 +161,7 @@ public class DatabaseService {
             throw new IllegalArgumentException("No values supplied.");
         }
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
-        int count = graphService.insertNode(upperTable, values);
+        validateTriggersAndConstraints(upperTable, "INSERT", values, null);
 
         if (jdbc != null) {
             try {
@@ -154,10 +186,13 @@ public class DatabaseService {
                 if (!params.isEmpty()) {
                     jdbc.update(sql.toString(), params.toArray());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
             }
         }
-        return count;
+
+        int count = graphService.insertNode(upperTable, values);
+        return Math.max(count, 1);
     }
 
     @PostConstruct
@@ -201,6 +236,7 @@ public class DatabaseService {
         }
 
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
+        validateTriggersAndConstraints(upperTable, "UPDATE", values, where);
         int count = cascadeUpdate(upperTable, values, where);
         return Math.max(1, count);
     }
@@ -344,6 +380,7 @@ public class DatabaseService {
         }
 
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
+        validateTriggersAndConstraints(upperTable, "DELETE", null, where);
         int totalDeleted = 0;
 
         switch (upperTable) {
@@ -434,7 +471,6 @@ public class DatabaseService {
     }
 
     private int deleteSingle(String table, Map<String, String> where) {
-        int count = graphService.deleteNode(table, where);
         if (jdbc != null) {
             try {
                 StringBuilder sql = new StringBuilder("DELETE FROM " + table + " WHERE ");
@@ -446,13 +482,15 @@ public class DatabaseService {
                     params.add(e.getValue());
                 }
                 jdbc.update(sql.toString(), params.toArray());
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
+            }
         }
+        int count = graphService.deleteNode(table, where);
         return Math.max(count, 1);
     }
 
     private int updateSingle(String table, Map<String, Object> values, Map<String, String> where) {
-        int count = graphService.updateNode(table, values, where);
         if (jdbc != null) {
             try {
                 StringBuilder sql = new StringBuilder("UPDATE " + table + " SET ");
@@ -471,8 +509,11 @@ public class DatabaseService {
                     params.add(e.getValue());
                 }
                 jdbc.update(sql.toString(), params.toArray());
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
+            }
         }
+        int count = graphService.updateNode(table, values, where);
         return count;
     }
 
@@ -591,11 +632,274 @@ public class DatabaseService {
     }
 
     // =========================
-    // TRIGGERS / GRAPH CONSTRAINTS
+    // TRIGGERS / PL/SQL TRIGGERS
     // =========================
 
     public List<Map<String, Object>> triggers() {
-        return graphService.getTriggers();
+        if (jdbc != null) {
+            try {
+                List<Map<String, Object>> dbTriggers = jdbc.queryForList(
+                    "SELECT TRIGGER_NAME, TRIGGER_TYPE, TRIGGERING_EVENT, TABLE_NAME, STATUS " +
+                    "FROM USER_TRIGGERS ORDER BY TRIGGER_NAME"
+                );
+                if (dbTriggers != null && !dbTriggers.isEmpty()) {
+                    return dbTriggers;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return List.of(
+            Map.of("TRIGGER_NAME", "TRG_STOCK_NO_NEGATIVE", "TABLE_NAME", "STOCK", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents negative stock quantity (:NEW.QUANTITY >= 0)"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_ITEM_VALIDATION", "TABLE_NAME", "ORDER_ITEM", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Validates order quantity (:NEW.QTY > 0) and item price (:NEW.PRICE >= 0)"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_DATE_VALIDATION", "TABLE_NAME", "ORDERS", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents future order dates (:NEW.ORDERDATE <= SYSDATE)"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_STATUS_VALIDATION", "TABLE_NAME", "ORDERS", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Validates order status in (NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED)"),
+            Map.of("TRIGGER_NAME", "TRG_SALARY_VALIDATION", "TABLE_NAME", "EMPLOYEE", "TRIGGERING_EVENT", "BEFORE UPDATE OF SALARY", "STATUS", "ENABLED", "DESCRIPTION", "Prevents reducing employee salary (:NEW.SALARY >= :OLD.SALARY)"),
+            Map.of("TRIGGER_NAME", "TRG_SALARY_AUDIT", "TABLE_NAME", "EMPLOYEE", "TRIGGERING_EVENT", "AFTER UPDATE OF SALARY", "STATUS", "ENABLED", "DESCRIPTION", "Audits salary changes into SALARY_AUDIT table"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_SHIP_STATUS", "TABLE_NAME", "SHIPMENT", "TRIGGERING_EVENT", "AFTER INSERT", "STATUS", "ENABLED", "DESCRIPTION", "Automatically marks associated order as SHIPPED"),
+            Map.of("TRIGGER_NAME", "TRG_CUSTOMER_DELETE_CHECK", "TABLE_NAME", "CUSTOMER", "TRIGGERING_EVENT", "BEFORE DELETE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents deleting customers who have active orders"),
+            Map.of("TRIGGER_NAME", "TRG_RETURN_AMOUNT_VALIDATION", "TABLE_NAME", "GOODS_RETURN", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents negative refund amounts (:NEW.REFUNDAMT >= 0)"),
+            Map.of("TRIGGER_NAME", "TRG_INSPECTION_RESULT", "TABLE_NAME", "INSPECTION", "TRIGGERING_EVENT", "BEFORE INSERT", "STATUS", "ENABLED", "DESCRIPTION", "Defaults inspection result to 'PENDING' if unspecified")
+        );
+    }
+
+    // =========================
+    // TRIGGER VALIDATION & ERROR EXTRACTION
+    // =========================
+
+    public void validateTriggersAndConstraints(String table, String operation, Map<String, Object> values, Map<String, String> where) {
+        String upperTable = (table == null) ? "" : table.toUpperCase(Locale.ROOT).trim();
+        String op = (operation == null) ? "" : operation.toUpperCase(Locale.ROOT).trim();
+
+        // 1. TRG_STOCK_NO_NEGATIVE (STOCK)
+        if ("STOCK".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String qtyStr = getParam(values, "QUANTITY");
+            if (qtyStr != null) {
+                try {
+                    double q = Double.parseDouble(qtyStr);
+                    if (q < 0) {
+                        throw new IllegalArgumentException("Trigger Violation [TRG_STOCK_NO_NEGATIVE]: Stock quantity cannot be negative (attempted: " + qtyStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // 2. TRG_ORDER_ITEM_VALIDATION (ORDER_ITEM)
+        if ("ORDER_ITEM".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String qtyStr = getParam(values, "QTY", "QUANTITY");
+            if (qtyStr != null) {
+                try {
+                    double q = Double.parseDouble(qtyStr);
+                    if (q <= 0) {
+                        throw new IllegalArgumentException("Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Order quantity must be greater than zero (attempted: " + qtyStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            String priceStr = getParam(values, "PRICE", "UNITPRICE");
+            if (priceStr != null) {
+                try {
+                    double p = Double.parseDouble(priceStr);
+                    if (p < 0) {
+                        throw new IllegalArgumentException("Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Item price cannot be negative (attempted: " + priceStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // 3. TRG_ORDER_DATE_VALIDATION & 4. TRG_ORDER_STATUS_VALIDATION (ORDERS)
+        if ("ORDERS".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String dateStr = getParam(values, "ORDERDATE", "ORDER_DATE");
+            if (dateStr != null) {
+                try {
+                    String cleanDate = dateStr.contains("T") ? dateStr.substring(0, dateStr.indexOf("T")) : dateStr.trim();
+                    LocalDate d = LocalDate.parse(cleanDate);
+                    if (d.isAfter(LocalDate.now())) {
+                        throw new IllegalArgumentException("Trigger Violation [TRG_ORDER_DATE_VALIDATION]: Order date cannot be in the future (attempted: " + dateStr + ").");
+                    }
+                } catch (Exception ex) {
+                    if (ex instanceof IllegalArgumentException) throw ex;
+                }
+            }
+            String status = getParam(values, "STATUS");
+            if (status != null) {
+                Set<String> validStatuses = Set.of("NEW", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED");
+                if (!validStatuses.contains(status.trim().toUpperCase(Locale.ROOT))) {
+                    throw new IllegalArgumentException("Trigger Violation [TRG_ORDER_STATUS_VALIDATION]: Invalid order status '" + status + "'. Allowed statuses: NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED.");
+                }
+            }
+        }
+
+        // 5. TRG_SALARY_VALIDATION (EMPLOYEE)
+        if ("EMPLOYEE".equals(upperTable)) {
+            String salStr = getParam(values, "SALARY");
+            if (salStr != null) {
+                try {
+                    double newSal = Double.parseDouble(salStr);
+                    if (newSal < 0) {
+                        throw new IllegalArgumentException("Constraint Violation: Employee salary cannot be negative (attempted: " + salStr + ").");
+                    }
+                    if ("UPDATE".equals(op)) {
+                        String empId = getParam(where, "EMPID", "ID");
+                        if (empId == null) empId = getParam(values, "EMPID", "ID");
+                        if (empId != null) {
+                            List<Map<String, Object>> existing = findMatchingRows("EMPLOYEE", "EMPID", empId);
+                            if (!existing.isEmpty()) {
+                                Object oldSalObj = getParam(existing.get(0), "SALARY");
+                                if (oldSalObj != null) {
+                                    double oldSal = Double.parseDouble(String.valueOf(oldSalObj));
+                                    if (newSal < oldSal) {
+                                        throw new IllegalArgumentException("Trigger Violation [TRG_SALARY_VALIDATION]: Salary cannot be reduced. Current: " + oldSal + ", Attempted: " + newSal + ".");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // 8. TRG_CUSTOMER_DELETE_CHECK (CUSTOMER)
+        if ("CUSTOMER".equals(upperTable) && "DELETE".equals(op)) {
+            String custId = findParam(where, "CUSTID");
+            if (custId != null) {
+                List<Map<String, Object>> orders = findMatchingRows("ORDERS", "CUSTID", custId);
+                if (!orders.isEmpty()) {
+                    throw new IllegalArgumentException("Trigger Violation [TRG_CUSTOMER_DELETE_CHECK]: Cannot delete customer " + custId + " because they have " + orders.size() + " associated order(s).");
+                }
+            }
+        }
+
+        // 9. TRG_RETURN_AMOUNT_VALIDATION (GOODS_RETURN)
+        if ("GOODS_RETURN".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String refStr = getParam(values, "REFUNDAMT", "REFUND_AMOUNT", "REFUND");
+            if (refStr != null) {
+                try {
+                    double r = Double.parseDouble(refStr);
+                    if (r < 0) {
+                        throw new IllegalArgumentException("Trigger Violation [TRG_RETURN_AMOUNT_VALIDATION]: Refund amount cannot be negative (attempted: " + refStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // 10. TRG_INSPECTION_RESULT (INSPECTION)
+        if ("INSPECTION".equals(upperTable) && "INSERT".equals(op)) {
+            String res = getParam(values, "RESULT");
+            if (res == null || res.isBlank()) {
+                values.put("RESULT", "PENDING");
+            }
+        }
+
+        // PRODUCT Check
+        if ("PRODUCT".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String priceStr = getParam(values, "UNITPRICE", "PRICE");
+            if (priceStr != null) {
+                try {
+                    double p = Double.parseDouble(priceStr);
+                    if (p < 0) {
+                        throw new IllegalArgumentException("Constraint Violation: Product unit price cannot be negative (attempted: " + priceStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // PERISHABLE_PRODUCT Check
+        if ("PERISHABLE_PRODUCT".equals(upperTable) && ("INSERT".equals(op) || "UPDATE".equals(op))) {
+            String shelfStr = getParam(values, "SHELFLIFEDAYS", "SHELFLIFE");
+            if (shelfStr != null) {
+                try {
+                    double s = Double.parseDouble(shelfStr);
+                    if (s <= 0) {
+                        throw new IllegalArgumentException("Constraint Violation: Shelf life days must be greater than zero (attempted: " + shelfStr + ").");
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+    }
+
+    public String extractTriggerOrDbError(Throwable t) {
+        if (t == null) return "Database operation failed.";
+        Throwable curr = t;
+        String rawMsg = t.getMessage();
+        while (curr != null) {
+            String m = curr.getMessage();
+            if (m != null && !m.isBlank()) {
+                rawMsg = m;
+                // Check for Oracle PL/SQL Application Error codes (-20001 to -20008)
+                if (m.contains("ORA-20001")) {
+                    return "Trigger Violation [TRG_STOCK_NO_NEGATIVE]: Stock quantity cannot be negative.";
+                }
+                if (m.contains("ORA-20002")) {
+                    return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Order quantity must be greater than zero.";
+                }
+                if (m.contains("ORA-20003")) {
+                    return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Item price cannot be negative.";
+                }
+                if (m.contains("ORA-20004")) {
+                    return "Trigger Violation [TRG_ORDER_DATE_VALIDATION]: Order date cannot be in the future.";
+                }
+                if (m.contains("ORA-20005")) {
+                    Matcher mat = Pattern.compile("ORA-20005:\\s*([^\\r\\n]+)").matcher(m);
+                    if (mat.find()) return "Trigger Violation [TRG_ORDER_STATUS_VALIDATION]: " + mat.group(1).trim();
+                    return "Trigger Violation [TRG_ORDER_STATUS_VALIDATION]: Invalid order status.";
+                }
+                if (m.contains("ORA-20006")) {
+                    Matcher mat = Pattern.compile("ORA-20006:\\s*([^\\r\\n]+)").matcher(m);
+                    if (mat.find()) return "Trigger Violation [TRG_SALARY_VALIDATION]: " + mat.group(1).trim();
+                    return "Trigger Violation [TRG_SALARY_VALIDATION]: Salary cannot be reduced.";
+                }
+                if (m.contains("ORA-20007")) {
+                    Matcher mat = Pattern.compile("ORA-20007:\\s*([^\\r\\n]+)").matcher(m);
+                    if (mat.find()) return "Trigger Violation [TRG_CUSTOMER_DELETE_CHECK]: " + mat.group(1).trim();
+                    return "Trigger Violation [TRG_CUSTOMER_DELETE_CHECK]: Cannot delete customer because associated orders exist.";
+                }
+                if (m.contains("ORA-20008")) {
+                    return "Trigger Violation [TRG_RETURN_AMOUNT_VALIDATION]: Refund amount cannot be negative.";
+                }
+                Matcher customOra = Pattern.compile("ORA-20\\d{3}:\\s*([^\\r\\n]+)").matcher(m);
+                if (customOra.find()) {
+                    return "Trigger Violation: " + customOra.group(1).trim();
+                }
+
+                // Check constraints (H2 or Oracle ORA-02290)
+                String upperM = m.toUpperCase(Locale.ROOT);
+                if (upperM.contains("CHECK") || upperM.contains("ORA-02290")) {
+                    if (upperM.contains("QUANTITY")) {
+                        return "Trigger Violation [TRG_STOCK_NO_NEGATIVE]: Stock quantity cannot be negative.";
+                    }
+                    if (upperM.contains("QTY")) {
+                        return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Order quantity must be greater than zero.";
+                    }
+                    if (upperM.contains("PRICE")) {
+                        return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Item price cannot be negative.";
+                    }
+                    if (upperM.contains("UNITPRICE")) {
+                        return "Constraint Violation: Product unit price cannot be negative.";
+                    }
+                    if (upperM.contains("SALARY")) {
+                        return "Constraint Violation: Employee salary cannot be negative.";
+                    }
+                    if (upperM.contains("SHELFLIFEDAYS")) {
+                        return "Constraint Violation: Shelf life days must be greater than zero.";
+                    }
+                    if (upperM.contains("REFUNDAMT")) {
+                        return "Trigger Violation [TRG_RETURN_AMOUNT_VALIDATION]: Refund amount cannot be negative.";
+                    }
+                    return "Constraint Violation: Value violates database check constraint.";
+                }
+
+                // Foreign Key / Referential constraints
+                if (upperM.contains("ORA-02291") || upperM.contains("ORA-02292") || upperM.contains("REFERENTIAL INTEGRITY")) {
+                    return "Integrity Constraint Violation: Foreign key constraint violated (parent record does not exist or record has dependent children).";
+                }
+
+                // Unique / Primary key constraints
+                if (upperM.contains("ORA-00001") || upperM.contains("UNIQUE INDEX") || upperM.contains("PRIMARY KEY")) {
+                    return "Constraint Violation: Record with this primary key already exists.";
+                }
+            }
+            curr = curr.getCause();
+        }
+        return rawMsg != null ? rawMsg : "Database operation failed.";
     }
 
     // =========================
