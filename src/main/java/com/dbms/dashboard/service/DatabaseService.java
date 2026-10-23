@@ -1,5 +1,8 @@
 package com.dbms.dashboard.service;
 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +15,8 @@ import java.util.*;
  */
 @Service
 public class DatabaseService {
+
+    private static final Logger log = LoggerFactory.getLogger(DatabaseService.class);
 
     private final GraphDatabaseService graphService;
     private final JdbcTemplate jdbc;
@@ -155,8 +160,32 @@ public class DatabaseService {
         return count;
     }
 
+    @PostConstruct
+    public void autoReconcileForeignKeys() {
+        try {
+            List<Map<String, Object>> drivers = rows("DRIVER");
+            List<Map<String, Object>> employees = rows("EMPLOYEE");
+            boolean driverHasD099 = drivers.stream().anyMatch(d -> "D-099".equalsIgnoreCase(String.valueOf(d.get("EMPID"))));
+            boolean empHasD099 = employees.stream().anyMatch(e -> "D-099".equalsIgnoreCase(String.valueOf(e.get("EMPID"))));
+            boolean driverHasD05 = drivers.stream().anyMatch(d -> "D-05".equalsIgnoreCase(String.valueOf(d.get("EMPID"))));
+            boolean empHasD05 = employees.stream().anyMatch(e -> "D-05".equalsIgnoreCase(String.valueOf(e.get("EMPID"))));
+
+            if ((driverHasD099 && !driverHasD05) || (empHasD099 && !empHasD05)) {
+                log.info("Auto-reconciling Driver D-05 to D-099 across dependent tables...");
+                updateSingle("DRIVER", Map.of("EMPID", "D-099"), Map.of("EMPID", "D-05"));
+                updateSingle("EMPLOYEE", Map.of("EMPID", "D-099"), Map.of("EMPID", "D-05"));
+                updateSingle("DRIVER_CITY", Map.of("DRIVERID", "D-099"), Map.of("DRIVERID", "D-05"));
+                updateSingle("ORDER_DRIVER", Map.of("DRIVERID", "D-099"), Map.of("DRIVERID", "D-05"));
+                updateSingle("DELIVERY_DUTY", Map.of("DRIVERID", "D-099"), Map.of("DRIVERID", "D-05"));
+                graphService.cascadeUpdateId("DRIVER", "D-05", "D-099");
+            }
+        } catch (Exception e) {
+            log.warn("Auto-reconcile standby: {}", e.getMessage());
+        }
+    }
+
     // =========================
-    // UPDATE TABLE / NODE
+    // UPDATE TABLE / NODE (WITH CASCADING ON UPDATE)
     // =========================
 
     public int update(
@@ -172,34 +201,133 @@ public class DatabaseService {
         }
 
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
-        int count = graphService.updateNode(upperTable, values, where);
+        int count = cascadeUpdate(upperTable, values, where);
+        return Math.max(1, count);
+    }
 
-        if (jdbc != null) {
-            try {
-                StringBuilder sql = new StringBuilder("UPDATE " + upperTable + " SET ");
-                List<Object> params = new ArrayList<>();
-                int i = 0;
-                for (Map.Entry<String, Object> e : values.entrySet()) {
-                    String k = e.getKey();
-                    if ("id".equalsIgnoreCase(k) || "name".equalsIgnoreCase(k)) continue;
-                    if (i++ > 0) sql.append(", ");
-                    sql.append(k).append(" = ?");
-                    params.add(e.getValue());
+    private int cascadeUpdate(String upperTable, Map<String, Object> values, Map<String, String> where) {
+        int count = 0;
+        switch (upperTable) {
+            case "DRIVER" -> {
+                String oldId = getParam(where, "EMPID", "DRIVERID", "ID");
+                String newId = getParam(values, "EMPID", "DRIVERID", "ID");
+                count += updateSingle("DRIVER", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("EMPLOYEE", Map.of("EMPID", newId), Map.of("EMPID", oldId));
+                    count += updateSingle("DRIVER_CITY", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    count += updateSingle("ORDER_DRIVER", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    count += updateSingle("DELIVERY_DUTY", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    graphService.cascadeUpdateId("DRIVER", oldId, newId);
                 }
-                sql.append(" WHERE ");
-                i = 0;
-                for (Map.Entry<String, String> e : where.entrySet()) {
-                    if (i++ > 0) sql.append(" AND ");
-                    sql.append(e.getKey()).append(" = ?");
-                    params.add(e.getValue());
+            }
+            case "EMPLOYEE" -> {
+                String oldId = getParam(where, "EMPID", "ID");
+                String newId = getParam(values, "EMPID", "ID");
+                count += updateSingle("EMPLOYEE", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("DRIVER", Map.of("EMPID", newId), Map.of("EMPID", oldId));
+                    count += updateSingle("MANAGER", Map.of("EMPID", newId), Map.of("EMPID", oldId));
+                    count += updateSingle("WAREHOUSE", Map.of("MANAGERID", newId), Map.of("MANAGERID", oldId));
+                    count += updateSingle("DRIVER_CITY", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    count += updateSingle("ORDER_DRIVER", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    count += updateSingle("DELIVERY_DUTY", Map.of("DRIVERID", newId), Map.of("DRIVERID", oldId));
+                    graphService.cascadeUpdateId("EMPLOYEE", oldId, newId);
                 }
-                if (!params.isEmpty()) {
-                    jdbc.update(sql.toString(), params.toArray());
+            }
+            case "MANAGER" -> {
+                String oldId = getParam(where, "EMPID", "ID");
+                String newId = getParam(values, "EMPID", "ID");
+                count += updateSingle("MANAGER", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("EMPLOYEE", Map.of("EMPID", newId), Map.of("EMPID", oldId));
+                    count += updateSingle("WAREHOUSE", Map.of("MANAGERID", newId), Map.of("MANAGERID", oldId));
+                    graphService.cascadeUpdateId("MANAGER", oldId, newId);
                 }
-            } catch (Exception ignored) {
+            }
+            case "CITY" -> {
+                String oldCity = getParam(where, "CITY");
+                String newCity = getParam(values, "CITY");
+                count += updateSingle("CITY", values, where);
+                if (oldCity != null && newCity != null && !oldCity.equalsIgnoreCase(newCity)) {
+                    count += updateSingle("SUPPLIER", Map.of("CITY", newCity), Map.of("CITY", oldCity));
+                    count += updateSingle("CUSTOMER", Map.of("CITY", newCity), Map.of("CITY", oldCity));
+                    count += updateSingle("WAREHOUSE", Map.of("CITY", newCity), Map.of("CITY", oldCity));
+                    count += updateSingle("DRIVER_CITY", Map.of("CITY", newCity), Map.of("CITY", oldCity));
+                    count += updateSingle("DELIVERY_DUTY", Map.of("CITY", newCity), Map.of("CITY", oldCity));
+                    graphService.cascadeUpdateId("CITY", oldCity, newCity);
+                }
+            }
+            case "CUSTOMER" -> {
+                String oldId = getParam(where, "CUSTID", "ID");
+                String newId = getParam(values, "CUSTID", "ID");
+                count += updateSingle("CUSTOMER", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("ORDERS", Map.of("CUSTID", newId), Map.of("CUSTID", oldId));
+                    graphService.cascadeUpdateId("CUSTOMER", oldId, newId);
+                }
+            }
+            case "SUPPLIER" -> {
+                String oldId = getParam(where, "SUPPLIERID", "ID");
+                String newId = getParam(values, "SUPPLIERID", "ID");
+                count += updateSingle("SUPPLIER", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("SUPPLIER_PHONE", Map.of("SUPPLIERID", newId), Map.of("SUPPLIERID", oldId));
+                    count += updateSingle("SUPPLIES", Map.of("SUPPLIERID", newId), Map.of("SUPPLIERID", oldId));
+                    count += updateSingle("INSPECTION", Map.of("SUPPLIERID", newId), Map.of("SUPPLIERID", oldId));
+                    graphService.cascadeUpdateId("SUPPLIER", oldId, newId);
+                }
+            }
+            case "PRODUCT" -> {
+                String oldId = getParam(where, "PRODUCTID", "ID");
+                String newId = getParam(values, "PRODUCTID", "ID");
+                count += updateSingle("PRODUCT", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("PERISHABLE_PRODUCT", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    count += updateSingle("HAZARDOUS_PRODUCT", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    count += updateSingle("SUPPLIES", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    count += updateSingle("INSPECTION", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    count += updateSingle("STOCK", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    count += updateSingle("ORDER_ITEM", Map.of("PRODUCTID", newId), Map.of("PRODUCTID", oldId));
+                    graphService.cascadeUpdateId("PRODUCT", oldId, newId);
+                }
+            }
+            case "WAREHOUSE" -> {
+                String oldId = getParam(where, "WAREHOUSEID", "ID");
+                String newId = getParam(values, "WAREHOUSEID", "ID");
+                count += updateSingle("WAREHOUSE", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("STOCK", Map.of("WAREHOUSEID", newId), Map.of("WAREHOUSEID", oldId));
+                    count += updateSingle("GOODS_MOVEMENT", Map.of("WAREHOUSEID", newId), Map.of("WAREHOUSEID", oldId));
+                    count += updateSingle("EMPLOYEE", Map.of("WAREHOUSEID", newId), Map.of("WAREHOUSEID", oldId));
+                    graphService.cascadeUpdateId("WAREHOUSE", oldId, newId);
+                }
+            }
+            case "ORDERS" -> {
+                String oldId = getParam(where, "ORDERID", "ID");
+                String newId = getParam(values, "ORDERID", "ID");
+                count += updateSingle("ORDERS", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("ORDER_ITEM", Map.of("ORDERID", newId), Map.of("ORDERID", oldId));
+                    count += updateSingle("ORDER_DRIVER", Map.of("ORDERID", newId), Map.of("ORDERID", oldId));
+                    count += updateSingle("DELIVERY_DUTY", Map.of("ORDERID", newId), Map.of("ORDERID", oldId));
+                    count += updateSingle("GOODS_MOVEMENT", Map.of("ORDERID", newId), Map.of("ORDERID", oldId));
+                    graphService.cascadeUpdateId("ORDERS", oldId, newId);
+                }
+            }
+            case "GOODS_MOVEMENT" -> {
+                String oldId = getParam(where, "MOVEMENTID", "ID");
+                String newId = getParam(values, "MOVEMENTID", "ID");
+                count += updateSingle("GOODS_MOVEMENT", values, where);
+                if (oldId != null && newId != null && !oldId.equalsIgnoreCase(newId)) {
+                    count += updateSingle("SHIPMENT", Map.of("MOVEMENTID", newId), Map.of("MOVEMENTID", oldId));
+                    count += updateSingle("GOODS_RETURN", Map.of("MOVEMENTID", newId), Map.of("MOVEMENTID", oldId));
+                    graphService.cascadeUpdateId("GOODS_MOVEMENT", oldId, newId);
+                }
+            }
+            default -> {
+                count += updateSingle(upperTable, values, where);
             }
         }
-
         return count;
     }
 
@@ -272,6 +400,22 @@ public class DatabaseService {
             if (e.getKey().equalsIgnoreCase(key)) return e.getValue();
         }
         return where.values().iterator().next();
+    }
+
+    private String getParam(Map<?, ?> map, String... keys) {
+        if (map == null || map.isEmpty()) return null;
+        for (String key : keys) {
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                if (String.valueOf(e.getKey()).equalsIgnoreCase(key)) {
+                    Object val = e.getValue();
+                    if (val != null) {
+                        String str = String.valueOf(val).trim();
+                        if (!str.isEmpty() && !"null".equalsIgnoreCase(str)) return str;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private List<Map<String, Object>> findMatchingRows(String table, String col, String val) {

@@ -112,6 +112,7 @@ public class GraphDatabaseService {
                 connectionMessage = "Connected live to Neo4j AuraDB (" + uri + ")";
                 log.info("Successfully connected to live Neo4j AuraDB: {}", uri);
                 autoSeedIfEmpty();
+                deduplicateLiveGraph();
             } catch (Exception e) {
                 isLiveConnected = false;
                 connectionMessage = "Fallback to Built-in Neo4j Engine (AuraDB standby: " + e.getMessage() + ")";
@@ -133,6 +134,7 @@ public class GraphDatabaseService {
             isLiveConnected = true;
             connectionMessage = "Connected live to Neo4j (" + uri + ")";
             autoSeedIfEmpty();
+            deduplicateLiveGraph();
             return Map.of("success", true, "message", connectionMessage, "live", true);
         } catch (Exception e) {
             isLiveConnected = false;
@@ -303,6 +305,31 @@ public class GraphDatabaseService {
         session.run("MATCH (hp:HAZARDOUS_PRODUCT), (p:PRODUCT {PRODUCTID: hp.PRODUCTID}) MERGE (hp)-[:IS_A]->(p)");
         session.run("MATCH (sh:SHIPMENT), (gm:GOODS_MOVEMENT {MOVEMENTID: sh.MOVEMENTID}) MERGE (sh)-[:IS_A]->(gm)");
         session.run("MATCH (gr:GOODS_RETURN), (gm:GOODS_MOVEMENT {MOVEMENTID: gr.MOVEMENTID}) MERGE (gr)-[:IS_A]->(gm)");
+    }
+
+    /**
+     * Purges duplicate nodes across all 22 labels in live Neo4j AuraDB by primary key.
+     */
+    public void deduplicateLiveGraph() {
+        if (!isLiveConnected || driver == null) return;
+        try (Session session = driver.session()) {
+            for (String label : CANONICAL_LABELS) {
+                List<String> pks = getPrimaryKeys(label);
+                if (pks.isEmpty()) continue;
+                String firstPk = pks.get(0);
+                String cypher = "MATCH (n:" + label + ") " +
+                                "WHERE n." + firstPk + " IS NOT NULL " +
+                                "WITH n." + firstPk + " AS pk, collect(n) AS nodes " +
+                                "WHERE size(nodes) > 1 " +
+                                "FOREACH (n IN tail(nodes) | DETACH DELETE n)";
+                try {
+                    session.run(cypher);
+                } catch (Exception ignored) {}
+            }
+            log.info("Live Neo4j graph deduplication complete across all 22 labels.");
+        } catch (Exception e) {
+            log.warn("Live Neo4j graph deduplication standby: {}", e.getMessage());
+        }
     }
 
     public boolean isLiveConnected() {
@@ -481,13 +508,13 @@ public class GraphDatabaseService {
 
     public List<Map<String, Object>> getNodesByLabel(String label) {
         String cleanLabel = (label == null) ? "SUPPLIER" : label.trim();
+        List<Map<String, Object>> rows = new ArrayList<>();
 
-        if (isLiveConnected) {
+        if (isLiveConnected && driver != null) {
             try (Session session = driver.session()) {
                 String cypher = "MATCH (n) WHERE any(l IN labels(n) WHERE toUpper(l) = toUpper($label)) " +
                                 "RETURN properties(n) AS props, id(n) AS _id LIMIT 250";
                 Result result = session.run(cypher, Map.of("label", cleanLabel));
-                List<Map<String, Object>> rows = new ArrayList<>();
                 while (result.hasNext()) {
                     Record rec = result.next();
                     Map<String, Object> props = new LinkedHashMap<>(rec.get("props").asMap());
@@ -495,27 +522,44 @@ public class GraphDatabaseService {
                     props.remove("name");
                     rows.add(props);
                 }
-                if (!rows.isEmpty()) {
-                    return rows;
-                }
             } catch (Exception e) {
                 log.warn("Querying live Neo4j for label {} failed: {}. Falling back to in-memory graph.", cleanLabel, e.getMessage());
             }
         }
 
-        // In-memory fallback
-        return defaultNodes.stream()
-            .filter(n -> {
-                String type = String.valueOf(n.get("type"));
-                return type.equalsIgnoreCase(cleanLabel);
-            })
-            .map(n -> {
-                Map<String, Object> props = new LinkedHashMap<>((Map<String, Object>) n.get("properties"));
-                props.remove("id");
-                props.remove("name");
-                return props;
-            })
-            .collect(Collectors.toList());
+        if (rows.isEmpty()) {
+            // In-memory fallback
+            rows = defaultNodes.stream()
+                .filter(n -> {
+                    String type = String.valueOf(n.get("type"));
+                    return type.equalsIgnoreCase(cleanLabel);
+                })
+                .map(n -> {
+                    Map<String, Object> props = new LinkedHashMap<>((Map<String, Object>) n.get("properties"));
+                    props.remove("id");
+                    props.remove("name");
+                    return props;
+                })
+                .collect(Collectors.toList());
+        }
+
+        // Deduplicate rows by primary key(s)
+        List<String> pks = getPrimaryKeys(cleanLabel.toUpperCase(Locale.ROOT));
+        Set<String> seen = new HashSet<>();
+        List<Map<String, Object>> deduped = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            List<String> keyParts = new ArrayList<>();
+            for (String pk : pks) {
+                Object v = row.get(pk);
+                if (v == null) v = row.get(pk.toLowerCase(Locale.ROOT));
+                if (v != null) keyParts.add(String.valueOf(v).trim().toUpperCase(Locale.ROOT));
+            }
+            String compositeKey = keyParts.isEmpty() ? row.toString() : String.join("||", keyParts);
+            if (seen.add(compositeKey)) {
+                deduped.add(row);
+            }
+        }
+        return deduped;
     }
 
     public List<Map<String, Object>> getLabelProperties(String label) {
@@ -642,16 +686,37 @@ public class GraphDatabaseService {
         Map<String, Object> cleanVals = cleanAndCastValues(cleanLabel, values);
         if (cleanVals.isEmpty()) return 0;
 
-        if (isLiveConnected) {
+        List<String> pks = getPrimaryKeys(cleanLabel);
+        Map<String, Object> pkParams = new HashMap<>();
+        StringBuilder matchKeys = new StringBuilder();
+        int kIdx = 0;
+        for (String pk : pks) {
+            Object v = cleanVals.get(pk);
+            if (v != null) {
+                if (kIdx++ > 0) matchKeys.append(", ");
+                String paramName = "pk_" + pk;
+                matchKeys.append(pk).append(": $").append(paramName);
+                pkParams.put(paramName, v);
+            }
+        }
+
+        if (isLiveConnected && driver != null) {
             try (Session session = driver.session()) {
-                String cypher = "CREATE (n:" + cleanLabel + ") SET n = $vals RETURN count(n) AS c";
-                session.run(cypher, Map.of("vals", cleanVals));
+                String cypher;
+                Map<String, Object> params = new HashMap<>(pkParams);
+                params.put("vals", cleanVals);
+                if (matchKeys.length() > 0) {
+                    cypher = "MERGE (n:" + cleanLabel + " {" + matchKeys + "}) SET n += $vals RETURN count(n) AS c";
+                } else {
+                    cypher = "CREATE (n:" + cleanLabel + ") SET n = $vals RETURN count(n) AS c";
+                }
+                session.run(cypher, params);
             } catch (Exception e) {
                 log.error("Live Neo4j insert failed: {}", e.getMessage());
             }
         }
 
-        // Always also add to in-memory store
+        // Always also handle in-memory store with deduplication
         String pkVal = extractPrimaryKeyValue(cleanLabel, cleanVals);
         String nodeId = cleanLabel + "_" + pkVal;
         String displayLabel = cleanLabel + " [" + pkVal + "]";
@@ -662,8 +727,32 @@ public class GraphDatabaseService {
         else if (cleanVals.containsKey("WNAME")) displayLabel = String.valueOf(cleanVals.get("WNAME")) + " [" + pkVal + "]";
         else if (cleanVals.containsKey("CITY")) displayLabel = String.valueOf(cleanVals.get("CITY"));
 
-        addNode(nodeId, displayLabel, cleanLabel, cleanVals);
-        autoLinkNode(nodeId, cleanLabel, cleanVals);
+        boolean replaced = false;
+        for (Map<String, Object> node : defaultNodes) {
+            if (cleanLabel.equalsIgnoreCase(String.valueOf(node.get("type")))) {
+                Map<String, Object> props = (Map<String, Object>) node.get("properties");
+                boolean allPkMatch = !pks.isEmpty();
+                for (String pk : pks) {
+                    Object existingPk = props.get(pk);
+                    Object newPk = cleanVals.get(pk);
+                    if (existingPk == null || newPk == null || !String.valueOf(existingPk).equalsIgnoreCase(String.valueOf(newPk))) {
+                        allPkMatch = false;
+                        break;
+                    }
+                }
+                if (allPkMatch) {
+                    props.putAll(cleanVals);
+                    node.put("label", displayLabel);
+                    replaced = true;
+                    break;
+                }
+            }
+        }
+
+        if (!replaced) {
+            addNode(nodeId, displayLabel, cleanLabel, cleanVals);
+            autoLinkNode(nodeId, cleanLabel, cleanVals);
+        }
         return 1;
     }
 
@@ -727,7 +816,7 @@ public class GraphDatabaseService {
         Map<String, Object> cleanVals = cleanAndCastValues(cleanLabel, values);
         if (cleanVals.isEmpty()) return 0;
 
-        if (isLiveConnected) {
+        if (isLiveConnected && driver != null) {
             try (Session session = driver.session()) {
                 StringBuilder whereClause = new StringBuilder();
                 Map<String, Object> params = new HashMap<>();
@@ -737,7 +826,10 @@ public class GraphDatabaseService {
                 int i = 0;
                 for (Map.Entry<String, String> e : where.entrySet()) {
                     String pKey = "w_" + i++;
-                    whereClause.append(" AND (toString(n.").append(e.getKey().toUpperCase(Locale.ROOT)).append(") = $").append(pKey).append(")");
+                    String kUp = e.getKey().toUpperCase(Locale.ROOT);
+                    String kLow = e.getKey().toLowerCase(Locale.ROOT);
+                    whereClause.append(" AND (toString(n.").append(kUp).append(") = $").append(pKey)
+                               .append(" OR toString(n.").append(kLow).append(") = $").append(pKey).append(")");
                     params.put(pKey, e.getValue());
                 }
 
@@ -765,6 +857,9 @@ public class GraphDatabaseService {
                 boolean match = true;
                 for (Map.Entry<String, String> w : where.entrySet()) {
                     Object pVal = props.get(w.getKey().toUpperCase(Locale.ROOT));
+                    if (pVal == null) {
+                        pVal = props.get(w.getKey().toLowerCase(Locale.ROOT));
+                    }
                     if (pVal == null && props.containsKey(w.getKey())) {
                         pVal = props.get(w.getKey());
                     }
@@ -775,11 +870,106 @@ public class GraphDatabaseService {
                 }
                 if (match) {
                     props.putAll(cleanVals);
+                    String pkVal = extractPrimaryKeyValue(cleanLabel, props);
+                    if (props.containsKey("PNAME")) n.put("label", props.get("PNAME") + " [" + pkVal + "]");
+                    else if (props.containsKey("SNAME")) n.put("label", props.get("SNAME") + " [" + pkVal + "]");
+                    else if (props.containsKey("CNAME")) n.put("label", props.get("CNAME") + " [" + pkVal + "]");
+                    else if (props.containsKey("ENAME")) n.put("label", props.get("ENAME") + " [" + pkVal + "]");
+                    else if (props.containsKey("WNAME")) n.put("label", props.get("WNAME") + " [" + pkVal + "]");
+                    else if (props.containsKey("CITY")) n.put("label", String.valueOf(props.get("CITY")));
                     updated++;
                 }
             }
         }
         return updated;
+    }
+
+    /**
+     * Cascades primary key / identifier updates across all referencing nodes & links in both live Neo4j and memory.
+     */
+    public void cascadeUpdateId(String label, String oldId, String newId) {
+        if (oldId == null || newId == null || oldId.equalsIgnoreCase(newId)) return;
+        String upper = label.toUpperCase(Locale.ROOT).trim();
+
+        if (isLiveConnected && driver != null) {
+            try (Session session = driver.session()) {
+                switch (upper) {
+                    case "DRIVER", "EMPLOYEE" -> {
+                        session.run("MATCH (d:DRIVER) WHERE d.EMPID = $oldId SET d.EMPID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (e:EMPLOYEE) WHERE e.EMPID = $oldId SET e.EMPID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (dc:DRIVER_CITY) WHERE dc.DRIVERID = $oldId SET dc.DRIVERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (od:ORDER_DRIVER) WHERE od.DRIVERID = $oldId SET od.DRIVERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (dd:DELIVERY_DUTY) WHERE dd.DRIVERID = $oldId SET dd.DRIVERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "CITY" -> {
+                        session.run("MATCH (c:CITY) WHERE c.CITY = $oldId SET c.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (s:SUPPLIER) WHERE s.CITY = $oldId SET s.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (c:CUSTOMER) WHERE c.CITY = $oldId SET c.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (w:WAREHOUSE) WHERE w.CITY = $oldId SET w.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (dc:DRIVER_CITY) WHERE dc.CITY = $oldId SET dc.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (dd:DELIVERY_DUTY) WHERE dd.CITY = $oldId SET dd.CITY = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "CUSTOMER" -> {
+                        session.run("MATCH (c:CUSTOMER) WHERE c.CUSTID = $oldId SET c.CUSTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (o:ORDERS) WHERE o.CUSTID = $oldId SET o.CUSTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "SUPPLIER" -> {
+                        session.run("MATCH (s:SUPPLIER) WHERE s.SUPPLIERID = $oldId SET s.SUPPLIERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (sp:SUPPLIER_PHONE) WHERE sp.SUPPLIERID = $oldId SET sp.SUPPLIERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (sup:SUPPLIES) WHERE sup.SUPPLIERID = $oldId SET sup.SUPPLIERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (i:INSPECTION) WHERE i.SUPPLIERID = $oldId SET i.SUPPLIERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "PRODUCT" -> {
+                        session.run("MATCH (p:PRODUCT) WHERE p.PRODUCTID = $oldId SET p.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (pp:PERISHABLE_PRODUCT) WHERE pp.PRODUCTID = $oldId SET pp.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (hp:HAZARDOUS_PRODUCT) WHERE hp.PRODUCTID = $oldId SET hp.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (oi:ORDER_ITEM) WHERE oi.PRODUCTID = $oldId SET oi.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (s:STOCK) WHERE s.PRODUCTID = $oldId SET s.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (sup:SUPPLIES) WHERE sup.PRODUCTID = $oldId SET sup.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (i:INSPECTION) WHERE i.PRODUCTID = $oldId SET i.PRODUCTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "WAREHOUSE" -> {
+                        session.run("MATCH (w:WAREHOUSE) WHERE w.WAREHOUSEID = $oldId SET w.WAREHOUSEID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (s:STOCK) WHERE s.WAREHOUSEID = $oldId SET s.WAREHOUSEID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (gm:GOODS_MOVEMENT) WHERE gm.WAREHOUSEID = $oldId SET gm.WAREHOUSEID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (e:EMPLOYEE) WHERE e.WAREHOUSEID = $oldId SET e.WAREHOUSEID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "ORDERS" -> {
+                        session.run("MATCH (o:ORDERS) WHERE o.ORDERID = $oldId SET o.ORDERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (oi:ORDER_ITEM) WHERE oi.ORDERID = $oldId SET oi.ORDERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (od:ORDER_DRIVER) WHERE od.ORDERID = $oldId SET od.ORDERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (dd:DELIVERY_DUTY) WHERE dd.ORDERID = $oldId SET dd.ORDERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (gm:GOODS_MOVEMENT) WHERE gm.ORDERID = $oldId SET gm.ORDERID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                    case "GOODS_MOVEMENT" -> {
+                        session.run("MATCH (gm:GOODS_MOVEMENT) WHERE gm.MOVEMENTID = $oldId SET gm.MOVEMENTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (sh:SHIPMENT) WHERE sh.MOVEMENTID = $oldId SET sh.MOVEMENTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                        session.run("MATCH (gr:GOODS_RETURN) WHERE gr.MOVEMENTID = $oldId SET gr.MOVEMENTID = $newId", Map.of("oldId", oldId, "newId", newId));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("cascadeUpdateId Neo4j query error: {}", e.getMessage());
+            }
+        }
+
+        // In-memory update
+        for (Map<String, Object> node : defaultNodes) {
+            Map<String, Object> props = (Map<String, Object>) node.get("properties");
+            for (Map.Entry<String, Object> prop : props.entrySet()) {
+                if (String.valueOf(prop.getValue()).equalsIgnoreCase(oldId)) {
+                    props.put(prop.getKey(), newId);
+                }
+            }
+            String currId = String.valueOf(node.get("id"));
+            if (currId.contains(oldId.replace("-", "").toUpperCase(Locale.ROOT)) || currId.contains(oldId)) {
+                String updatedId = currId.replace(oldId, newId).replace(oldId.replace("-", ""), newId.replace("-", ""));
+                node.put("id", updatedId);
+                for (Map<String, Object> link : defaultLinks) {
+                    if (currId.equals(link.get("source"))) link.put("source", updatedId);
+                    if (currId.equals(link.get("target"))) link.put("target", updatedId);
+                }
+            }
+        }
     }
 
     public int deleteNode(String label, Map<String, String> where) {

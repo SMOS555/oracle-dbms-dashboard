@@ -625,8 +625,17 @@ function openEditModal(index) {
    SAVE EDIT
 ===================================================== */
 
+let isSavingEdit = false;
 async function saveEdit() {
-    if (!state.currentRow) return;
+    if (isSavingEdit || !state.currentRow) return;
+
+    const saveBtn = $("save");
+    const origText = saveBtn ? saveBtn.textContent : "Save Changes";
+    isSavingEdit = true;
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+    }
 
     const queryParams = new URLSearchParams();
     state.primaryKeys.forEach(key => {
@@ -657,6 +666,12 @@ async function saveEdit() {
         await loadTable(state.table);
     } catch (error) {
         showToast("Update failed: " + error.message);
+    } finally {
+        isSavingEdit = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = origText;
+        }
     }
 }
 
@@ -776,7 +791,10 @@ async function renderAddModalInputs(table) {
     }
 }
 
+let isSavingAdd = false;
 async function saveAdd() {
+    if (isSavingAdd) return;
+
     const table = state.table || ($("modalTableSelect") ? $("modalTableSelect").value : "");
     if (!table) {
         showToast("Error: No table selected.");
@@ -807,6 +825,14 @@ async function saveAdd() {
         return;
     }
 
+    const saveAddBtn = $("saveAdd");
+    const origText = saveAddBtn ? saveAddBtn.textContent : "Save Record";
+    isSavingAdd = true;
+    if (saveAddBtn) {
+        saveAddBtn.disabled = true;
+        saveAddBtn.textContent = "Saving...";
+    }
+
     try {
         const res = await api(`/api/tables/${encodeURIComponent(table)}`, {
             method: "POST",
@@ -818,6 +844,12 @@ async function saveAdd() {
         await loadTable(table);
     } catch (error) {
         showToast("Add failed: " + error.message);
+    } finally {
+        isSavingAdd = false;
+        if (saveAddBtn) {
+            saveAddBtn.disabled = false;
+            saveAddBtn.textContent = origText;
+        }
     }
 }
 window.saveAdd = saveAdd;
