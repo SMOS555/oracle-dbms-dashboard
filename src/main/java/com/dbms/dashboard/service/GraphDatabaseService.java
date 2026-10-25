@@ -146,12 +146,30 @@ public class GraphDatabaseService {
     /**
      * If the connected Neo4j database is empty (0 nodes), auto-seeds all 22 entities and relationships.
      */
+    public Map<String, Object> seedLiveDatabase() {
+        if (!isLiveConnected || driver == null) {
+            initDefaultGraph();
+            return Map.of("success", true, "message", "Seeded in-memory graph with all 22 entities.", "source", "In-Memory Graph Engine");
+        }
+        try (Session session = driver.session()) {
+            seedLiveNeo4j(session);
+            return Map.of("success", true, "message", "Successfully seeded live Neo4j AuraDB with all 22 entities and relationships.", "source", "Live Neo4j AuraDB");
+        } catch (Exception e) {
+            return Map.of("success", false, "error", e.getMessage() != null ? e.getMessage() : "Seeding failed");
+        }
+    }
+
     private void autoSeedIfEmpty() {
         if (!isLiveConnected || driver == null) return;
         try (Session session = driver.session()) {
             int count = session.run("MATCH (n) RETURN count(n) AS c").single().get("c").asInt();
-            if (count == 0) {
-                log.info("Neo4j database is empty. Executing automated graph seed for all 22 entities...");
+            int labelCount = 0;
+            try {
+                labelCount = session.run("CALL db.labels() YIELD label RETURN count(label) AS c").single().get("c").asInt();
+            } catch (Exception ignored) {}
+
+            if (count == 0 || labelCount < 18) {
+                log.info("Neo4j database has {} nodes and {} labels. Auto-seeding all 22 entities...", count, labelCount);
                 seedLiveNeo4j(session);
                 log.info("Neo4j automated graph seeding completed successfully.");
             }
@@ -364,20 +382,27 @@ public class GraphDatabaseService {
     // ==========================================
 
     public List<String> getLabels() {
-        if (isLiveConnected) {
+        Set<String> all = new LinkedHashSet<>(CANONICAL_LABELS);
+        if (isLiveConnected && driver != null) {
             try (Session session = driver.session()) {
                 Result result = session.run("CALL db.labels() YIELD label RETURN label ORDER BY label");
-                List<String> list = new ArrayList<>();
                 while (result.hasNext()) {
-                    list.add(result.next().get("label").asString());
-                }
-                if (!list.isEmpty()) {
-                    return list;
+                    String l = result.next().get("label").asString();
+                    boolean exists = false;
+                    for (String can : CANONICAL_LABELS) {
+                        if (can.equalsIgnoreCase(l)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        all.add(l.toUpperCase(Locale.ROOT));
+                    }
                 }
             } catch (Exception ignored) {
             }
         }
-        return CANONICAL_LABELS;
+        return new ArrayList<>(all);
     }
 
     public static final Map<String, List<Map<String, Object>>> CANONICAL_TABLE_COLUMNS = new LinkedHashMap<>();

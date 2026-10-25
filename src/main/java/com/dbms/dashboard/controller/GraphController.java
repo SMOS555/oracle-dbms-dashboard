@@ -67,4 +67,9 @@ public class GraphController {
         Map<String, Object> result = graphService.connectWithCredentials(uri, username != null ? username : "neo4j", password);
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/seed")
+    public ResponseEntity<?> seedAllEntities() {
+        return ResponseEntity.ok(graphService.seedLiveDatabase());
+    }
 }

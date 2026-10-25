@@ -69,8 +69,28 @@ function isDateColumn(columnName) {
 
 
 /* =====================================================
-   FORMAT CELL
+   FORMAT CELL & PROPERTY NORMALIZATION
 ===================================================== */
+
+function getRowValueCaseInsensitive(row, col) {
+    if (!row || !col) return null;
+    if (row[col] !== undefined && row[col] !== null) return row[col];
+    const upper = String(col).trim().toUpperCase();
+    const foundKey = Object.keys(row).find(k => k.trim().toUpperCase() === upper);
+    if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) {
+        return row[foundKey];
+    }
+    // Generic ID / Name alias fallback
+    if (upper === "EMPID" || upper === "CUSTID" || upper === "SUPPLIERID" || upper === "PRODUCTID" || upper === "WAREHOUSEID" || upper === "ORDERID" || upper === "MOVEMENTID" || upper === "INSPID") {
+        if (row.id !== undefined && row.id !== null) return row.id;
+        if (row.ID !== undefined && row.ID !== null) return row.ID;
+    }
+    if (upper === "ENAME" || upper === "CNAME" || upper === "SNAME" || upper === "PNAME" || upper === "WNAME") {
+        if (row.name !== undefined && row.name !== null) return row.name;
+        if (row.NAME !== undefined && row.NAME !== null) return row.NAME;
+    }
+    return null;
+}
 
 function formatCellValue(value, columnName) {
 
@@ -493,7 +513,7 @@ function renderTable() {
                                 column => {
 
                                     const rawValue =
-                                        row[column];
+                                        getRowValueCaseInsensitive(row, column);
 
                                     const displayValue =
                                         formatCellValue(
@@ -615,7 +635,7 @@ function openEditModal(index) {
         .map(column => {
             const name = getColumnName(column);
             const isPrimaryKey = state.primaryKeys.includes(name);
-            let value = state.currentRow[name] ?? "";
+            let value = getRowValueCaseInsensitive(state.currentRow, name) ?? "";
 
             if (isDateColumn(name) && value) {
                 const date = new Date(value);
