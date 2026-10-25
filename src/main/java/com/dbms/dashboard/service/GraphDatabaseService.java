@@ -249,7 +249,7 @@ public class GraphDatabaseService {
             "{id: 'D-09', name: 'Suresh Patil', role: 'Driver', salary: 34000, warehouseId: 'W-02', supervisorId: 'M-01'}," +
             "{id: 'D-11', name: 'Venkatesh Rao', role: 'Driver', salary: 31000, warehouseId: 'W-01', supervisorId: 'M-01'}," +
             "{id: 'M-01', name: 'Kavita Sharma', role: 'Manager', salary: 85000, warehouseId: 'W-01'}" +
-            "] AS e MERGE (n:EMPLOYEE {EMPID: e.id, ENAME: e.name, ROLE: e.role, SALARY: e.salary, WAREHOUSEID: e.warehouseId, id: e.id, name: e.name})");
+            "] AS e MERGE (n:EMPLOYEE {EMPID: e.id}) SET n.ENAME = e.name, n.ROLE = e.role, n.SALARY = e.salary, n.WAREHOUSEID = e.warehouseId, n.SUPERVISORID = e.supervisorId, n.id = e.id, n.name = e.name");
 
         session.run("MERGE (n:DRIVER {EMPID: 'D-05', LICENSENO: 'TN-02-2021-998', EXPIRY: '2028-12-31', id: 'D-05', name: 'Ramesh Kumar (Driver)'})");
         session.run("MERGE (n:DRIVER {EMPID: 'D-09', LICENSENO: 'MH-01-2020-412', EXPIRY: '2027-08-15', id: 'D-09', name: 'Suresh Patil (Driver)'})");
