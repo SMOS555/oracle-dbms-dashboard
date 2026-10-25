@@ -1018,7 +1018,7 @@ function showPage(page) {
 
     const titles = {
         explorer: "Data Explorer",
-        sql: "SQL Console",
+        sql: "Cypher Console (Dual Mode)",
         graph: "Neo4j Graph (Organized Supply Chain)",
         triggers: "Database Triggers",
         cursors: "Database Cursors",
@@ -1038,6 +1038,8 @@ function showPage(page) {
                 layoutVisibleNodes();
             }
         }, 60);
+    } else if (page === "sql") {
+        setConsoleMode(currentQueryMode || "cypher");
     } else if (page === "cloud") {
         checkCloudHealth();
     } else if (page === "triggers") {
@@ -1049,210 +1051,239 @@ function showPage(page) {
 
 
 /* =====================================================
-   RUN SQL
+   CYPHER & SQL CONSOLE (DUAL ENGINE)
 ===================================================== */
 
-async function runSQL() {
+let currentQueryMode = "cypher";
+let cypherQueryText = "MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS)\nRETURN c.CNAME AS Customer, o.ORDERID AS OrderID, o.STATUS AS Status\nLIMIT 25;";
+let sqlQueryText = "SELECT CUSTID, CNAME, CITY, PHONE\nFROM CUSTOMER\nORDER BY CUSTID\nLIMIT 25;";
 
-    const sql =
-        $("sqlInput").value.trim();
+const CYPHER_TEMPLATES = [
+    {
+        label: "Customer Orders",
+        query: "MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS)\nRETURN c.CNAME AS Customer, o.ORDERID AS OrderID, o.STATUS AS Status\nLIMIT 25;"
+    },
+    {
+        label: "Supply Chain Entities",
+        query: "MATCH (n)\nRETURN head(labels(n)) AS Entity, count(n) AS TotalNodes\nORDER BY TotalNodes DESC;"
+    },
+    {
+        label: "Warehouse Stock",
+        query: "MATCH (w:WAREHOUSE)<-[:STOCKED_AT]-(i:INVENTORY)-[:REPRESENTS_PRODUCT]->(p:PRODUCT)\nRETURN w.WNAME AS Warehouse, p.PNAME AS Product, i.QUANTITYONHAND AS Stock\nLIMIT 25;"
+    },
+    {
+        label: "Shipments & Drivers",
+        query: "MATCH (s:SHIPMENT)-[:ASSIGNED_TO_DRIVER]->(d:DRIVER)\nRETURN s.SHIPMENTID AS Shipment, s.STATUS AS Status, d.DNAME AS Driver, d.VEHICLENO AS Vehicle\nLIMIT 25;"
+    },
+    {
+        label: "Order Totals Aggregation",
+        query: "MATCH (o:ORDERS)-[:CONTAINS_ITEM]->(oi:ORDER_ITEM)\nRETURN o.ORDERID AS OrderID, o.ORDERDATE AS Date, count(oi) AS Items, sum(oi.TOTALPRICE) AS TotalValue\nORDER BY TotalValue DESC\nLIMIT 15;"
+    }
+];
 
+const SQL_TEMPLATES = [
+    {
+        label: "Select Customers",
+        query: "SELECT CUSTID, CNAME, CITY, PHONE FROM CUSTOMER ORDER BY CUSTID LIMIT 25;"
+    },
+    {
+        label: "Customer Orders (JOIN)",
+        query: "SELECT c.CNAME, o.ORDERID, o.ORDERDATE, o.STATUS\nFROM CUSTOMER c\nJOIN ORDERS o ON c.CUSTID = o.CUSTID\nLIMIT 25;"
+    },
+    {
+        label: "Warehouse Inventory",
+        query: "SELECT w.WNAME, p.PNAME, i.QUANTITYONHAND\nFROM INVENTORY i\nJOIN WAREHOUSE w ON i.WAREHOUSEID = w.WAREHOUSEID\nJOIN PRODUCT p ON i.PRODUCTID = p.PRODUCTID\nWHERE i.QUANTITYONHAND < 100;"
+    },
+    {
+        label: "Driver Shipments",
+        query: "SELECT d.DNAME, d.VEHICLENO, s.SHIPMENTID, s.STATUS\nFROM DRIVER d\nJOIN SHIPMENT s ON d.DRIVERID = s.DRIVERID\nLIMIT 25;"
+    },
+    {
+        label: "Order Status Count",
+        query: "SELECT STATUS, COUNT(*) AS TotalOrders\nFROM ORDERS\nGROUP BY STATUS;"
+    }
+];
 
-    if (!sql) {
+function renderQuickTemplates(templates) {
+    const bar = $("quickTemplatesBar");
+    if (!bar) return;
+    bar.innerHTML = `<span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-right: 4px;">Quick Templates:</span>`;
+    templates.forEach(t => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pill-btn";
+        btn.textContent = t.label;
+        btn.title = t.query;
+        btn.addEventListener("click", () => {
+            const input = $("sqlInput");
+            if (input) {
+                input.value = t.query;
+                if (currentQueryMode === "cypher") {
+                    cypherQueryText = t.query;
+                } else {
+                    sqlQueryText = t.query;
+                }
+                input.focus();
+            }
+        });
+        bar.appendChild(btn);
+    });
+}
 
-        showToast(
-            "Enter a SQL statement first."
-        );
-
-        return;
-
+function setConsoleMode(mode) {
+    const input = $("sqlInput");
+    if (input) {
+        if (currentQueryMode === "cypher") {
+            cypherQueryText = input.value;
+        } else {
+            sqlQueryText = input.value;
+        }
     }
 
+    currentQueryMode = mode;
+
+    const btnCypher = $("btnModeCypher");
+    const btnSql = $("btnModeSql");
+    const badge = $("queryEngineBadge");
+    const kicker = $("queryEditorKicker");
+    const title = $("queryEditorTitle");
+    const runBtn = $("runSql");
+    const hint = $("querySecurityHint");
+
+    if (mode === "cypher") {
+        if (btnCypher) {
+            btnCypher.className = "button primary-button";
+            btnCypher.style.boxShadow = "0 0 10px rgba(139, 92, 246, 0.4)";
+        }
+        if (btnSql) {
+            btnSql.className = "button secondary-button";
+            btnSql.style.boxShadow = "none";
+        }
+        if (badge) {
+            badge.className = "badge badge-purple";
+            badge.textContent = "Mode: Native Cypher (Neo4j AuraDB)";
+        }
+        if (kicker) kicker.textContent = "CYPHER GRAPH QUERY";
+        if (title) title.textContent = "Cypher statement";
+        if (runBtn) runBtn.textContent = "▶ Run Cypher";
+        if (hint) hint.textContent = "Supports MATCH, RETURN, WHERE, WITH, CREATE, MERGE, and all 22 Supply Chain labels.";
+        if (input) {
+            input.placeholder = "MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS) RETURN c.CNAME AS Customer, o.ORDERID AS OrderID, o.STATUS AS Status LIMIT 25;";
+            input.value = cypherQueryText;
+        }
+        renderQuickTemplates(CYPHER_TEMPLATES);
+    } else {
+        if (btnSql) {
+            btnSql.className = "button primary-button";
+            btnSql.style.boxShadow = "0 0 10px rgba(59, 130, 246, 0.4)";
+        }
+        if (btnCypher) {
+            btnCypher.className = "button secondary-button";
+            btnCypher.style.boxShadow = "none";
+        }
+        if (badge) {
+            badge.className = "badge badge-blue";
+            badge.textContent = "Mode: Relational SQL Bridge";
+        }
+        if (kicker) kicker.textContent = "SQL RELATIONAL QUERY";
+        if (title) title.textContent = "SQL statement";
+        if (runBtn) runBtn.textContent = "▶ Run SQL";
+        if (hint) hint.textContent = "Relational SQL translated on-the-fly to graph operations. DROP, ALTER, TRUNCATE, GRANT, and REVOKE are blocked.";
+        if (input) {
+            input.placeholder = "SELECT CUSTID, CNAME, CITY, PHONE FROM CUSTOMER ORDER BY CUSTID LIMIT 25;";
+            input.value = sqlQueryText;
+        }
+        renderQuickTemplates(SQL_TEMPLATES);
+    }
+}
+
+async function runSQL() {
+    const input = $("sqlInput");
+    const query = input ? input.value.trim() : "";
+
+    if (!query) {
+        showToast(`Enter a ${currentQueryMode === "cypher" ? "Cypher" : "SQL"} statement first.`);
+        return;
+    }
+
+    if (currentQueryMode === "cypher") {
+        cypherQueryText = query;
+    } else {
+        sqlQueryText = query;
+    }
 
     try {
+        const data = await api("/api/query", {
+            method: "POST",
+            body: JSON.stringify({
+                sql: query
+            })
+        });
 
-        const data =
-            await api(
-                "/api/query",
-                {
-                    method: "POST",
+        const engineTag = currentQueryMode === "cypher" ? "⚡ Cypher" : "📄 SQL";
 
-                    body: JSON.stringify({
-                        sql: sql
-                    })
-                }
-            );
+        if (Array.isArray(data) || Array.isArray(data.rows)) {
+            const rows = Array.isArray(data) ? data : data.rows;
+            const columns = rows.length ? Object.keys(rows[0]) : (data.columns || []);
 
-
-        if (
-            Array.isArray(data) ||
-            Array.isArray(data.rows)
-        ) {
-
-            const rows =
-                Array.isArray(data)
-                    ? data
-                    : data.rows;
-
-
-            const columns =
-                rows.length
-                    ? Object.keys(rows[0])
-                    : (data.columns || []);
-
-
-            $("resultTitle").textContent =
-                `${rows.length} rows returned`;
-
+            $("resultTitle").textContent = `${rows.length} rows returned · [${engineTag}]`;
 
             if (!rows.length) {
-
                 $("resultWrap").innerHTML = `
-
                     <div class="empty-state">
-
-                        <h3>
-                            No rows returned
-                        </h3>
-
+                        <h3>No rows returned</h3>
+                        <p>The query executed successfully but produced 0 records.</p>
                     </div>
-
                 `;
-
                 return;
-
             }
 
-
             $("resultWrap").innerHTML = `
-
                 <table class="result-table">
-
                     <thead>
-
                         <tr>
-
-                            ${columns.map(
-                                column => `
-                                    <th>
-                                        ${escapeHtml(column)}
-                                    </th>
-                                `
-                            ).join("")}
-
+                            ${columns.map(column => `
+                                <th>${escapeHtml(column)}</th>
+                            `).join("")}
                         </tr>
-
                     </thead>
-
-
                     <tbody>
-
-                        ${rows.map(
-                            row => `
-
-                                <tr>
-
-                                    ${columns.map(
-                                        column => {
-
-                                            const rawValue =
-                                                row[column];
-
-                                            const displayValue =
-                                                formatCellValue(
-                                                    rawValue,
-                                                    column
-                                                );
-
-                                            return `
-
-                                                <td>
-
-                                                    ${
-                                                        rawValue === null
-                                                            ? "NULL"
-                                                            : escapeHtml(
-                                                                displayValue
-                                                            )
-                                                    }
-
-                                                </td>
-
-                                            `;
-
-                                        }
-                                    ).join("")}
-
-                                </tr>
-
-                            `
-                        ).join("")}
-
+                        ${rows.map(row => `
+                            <tr>
+                                ${columns.map(column => {
+                                    const rawValue = row[column];
+                                    const displayValue = formatCellValue(rawValue, column);
+                                    return `<td>${rawValue === null ? "NULL" : escapeHtml(displayValue)}</td>`;
+                                }).join("")}
+                            </tr>
+                        `).join("")}
                     </tbody>
-
                 </table>
-
             `;
-
-
             return;
-
         }
 
-
-        const affectedRows =
-            data.affectedRows ??
-            data.rowsAffected ??
-            data.count ??
-            0;
-
-
-        $("resultTitle").textContent =
-            "Statement executed";
-
-
+        const affectedRows = data.affectedRows ?? data.rowsAffected ?? data.count ?? 0;
+        $("resultTitle").textContent = `Statement executed · [${engineTag}]`;
         $("resultWrap").innerHTML = `
-
             <div class="affected">
-
-                Affected rows
-
-                <strong>
-                    ${escapeHtml(affectedRows)}
-                </strong>
-
+                Affected rows:
+                <strong>${escapeHtml(affectedRows)}</strong>
             </div>
-
         `;
-
 
         if (state.table) {
             await loadTable(state.table);
         }
-
-
     } catch (error) {
-
-        $("resultTitle").textContent =
-            "Query failed";
-
-
+        $("resultTitle").textContent = `${currentQueryMode === "cypher" ? "Cypher" : "SQL"} Query failed`;
         $("resultWrap").innerHTML = `
-
             <div class="affected">
-
-                <strong>
-                    Error
-                </strong>
-
+                <strong>Error</strong>
                 ${escapeHtml(error.message)}
-
             </div>
-
         `;
-
     }
-
 }
 
 
@@ -1803,72 +1834,93 @@ loadTables();
 
 /* INSERT WITH SQL */
 
-$("insertSql")
-    .addEventListener(
-        "click",
-        () => {
+if ($("insertSql")) {
+    $("insertSql")
+        .addEventListener(
+            "click",
+            () => {
 
-            showPage("sql");
+                showPage("sql");
+                setConsoleMode("sql");
 
+                $("sqlInput").value =
+                    `INSERT INTO ${
+                        state.table || "TABLE_NAME"
+                    } (...) VALUES (...);`;
+                sqlQueryText = $("sqlInput").value;
 
-            $("sqlInput").value =
-                `INSERT INTO ${
-                    state.table || "TABLE_NAME"
-                } (...) VALUES (...);`;
+                $("sqlInput").focus();
 
-
-            $("sqlInput").focus();
-
-        }
-    );
-
-
-/* RUN SQL */
-
-$("runSql")
-    .addEventListener(
-        "click",
-        runSQL
-    );
+            }
+        );
+}
 
 
-/* CLEAR SQL */
+/* CYPHER VS SQL MODE BUTTONS */
 
-$("clearSql")
-    .addEventListener(
-        "click",
-        () => {
+if ($("btnModeCypher")) {
+    $("btnModeCypher").addEventListener("click", () => setConsoleMode("cypher"));
+}
 
-            $("sqlInput").value = "";
-
-
-            $("resultTitle").textContent =
-                "No query executed";
+if ($("btnModeSql")) {
+    $("btnModeSql").addEventListener("click", () => setConsoleMode("sql"));
+}
 
 
-            $("resultWrap").innerHTML = `
+/* RUN SQL / CYPHER */
 
-                <div class="empty-state">
+if ($("runSql")) {
+    $("runSql")
+        .addEventListener(
+            "click",
+            runSQL
+        );
+}
 
-                    <div class="empty-icon">
-                        ⌘
+
+/* CLEAR QUERY */
+
+if ($("clearSql")) {
+    $("clearSql")
+        .addEventListener(
+            "click",
+            () => {
+
+                $("sqlInput").value = "";
+                if (currentQueryMode === "cypher") {
+                    cypherQueryText = "";
+                } else {
+                    sqlQueryText = "";
+                }
+
+                $("resultTitle").textContent =
+                    "No query executed";
+
+
+                $("resultWrap").innerHTML = `
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ⚡
+                        </div>
+
+                        <h3>
+                            Query results appear here
+                        </h3>
+
+                        <p>
+                            Run a Cypher or SQL statement to see
+                            rows or affected-record counts.
+                        </p>
+
                     </div>
 
-                    <h3>
-                        Query results appear here
-                    </h3>
+                `;
 
-                    <p>
-                        Run a statement to see
-                        rows or affected-row counts.
-                    </p>
-
-                </div>
-
-            `;
-
-        }
-    );
+            }
+        );
+}
 
 
 /* REFRESH TRIGGERS */
@@ -2056,6 +2108,7 @@ $("sqlInput")
 
 loadTables();
 checkCloudHealth();
+setConsoleMode("cypher");
 
 
 /* =====================================================

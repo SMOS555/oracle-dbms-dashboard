@@ -65,9 +65,9 @@
 
             <button class="nav-button" data-page="sql">
 
-                <span class="nav-icon">⌘</span>
+                <span class="nav-icon">⚡</span>
 
-                <span>SQL Console</span>
+                <span>Cypher Console</span>
 
             </button>
 
@@ -240,7 +240,7 @@
                         class="button secondary-button"
                         onclick="document.querySelector('[data-page=\'sql\']').click()">
 
-                        SQL Console
+                        ⚡ Cypher Console
 
                     </button>
 
@@ -315,7 +315,7 @@
         </section>
 
 
-        <!-- ================= SQL CONSOLE ================= -->
+        <!-- ================= CYPHER & SQL CONSOLE ================= -->
 
         <section id="sqlPage" class="page">
 
@@ -325,11 +325,11 @@
                 <div>
 
                     <div class="section-label">
-                        SQL WORKSPACE
+                        QUERY ENGINE · DUAL CYPHER &amp; SQL
                     </div>
 
-                    <h2>
-                        SQL Console
+                    <h2 id="consoleHeading">
+                        Cypher Console
                     </h2>
 
                 </div>
@@ -346,7 +346,23 @@
             </div>
 
 
-            <!-- SQL EDITOR -->
+            <!-- MODE SWITCHER: CYPHER vs SQL -->
+            <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; gap: 8px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #334155;">
+                    <button id="btnModeCypher" class="button primary-button" style="padding: 7px 16px; font-size: 0.88rem; font-weight: 600;">
+                        ⚡ Cypher Mode (Native Neo4j)
+                    </button>
+                    <button id="btnModeSql" class="button secondary-button" style="padding: 7px 16px; font-size: 0.88rem; font-weight: 600;">
+                        📄 SQL Mode (Relational Bridge)
+                    </button>
+                </div>
+                <div>
+                    <span id="queryEngineBadge" class="badge badge-purple">Mode: Native Cypher (AuraDB)</span>
+                </div>
+            </div>
+
+
+            <!-- QUERY EDITOR -->
 
             <section class="panel sql-panel">
 
@@ -354,12 +370,12 @@
 
                     <div>
 
-                        <div class="panel-kicker">
-                            QUERY EDITOR
+                        <div id="queryEditorKicker" class="panel-kicker">
+                            CYPHER GRAPH QUERY
                         </div>
 
-                        <h3>
-                            SQL statement
+                        <h3 id="queryEditorTitle">
+                            Cypher statement
                         </h3>
 
                     </div>
@@ -373,6 +389,13 @@
 
                     </button>
 
+                </div>
+
+
+                <!-- QUICK QUERY TEMPLATES BAR -->
+                <div id="quickTemplatesBar" style="padding: 10px 14px; background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; overflow-x: auto; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">Templates:</span>
+                    <!-- Pills dynamically injected by app.js -->
                 </div>
 
 
@@ -398,7 +421,7 @@
                     <textarea
                         id="sqlInput"
                         spellcheck="false"
-                        placeholder="SELECT * FROM CUSTOMER ORDER BY CUSTID;"></textarea>
+                        placeholder="MATCH (c:CUSTOMER)-[:PLACED]->(o:ORDERS) RETURN c.CNAME AS Customer, o.ORDERID AS OrderID, o.STATUS AS Status LIMIT 25;"></textarea>
 
                 </div>
 
@@ -409,13 +432,13 @@
                         id="runSql"
                         class="button primary-button">
 
-                        ▶ Run Query
+                        ▶ Run Cypher
 
                     </button>
 
 
-                    <small>
-                        DROP, ALTER, TRUNCATE, GRANT and REVOKE are blocked.
+                    <small id="querySecurityHint">
+                        Supports MATCH, RETURN, WHERE, WITH, CREATE, MERGE, and all 22 Supply Chain labels.
                     </small>
 
                 </div>
