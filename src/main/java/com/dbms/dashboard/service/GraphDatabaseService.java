@@ -360,6 +360,10 @@ public class GraphDatabaseService {
     public void deduplicateLiveGraph() {
         if (!isLiveConnected || driver == null) return;
         try (Session session = driver.session()) {
+            try {
+                session.run("MATCH (n:Order) DETACH DELETE n");
+                session.run("MATCH (n:ORDER) DETACH DELETE n");
+            } catch (Exception ignored) {}
             for (String label : CANONICAL_LABELS) {
                 List<String> pks = getPrimaryKeys(label);
                 if (pks.isEmpty()) continue;
@@ -411,27 +415,7 @@ public class GraphDatabaseService {
     // ==========================================
 
     public List<String> getLabels() {
-        Set<String> all = new LinkedHashSet<>(CANONICAL_LABELS);
-        if (isLiveConnected && driver != null) {
-            try (Session session = driver.session()) {
-                Result result = session.run("CALL db.labels() YIELD label RETURN label ORDER BY label");
-                while (result.hasNext()) {
-                    String l = result.next().get("label").asString();
-                    boolean exists = false;
-                    for (String can : CANONICAL_LABELS) {
-                        if (can.equalsIgnoreCase(l)) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (!exists) {
-                        all.add(l.toUpperCase(Locale.ROOT));
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return new ArrayList<>(all);
+        return new ArrayList<>(CANONICAL_LABELS);
     }
 
     public static final Map<String, List<Map<String, Object>>> CANONICAL_TABLE_COLUMNS = new LinkedHashMap<>();
@@ -573,7 +557,8 @@ public class GraphDatabaseService {
     }
 
     public List<Map<String, Object>> getNodesByLabel(String label) {
-        String cleanLabel = (label == null) ? "SUPPLIER" : label.trim();
+        String rawLabel = (label == null) ? "SUPPLIER" : label.trim();
+        final String cleanLabel = "ORDER".equalsIgnoreCase(rawLabel) ? "ORDERS" : rawLabel;
         List<Map<String, Object>> rows = new ArrayList<>();
 
         if (isLiveConnected && driver != null) {
@@ -629,6 +614,9 @@ public class GraphDatabaseService {
 
     public List<Map<String, Object>> getLabelProperties(String label) {
         String upper = (label == null) ? "" : label.toUpperCase(Locale.ROOT).trim();
+        if ("ORDER".equals(upper)) {
+            upper = "ORDERS";
+        }
         if (CANONICAL_TABLE_COLUMNS.containsKey(upper)) {
             return CANONICAL_TABLE_COLUMNS.get(upper);
         }
@@ -693,7 +681,7 @@ public class GraphDatabaseService {
             case "EMPLOYEE", "MANAGER", "DRIVER" -> List.of("EMPID");
             case "DRIVER_CITY" -> List.of("DRIVERID", "CITY");
             case "CUSTOMER" -> List.of("CUSTID");
-            case "ORDERS" -> List.of("ORDERID");
+            case "ORDERS", "ORDER" -> List.of("ORDERID");
             case "ORDER_ITEM" -> List.of("ORDERID", "PRODUCTID");
             case "ORDER_DRIVER" -> List.of("ORDERID", "DRIVERID");
             case "DELIVERY_DUTY" -> List.of("ORDERID", "CITY");
