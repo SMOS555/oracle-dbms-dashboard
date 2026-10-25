@@ -179,127 +179,157 @@ public class GraphDatabaseService {
     }
 
     private void seedLiveNeo4j(Session session) {
-        // 1. Cities
+        // 1. CITY (da2)
+        session.run("UNWIND [{city: 'Chennai', state: 'Tamil Nadu'}, {city: 'Mumbai', state: 'Maharashtra'}] AS c MERGE (n:CITY {CITY: c.city}) SET n.STATE = c.state, n.id = c.city, n.name = c.city");
+
+        // 2. SUPPLIER (da2)
+        session.run("UNWIND [{id: 'S01'}, {id: 'S03'}, {id: 'S05'}] AS s MERGE (n:SUPPLIER {SUPPLIERID: s.id}) SET n.id = s.id");
+
+        // 3. SUPPLIER_PHONE (da2)
         session.run("UNWIND [" +
-            "{city: 'Chennai', state: 'Tamil Nadu'}," +
-            "{city: 'Mumbai', state: 'Maharashtra'}," +
-            "{city: 'Bangalore', state: 'Karnataka'}," +
-            "{city: 'Delhi', state: 'Delhi NCR'}," +
-            "{city: 'Hyderabad', state: 'Telangana'}" +
-            "] AS c MERGE (n:CITY {CITY: c.city, STATE: c.state, id: c.city, name: c.city})");
+            "{supplierId: 'S01', phone: '9845012345'}," +
+            "{supplierId: 'S01', phone: '08022334455'}," +
+            "{supplierId: 'S03', phone: '9820011122'}," +
+            "{supplierId: 'S05', phone: '9840199887'}," +
+            "{supplierId: 'S05', phone: '04424851212'}" +
+            "] AS sp MERGE (n:SUPPLIER_PHONE {SUPPLIERID: sp.supplierId, PHONE: sp.phone}) SET n.id = sp.supplierId + '_' + sp.phone");
 
-        // 2. Suppliers
+        // 4. PRODUCT (da2)
         session.run("UNWIND [" +
-            "{id: 'S01', name: 'Apex Agro Supplies', city: 'Chennai', rating: 4.8, phone: '9845012345'}," +
-            "{id: 'S03', name: 'Metro Wholesale Mills', city: 'Mumbai', rating: 4.6, phone: '9820011122'}," +
-            "{id: 'S05', name: 'Delta Cold & Chemicals', city: 'Chennai', rating: 4.9, phone: '9840199887'}" +
-            "] AS s MERGE (n:SUPPLIER {SUPPLIERID: s.id, SNAME: s.name, CITY: s.city, RATING: s.rating, PHONE: s.phone, id: s.id, name: s.name})");
+            "{id: 'P-100', name: 'Basmati Rice', category: 'Staples', unitPrice: 480}," +
+            "{id: 'P-104', name: 'Sunflower Oil', category: 'Oils', unitPrice: 132}," +
+            "{id: 'P-108', name: 'Sona Masoori', category: 'Staples', unitPrice: 445}," +
+            "{id: 'P-210', name: 'Frozen Peas', category: 'Frozen', unitPrice: 96}," +
+            "{id: 'P-420', name: 'Industrial Sanitizer', category: 'Chemicals', unitPrice: 350.00}" +
+            "] AS p MERGE (n:PRODUCT {PRODUCTID: p.id}) SET n.PNAME = p.name, n.CATEGORY = p.category, n.UNITPRICE = p.unitPrice, n.id = p.id, n.name = p.name");
 
-        // 3. Products
-        session.run("UNWIND [" +
-            "{id: 'P-100', name: 'Basmati Rice', category: 'Staples', unitPrice: 480.00}," +
-            "{id: 'P-104', name: 'Sunflower Oil', category: 'Oils', unitPrice: 132.00}," +
-            "{id: 'P-108', name: 'Sona Masoori', category: 'Staples', unitPrice: 445.00}," +
-            "{id: 'P-210', name: 'Frozen Peas', category: 'Frozen', unitPrice: 96.00}," +
-            "{id: 'P-301', name: 'Industrial Solvent', category: 'Chemicals', unitPrice: 1250.00}" +
-            "] AS p MERGE (n:PRODUCT {PRODUCTID: p.id, PNAME: p.name, CATEGORY: p.category, UNITPRICE: p.unitPrice, id: p.id, name: p.name})");
+        // 5. PERISHABLE_PRODUCT & HAZARDOUS_PRODUCT (da2)
+        session.run("MERGE (n:PERISHABLE_PRODUCT {PRODUCTID: 'P-210'}) SET n.SHELFLIFEDAYS = 90, n.STORAGETEMPC = '-18C', n.id = 'P-210'");
+        session.run("MERGE (n:HAZARDOUS_PRODUCT {PRODUCTID: 'P-420'}) SET n.HAZARDCLASS = 'Class 3 Flammable Liquid', n.HANDLINGNOTE = 'Keep away from heat and open flame', n.id = 'P-420'");
 
-        // 4. Product Subtypes
-        session.run("MERGE (n:PERISHABLE_PRODUCT {PRODUCTID: 'P-210', SHELFLIFEDAYS: 90, STORAGETEMPC: '-18°C', id: 'P-210', name: 'Frozen Peas [Perishable]'})");
-        session.run("MERGE (n:HAZARDOUS_PRODUCT {PRODUCTID: 'P-301', HAZARDCLASS: 'Class 3 Flammable', HANDLINGNOTE: 'Keep away from sparks and high temperature', id: 'P-301', name: 'Industrial Solvent [Hazmat]'})");
-
-        // 5. Warehouses
-        session.run("UNWIND [" +
-            "{id: 'W-01', name: 'Chennai Central Hub', city: 'Chennai', capacity: 50000, managerId: 'M-01'}," +
-            "{id: 'W-02', name: 'Mumbai Port Depot', city: 'Mumbai', capacity: 75000, managerId: 'M-02'}" +
-            "] AS w MERGE (n:WAREHOUSE {WAREHOUSEID: w.id, WNAME: w.name, CITY: w.city, CAPACITY: w.capacity, MANAGERID: w.managerId, id: w.id, name: w.name})");
-
-        // 6. Customers
+        // 6. CUSTOMER (da2)
         session.run("UNWIND [" +
             "{id: 'C-01', name: 'Shama Retail', street: '12 MG Rd', city: 'Chennai', phone: '9840011223'}," +
             "{id: 'C-03', name: 'Metro Mart', street: '5 Link Rd', city: 'Mumbai', phone: '9820044556'}," +
             "{id: 'C-05', name: 'Anand Stores', street: '7 Anna Salai', city: 'Chennai', phone: '9845567788'}" +
-            "] AS c MERGE (n:CUSTOMER {CUSTID: c.id, CNAME: c.name, STREET: c.street, CITY: c.city, PHONE: c.phone, id: c.id, name: c.name})");
+            "] AS c MERGE (n:CUSTOMER {CUSTID: c.id}) SET n.CNAME = c.name, n.STREET = c.street, n.CITY = c.city, n.PHONE = c.phone, n.id = c.id, n.name = c.name");
 
-        // 7. Orders
+        // 7. ORDERS (da2)
         session.run("UNWIND [" +
-            "{id: 'O-101', date: '2026-04-02', status: 'SHIPPED', custId: 'C-01', amount: 16200}," +
-            "{id: 'O-102', date: '2026-04-05', status: 'NEW', custId: 'C-03', amount: 2880}," +
-            "{id: 'O-103', date: '2026-04-09', status: 'SHIPPED', custId: 'C-01', amount: 7200}," +
-            "{id: 'O-104', date: '2026-04-11', status: 'NEW', custId: 'C-05', amount: 5340}," +
-            "{id: 'O-105', date: '2026-04-14', status: 'SHIPPED', custId: 'C-03', amount: 7140}," +
-            "{id: 'O-106', date: '2026-04-16', status: 'NEW', custId: 'C-05', amount: 8640}" +
-            "] AS o MERGE (n:ORDERS {ORDERID: o.id, ORDERDATE: o.date, STATUS: o.status, CUSTID: o.custId, AMOUNT: o.amount, id: o.id, name: 'Order #' + o.id})");
+            "{id: 'O-101', date: '2026-04-02', status: 'SHIPPED', custId: 'C-01'}," +
+            "{id: 'O-102', date: '2026-04-05', status: 'NEW', custId: 'C-03'}," +
+            "{id: 'O-103', date: '2026-04-09', status: 'SHIPPED', custId: 'C-01'}," +
+            "{id: 'O-104', date: '2026-04-11', status: 'NEW', custId: 'C-05'}," +
+            "{id: 'O-105', date: '2026-04-14', status: 'SHIPPED', custId: 'C-03'}," +
+            "{id: 'O-106', date: '2026-04-16', status: 'NEW', custId: 'C-05'}" +
+            "] AS o MERGE (n:ORDERS {ORDERID: o.id}) SET n.ORDERDATE = o.date, n.STATUS = o.status, n.CUSTID = o.custId, n.id = o.id");
 
-        // 8. Order Items
+        // 8. ORDER_ITEM (da2)
         session.run("UNWIND [" +
-            "{orderId: 'O-101', productId: 'P-100', qty: 20, price: 480.00}," +
-            "{orderId: 'O-101', productId: 'P-104', qty: 50, price: 132.00}," +
-            "{orderId: 'O-102', productId: 'P-210', qty: 30, price: 96.00}," +
-            "{orderId: 'O-103', productId: 'P-100', qty: 15, price: 480.00}," +
-            "{orderId: 'O-104', productId: 'P-108', qty: 12, price: 445.00}," +
-            "{orderId: 'O-105', productId: 'P-104', qty: 25, price: 132.00}," +
-            "{orderId: 'O-105', productId: 'P-210', qty: 40, price: 96.00}," +
-            "{orderId: 'O-106', productId: 'P-100', qty: 18, price: 480.00}" +
-            "] AS oi MERGE (n:ORDER_ITEM {ORDERID: oi.orderId, PRODUCTID: oi.productId, QTY: oi.qty, PRICE: oi.price, id: oi.orderId + '_' + oi.productId})");
+            "{orderId: 'O-101', productId: 'P-100', qty: 20, price: 480}," +
+            "{orderId: 'O-101', productId: 'P-104', qty: 50, price: 132}," +
+            "{orderId: 'O-102', productId: 'P-210', qty: 30, price: 96}," +
+            "{orderId: 'O-103', productId: 'P-100', qty: 15, price: 480}," +
+            "{orderId: 'O-104', productId: 'P-108', qty: 12, price: 445}," +
+            "{orderId: 'O-105', productId: 'P-104', qty: 25, price: 132}," +
+            "{orderId: 'O-105', productId: 'P-210', qty: 40, price: 96}," +
+            "{orderId: 'O-106', productId: 'P-100', qty: 18, price: 480}" +
+            "] AS oi MERGE (n:ORDER_ITEM {ORDERID: oi.orderId, PRODUCTID: oi.productId}) SET n.QTY = oi.qty, n.PRICE = oi.price, n.id = oi.orderId + '_' + oi.productId");
 
-        // 9. Employees, Drivers, Managers
+        // 9. EMPLOYEE, DRIVER, MANAGER (da2)
         session.run("UNWIND [" +
-            "{id: 'D-05', name: 'Ramesh Kumar', role: 'Driver', salary: 32000, warehouseId: 'W-01', supervisorId: 'M-01'}," +
-            "{id: 'D-09', name: 'Suresh Patil', role: 'Driver', salary: 34000, warehouseId: 'W-02', supervisorId: 'M-01'}," +
-            "{id: 'D-11', name: 'Venkatesh Rao', role: 'Driver', salary: 31000, warehouseId: 'W-01', supervisorId: 'M-01'}," +
-            "{id: 'M-01', name: 'Kavita Sharma', role: 'Manager', salary: 85000, warehouseId: 'W-01'}" +
-            "] AS e MERGE (n:EMPLOYEE {EMPID: e.id}) SET n.ENAME = e.name, n.ROLE = e.role, n.SALARY = e.salary, n.WAREHOUSEID = e.warehouseId, n.SUPERVISORID = e.supervisorId, n.id = e.id, n.name = e.name");
+            "{id: 'D-05', name: null, role: 'Driver', salary: null}," +
+            "{id: 'D-09', name: null, role: 'Driver', salary: null}," +
+            "{id: 'D-11', name: null, role: 'Driver', salary: null}," +
+            "{id: 'M-01', name: 'Kavita Sharma', role: 'Manager', salary: 85000}," +
+            "{id: 'M-02', name: 'Arun Nair', role: 'Manager', salary: 82000}" +
+            "] AS e MERGE (n:EMPLOYEE {EMPID: e.id}) SET n.ENAME = e.name, n.ROLE = e.role, n.SALARY = e.salary, n.id = e.id, n.name = e.name");
 
-        session.run("MERGE (n:DRIVER {EMPID: 'D-05', LICENSENO: 'TN-02-2021-998', EXPIRY: '2028-12-31', id: 'D-05', name: 'Ramesh Kumar (Driver)'})");
-        session.run("MERGE (n:DRIVER {EMPID: 'D-09', LICENSENO: 'MH-01-2020-412', EXPIRY: '2027-08-15', id: 'D-09', name: 'Suresh Patil (Driver)'})");
-        session.run("MERGE (n:DRIVER {EMPID: 'D-11', LICENSENO: 'TN-05-2022-771', EXPIRY: '2029-05-20', id: 'D-11', name: 'Venkatesh Rao (Driver)'})");
-        session.run("MERGE (n:MANAGER {EMPID: 'M-01', LEVELNO: 'L3', BONUS: 15000.00, id: 'M-01', name: 'Kavita Sharma (Manager)'})");
+        session.run("MERGE (n:DRIVER {EMPID: 'D-05'}) SET n.id = 'D-05'");
+        session.run("MERGE (n:DRIVER {EMPID: 'D-09'}) SET n.id = 'D-09'");
+        session.run("MERGE (n:DRIVER {EMPID: 'D-11'}) SET n.id = 'D-11'");
 
-        // 10. Secondary Entities
-        session.run("MERGE (n:INSPECTION {INSPID: 'INSP-01', SUPPLIERID: 'S01', PRODUCTID: 'P-100', INSPDATE: '2026-03-15', RESULT: 'PASSED_GRADE_A', id: 'INSP-01'})");
-        session.run("MERGE (n:INSPECTION {INSPID: 'INSP-02', SUPPLIERID: 'S05', PRODUCTID: 'P-210', INSPDATE: '2026-03-20', RESULT: 'PASSED_COLD_CHAIN', id: 'INSP-02'})");
+        session.run("MERGE (n:MANAGER {EMPID: 'M-01'}) SET n.LEVELNO = 'Senior L3', n.BONUS = 15000.00, n.id = 'M-01'");
+        session.run("MERGE (n:MANAGER {EMPID: 'M-02'}) SET n.LEVELNO = 'Regional L2', n.BONUS = 12000.00, n.id = 'M-02'");
 
-        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'MOV-01', ORDERID: 'O-101', WAREHOUSEID: 'W-01', MOVEDATE: '2026-04-03', STATUS: 'DISPATCHED', id: 'MOV-01'})");
-        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'MOV-02', ORDERID: 'O-103', WAREHOUSEID: 'W-01', MOVEDATE: '2026-04-10', STATUS: 'DELIVERED', id: 'MOV-02'})");
-        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'MOV-03', ORDERID: 'O-105', WAREHOUSEID: 'W-02', MOVEDATE: '2026-04-15', STATUS: 'DELIVERED', id: 'MOV-03'})");
+        // 10. WAREHOUSE (da2)
+        session.run("UNWIND [" +
+            "{id: 'W-01', name: 'Central Chennai Depot', city: 'Chennai', capacity: 15000, managerId: 'M-01'}," +
+            "{id: 'W-02', name: 'Navi Mumbai Hub', city: 'Mumbai', capacity: 22000, managerId: 'M-02'}," +
+            "{id: 'W-03', name: 'Whitefield Logistics Center', city: 'Bengaluru', capacity: 18000, managerId: 'M-01'}" +
+            "] AS w MERGE (n:WAREHOUSE {WAREHOUSEID: w.id}) SET n.WNAME = w.name, n.CITY = w.city, n.CAPACITY = w.capacity, n.MANAGERID = w.managerId, n.id = w.id, n.name = w.name");
 
-        session.run("MERGE (n:SHIPMENT {MOVEMENTID: 'MOV-01', DELIVERYDATE: '2026-04-04', id: 'MOV-01'})");
-        session.run("MERGE (n:SHIPMENT {MOVEMENTID: 'MOV-02', DELIVERYDATE: '2026-04-12', id: 'MOV-02'})");
-        session.run("MERGE (n:GOODS_RETURN {MOVEMENTID: 'MOV-03', REASON: 'Packaging damaged during secondary transit', REFUNDAMT: 1250.00, id: 'MOV-03'})");
+        // 11. ORDER_DRIVER (da2)
+        session.run("UNWIND [" +
+            "{orderId: 'O-101', driverId: 'D-05'}," +
+            "{orderId: 'O-102', driverId: 'D-09'}," +
+            "{orderId: 'O-103', driverId: 'D-05'}," +
+            "{orderId: 'O-104', driverId: 'D-05'}," +
+            "{orderId: 'O-105', driverId: 'D-09'}," +
+            "{orderId: 'O-106', driverId: 'D-11'}" +
+            "] AS od MERGE (n:ORDER_DRIVER {ORDERID: od.orderId, DRIVERID: od.driverId}) SET n.id = od.orderId + '_' + od.driverId");
 
-        session.run("MERGE (n:SUPPLIER_PHONE {SUPPLIERID: 'S01', PHONE: '9845012345', id: 'S01_P1'})");
-        session.run("MERGE (n:SUPPLIER_PHONE {SUPPLIERID: 'S03', PHONE: '9820011122', id: 'S03_P1'})");
-        session.run("MERGE (n:DRIVER_CITY {DRIVERID: 'D-05', CITY: 'Chennai', id: 'D05_Chennai'})");
-        session.run("MERGE (n:DRIVER_CITY {DRIVERID: 'D-09', CITY: 'Mumbai', id: 'D09_Mumbai'})");
-        session.run("MERGE (n:ORDER_DRIVER {ORDERID: 'O-101', DRIVERID: 'D-05', id: 'O101_D05'})");
-        session.run("MERGE (n:ORDER_DRIVER {ORDERID: 'O-102', DRIVERID: 'D-09', id: 'O102_D09'})");
-        session.run("MERGE (n:DELIVERY_DUTY {ORDERID: 'O-101', DRIVERID: 'D-05', CITY: 'Chennai', id: 'DD_1'})");
-        session.run("MERGE (n:DELIVERY_DUTY {ORDERID: 'O-102', DRIVERID: 'D-09', CITY: 'Mumbai', id: 'DD_2'})");
-        session.run("MERGE (n:STOCK {WAREHOUSEID: 'W-01', PRODUCTID: 'P-100', QUANTITY: 1200, id: 'ST_1'})");
-        session.run("MERGE (n:STOCK {WAREHOUSEID: 'W-02', PRODUCTID: 'P-104', QUANTITY: 2500, id: 'ST_2'})");
-        session.run("MERGE (n:SUPPLIES {SUPPLIERID: 'S01', PRODUCTID: 'P-100', LEADTIMEDAYS: 4, id: 'SUP_1'})");
+        // 12. DELIVERY_DUTY (da2)
+        session.run("UNWIND [" +
+            "{orderId: 'O-101', driverId: 'D-05', city: 'Chennai'}," +
+            "{orderId: 'O-101', driverId: 'D-09', city: 'Mumbai'}," +
+            "{orderId: 'O-102', driverId: 'D-09', city: 'Mumbai'}," +
+            "{orderId: 'O-103', driverId: 'D-05', city: 'Chennai'}," +
+            "{orderId: 'O-104', driverId: 'D-05', city: 'Chennai'}," +
+            "{orderId: 'O-105', driverId: 'D-09', city: 'Mumbai'}," +
+            "{orderId: 'O-106', driverId: 'D-11', city: 'Chennai'}," +
+            "{orderId: 'O-107', driverId: 'D-11', city: 'Bengaluru'}" +
+            "] AS dd MERGE (n:DELIVERY_DUTY {ORDERID: dd.orderId, CITY: dd.city}) SET n.DRIVERID = dd.driverId, n.id = dd.orderId + '_' + dd.city");
 
-        // 11. Interconnecting Graph Relationships
-        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S01'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 4}]->(p)");
-        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S01'}), (p:PRODUCT {PRODUCTID: 'P-108'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 5}]->(p)");
-        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S03'}), (p:PRODUCT {PRODUCTID: 'P-104'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 3}]->(p)");
-        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S05'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 2, coldChain: true}]->(p)");
-        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S05'}), (p:PRODUCT {PRODUCTID: 'P-301'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 7, hazmatCertified: true}]->(p)");
+        // 13. DRIVER_CITY (da2)
+        session.run("UNWIND [" +
+            "{driverId: 'D-05', city: 'Chennai'}," +
+            "{driverId: 'D-09', city: 'Mumbai'}," +
+            "{driverId: 'D-11', city: 'Bengaluru'}" +
+            "] AS dc MERGE (n:DRIVER_CITY {DRIVERID: dc.driverId, CITY: dc.city}) SET n.id = dc.driverId + '_' + dc.city");
 
-        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (w)-[:STOCKS {quantity: 1200}]->(p)");
-        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-108'}) MERGE (w)-[:STOCKS {quantity: 850}]->(p)");
-        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (w)-[:STOCKS {quantity: 400}]->(p)");
-        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-02'}), (p:PRODUCT {PRODUCTID: 'P-104'}) MERGE (w)-[:STOCKS {quantity: 2500}]->(p)");
-        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-02'}), (p:PRODUCT {PRODUCTID: 'P-301'}) MERGE (w)-[:STOCKS {quantity: 150}]->(p)");
+        // 14. STOCK (da2)
+        session.run("UNWIND [" +
+            "{warehouseId: 'W-01', productId: 'P-100', quantity: 450}," +
+            "{warehouseId: 'W-01', productId: 'P-104', quantity: 600}," +
+            "{warehouseId: 'W-01', productId: 'P-210', quantity: 300}," +
+            "{warehouseId: 'W-02', productId: 'P-100', quantity: 800}," +
+            "{warehouseId: 'W-02', productId: 'P-108', quantity: 520}" +
+            "] AS st MERGE (n:STOCK {WAREHOUSEID: st.warehouseId, PRODUCTID: st.productId}) SET n.QUANTITY = st.quantity, n.id = st.warehouseId + '_' + st.productId");
 
+        // 15. SUPPLIES (da2)
+        session.run("MERGE (n:SUPPLIES {SUPPLIERID: 'S01', PRODUCTID: 'P-100'}) SET n.LEADTIMEDAYS = 3, n.id = 'S01_P100'");
+        session.run("MERGE (n:SUPPLIES {SUPPLIERID: 'S05', PRODUCTID: 'P-210'}) SET n.LEADTIMEDAYS = 4, n.id = 'S05_P210'");
+
+        // 16. INSPECTION (da2)
+        session.run("MERGE (n:INSPECTION {INSPID: 'INS-01'}) SET n.SUPPLIERID = 'S01', n.PRODUCTID = 'P-100', n.INSPDATE = '2026-04-01', n.RESULT = 'PASSED', n.id = 'INS-01'");
+        session.run("MERGE (n:INSPECTION {INSPID: 'INS-02'}) SET n.SUPPLIERID = 'S05', n.PRODUCTID = 'P-210', n.INSPDATE = '2026-04-04', n.RESULT = 'PASSED', n.id = 'INS-02'");
+
+        // 17. GOODS_MOVEMENT, SHIPMENT, GOODS_RETURN (da2)
+        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'M-01'}) SET n.ORDERID = 'O-101', n.WAREHOUSEID = 'W-01', n.MOVEDATE = '2026-04-03', n.STATUS = 'DISPATCHED', n.id = 'M-01'");
+        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'M-02'}) SET n.ORDERID = 'O-103', n.WAREHOUSEID = 'W-01', n.MOVEDATE = '2026-04-10', n.STATUS = 'DISPATCHED', n.id = 'M-02'");
+        session.run("MERGE (n:GOODS_MOVEMENT {MOVEMENTID: 'M-03'}) SET n.ORDERID = 'O-105', n.WAREHOUSEID = 'W-02', n.MOVEDATE = '2026-04-15', n.STATUS = 'DISPATCHED', n.id = 'M-03'");
+
+        session.run("MERGE (n:SHIPMENT {MOVEMENTID: 'M-01'}) SET n.DELIVERYDATE = '2026-04-04', n.id = 'M-01'");
+        session.run("MERGE (n:SHIPMENT {MOVEMENTID: 'M-02'}) SET n.DELIVERYDATE = '2026-04-11', n.id = 'M-02'");
+        session.run("MERGE (n:SHIPMENT {MOVEMENTID: 'M-03'}) SET n.DELIVERYDATE = '2026-04-16', n.id = 'M-03'");
+
+        session.run("MERGE (n:GOODS_RETURN {MOVEMENTID: 'M-02'}) SET n.REASON = 'Damaged packaging during transit', n.REFUNDAMT = 480.00, n.id = 'M-02'");
+
+        // Relationships
+        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S01'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 3}]->(p)");
+        session.run("MATCH (s:SUPPLIER {SUPPLIERID: 'S05'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (s)-[:SUPPLIES {leadTimeDays: 4}]->(p)");
+        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (w)-[:STOCKS {quantity: 450}]->(p)");
+        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-104'}) MERGE (w)-[:STOCKS {quantity: 600}]->(p)");
+        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-01'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (w)-[:STOCKS {quantity: 300}]->(p)");
+        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-02'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (w)-[:STOCKS {quantity: 800}]->(p)");
+        session.run("MATCH (w:WAREHOUSE {WAREHOUSEID: 'W-02'}), (p:PRODUCT {PRODUCTID: 'P-108'}) MERGE (w)-[:STOCKS {quantity: 520}]->(p)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-01'}), (o:ORDERS {ORDERID: 'O-101'}) MERGE (c)-[:PLACED]->(o)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-03'}), (o:ORDERS {ORDERID: 'O-102'}) MERGE (c)-[:PLACED]->(o)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-01'}), (o:ORDERS {ORDERID: 'O-103'}) MERGE (c)-[:PLACED]->(o)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-05'}), (o:ORDERS {ORDERID: 'O-104'}) MERGE (c)-[:PLACED]->(o)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-03'}), (o:ORDERS {ORDERID: 'O-105'}) MERGE (c)-[:PLACED]->(o)");
         session.run("MATCH (c:CUSTOMER {CUSTID: 'C-05'}), (o:ORDERS {ORDERID: 'O-106'}) MERGE (c)-[:PLACED]->(o)");
-
         session.run("MATCH (o:ORDERS {ORDERID: 'O-101'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (o)-[:CONTAINS {qty: 20, price: 480}]->(p)");
         session.run("MATCH (o:ORDERS {ORDERID: 'O-101'}), (p:PRODUCT {PRODUCTID: 'P-104'}) MERGE (o)-[:CONTAINS {qty: 50, price: 132}]->(p)");
         session.run("MATCH (o:ORDERS {ORDERID: 'O-102'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (o)-[:CONTAINS {qty: 30, price: 96}]->(p)");
@@ -308,15 +338,14 @@ public class GraphDatabaseService {
         session.run("MATCH (o:ORDERS {ORDERID: 'O-105'}), (p:PRODUCT {PRODUCTID: 'P-104'}) MERGE (o)-[:CONTAINS {qty: 25, price: 132}]->(p)");
         session.run("MATCH (o:ORDERS {ORDERID: 'O-105'}), (p:PRODUCT {PRODUCTID: 'P-210'}) MERGE (o)-[:CONTAINS {qty: 40, price: 96}]->(p)");
         session.run("MATCH (o:ORDERS {ORDERID: 'O-106'}), (p:PRODUCT {PRODUCTID: 'P-100'}) MERGE (o)-[:CONTAINS {qty: 18, price: 480}]->(p)");
-
         session.run("MATCH (d:DRIVER {EMPID: 'D-05'}), (o:ORDERS {ORDERID: 'O-101'}) MERGE (d)-[:DELIVERS {assignedCity: 'Chennai'}]->(o)");
         session.run("MATCH (d:DRIVER {EMPID: 'D-09'}), (o:ORDERS {ORDERID: 'O-102'}) MERGE (d)-[:DELIVERS {assignedCity: 'Mumbai'}]->(o)");
         session.run("MATCH (d:DRIVER {EMPID: 'D-05'}), (o:ORDERS {ORDERID: 'O-103'}) MERGE (d)-[:DELIVERS {assignedCity: 'Chennai'}]->(o)");
         session.run("MATCH (d:DRIVER {EMPID: 'D-05'}), (o:ORDERS {ORDERID: 'O-104'}) MERGE (d)-[:DELIVERS {assignedCity: 'Chennai'}]->(o)");
         session.run("MATCH (d:DRIVER {EMPID: 'D-09'}), (o:ORDERS {ORDERID: 'O-105'}) MERGE (d)-[:DELIVERS {assignedCity: 'Mumbai'}]->(o)");
         session.run("MATCH (d:DRIVER {EMPID: 'D-11'}), (o:ORDERS {ORDERID: 'O-106'}) MERGE (d)-[:DELIVERS {assignedCity: 'Chennai'}]->(o)");
-
-        session.run("MATCH (m:MANAGER {EMPID: 'M-01'}), (w:WAREHOUSE {WAREHOUSEID: 'W-01'}) MERGE (m)-[:MANAGES {since: '2024'}]->(w)");
+        session.run("MATCH (m:MANAGER {EMPID: 'M-01'}), (w:WAREHOUSE {WAREHOUSEID: 'W-01'}) MERGE (m)-[:MANAGES]->(w)");
+        session.run("MATCH (m:MANAGER {EMPID: 'M-02'}), (w:WAREHOUSE {WAREHOUSEID: 'W-02'}) MERGE (m)-[:MANAGES]->(w)");
         session.run("MATCH (d:DRIVER), (e:EMPLOYEE {EMPID: d.EMPID}) MERGE (d)-[:IS_A]->(e)");
         session.run("MATCH (m:MANAGER), (e:EMPLOYEE {EMPID: m.EMPID}) MERGE (m)-[:IS_A]->(e)");
         session.run("MATCH (pp:PERISHABLE_PRODUCT), (p:PRODUCT {PRODUCTID: pp.PRODUCTID}) MERGE (pp)-[:IS_A]->(p)");
@@ -1795,179 +1824,152 @@ public class GraphDatabaseService {
     }
 
     // ==========================================
-    // INITIALIZE ALL 22 ENTITIES IN-MEMORY
+    // INITIALIZE ALL 22 ENTITIES IN-MEMORY (MATCHING da2)
     // ==========================================
+
+    private static Map<String, Object> mapOf(Object... kvs) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i < kvs.length; i += 2) {
+            String k = (String) kvs[i];
+            Object v = kvs[i + 1];
+            if (v != null) {
+                map.put(k, v);
+            }
+        }
+        return map;
+    }
 
     private void initDefaultGraph() {
         defaultNodes.clear();
         defaultLinks.clear();
 
-        // 1. CITY
-        addNode("CITY_Chennai", "Chennai", "CITY", Map.of("CITY", "Chennai", "STATE", "Tamil Nadu", "id", "Chennai", "name", "Chennai"));
-        addNode("CITY_Mumbai", "Mumbai", "CITY", Map.of("CITY", "Mumbai", "STATE", "Maharashtra", "id", "Mumbai", "name", "Mumbai"));
-        addNode("CITY_Bangalore", "Bangalore", "CITY", Map.of("CITY", "Bangalore", "STATE", "Karnataka", "id", "Bangalore", "name", "Bangalore"));
+        // 1. CITY (da2)
+        addNode("CITY_Chennai", "Chennai", "CITY", mapOf("CITY", "Chennai", "STATE", "Tamil Nadu", "id", "Chennai", "name", "Chennai"));
+        addNode("CITY_Mumbai", "Mumbai", "CITY", mapOf("CITY", "Mumbai", "STATE", "Maharashtra", "id", "Mumbai", "name", "Mumbai"));
 
-        // 2. SUPPLIER
-        addNode("SUPPLIER_S01", "Apex Agro Supplies [S01]", "SUPPLIER", Map.of(
-            "SUPPLIERID", "S01", "SNAME", "Apex Agro Supplies", "CITY", "Chennai", "RATING", 4.8, "PHONE", "9845012345", "id", "S01", "name", "Apex Agro Supplies"
-        ));
-        addNode("SUPPLIER_S03", "Metro Wholesale Mills [S03]", "SUPPLIER", Map.of(
-            "SUPPLIERID", "S03", "SNAME", "Metro Wholesale Mills", "CITY", "Mumbai", "RATING", 4.6, "PHONE", "9820011122", "id", "S03", "name", "Metro Wholesale Mills"
-        ));
-        addNode("SUPPLIER_S05", "Delta Cold & Chemicals [S05]", "SUPPLIER", Map.of(
-            "SUPPLIERID", "S05", "SNAME", "Delta Cold & Chemicals", "CITY", "Chennai", "RATING", 4.9, "PHONE", "9840199887", "id", "S05", "name", "Delta Cold & Chemicals"
-        ));
+        // 2. SUPPLIER (da2)
+        addNode("SUPPLIER_S01", "S01", "SUPPLIER", mapOf("SUPPLIERID", "S01", "id", "S01"));
+        addNode("SUPPLIER_S03", "S03", "SUPPLIER", mapOf("SUPPLIERID", "S03", "id", "S03"));
+        addNode("SUPPLIER_S05", "S05", "SUPPLIER", mapOf("SUPPLIERID", "S05", "id", "S05"));
 
-        // 3. SUPPLIER_PHONE
-        addNode("SP_S01_1", "S01 Phone 1", "SUPPLIER_PHONE", Map.of("SUPPLIERID", "S01", "PHONE", "9845012345", "id", "S01_P1"));
-        addNode("SP_S01_2", "S01 Phone 2", "SUPPLIER_PHONE", Map.of("SUPPLIERID", "S01", "PHONE", "08022334455", "id", "S01_P2"));
-        addNode("SP_S03_1", "S03 Phone 1", "SUPPLIER_PHONE", Map.of("SUPPLIERID", "S03", "PHONE", "9820011122", "id", "S03_P1"));
-        addNode("SP_S05_1", "S05 Phone 1", "SUPPLIER_PHONE", Map.of("SUPPLIERID", "S05", "PHONE", "9840199887", "id", "S05_P1"));
+        // 3. SUPPLIER_PHONE (da2)
+        addNode("SP_1", "S01 - 9845012345", "SUPPLIER_PHONE", mapOf("SUPPLIERID", "S01", "PHONE", "9845012345", "id", "S01_9845012345"));
+        addNode("SP_2", "S01 - 08022334455", "SUPPLIER_PHONE", mapOf("SUPPLIERID", "S01", "PHONE", "08022334455", "id", "S01_08022334455"));
+        addNode("SP_3", "S03 - 9820011122", "SUPPLIER_PHONE", mapOf("SUPPLIERID", "S03", "PHONE", "9820011122", "id", "S03_9820011122"));
+        addNode("SP_4", "S05 - 9840199887", "SUPPLIER_PHONE", mapOf("SUPPLIERID", "S05", "PHONE", "9840199887", "id", "S05_9840199887"));
+        addNode("SP_5", "S05 - 04424851212", "SUPPLIER_PHONE", mapOf("SUPPLIERID", "S05", "PHONE", "04424851212", "id", "S05_04424851212"));
 
-        // 4. PRODUCT
-        addNode("PRODUCT_P100", "Basmati Rice [P-100]", "PRODUCT", Map.of(
-            "PRODUCTID", "P-100", "PNAME", "Basmati Rice", "CATEGORY", "Staples", "UNITPRICE", 480.00, "id", "P-100", "name", "Basmati Rice"
-        ));
-        addNode("PRODUCT_P104", "Sunflower Oil [P-104]", "PRODUCT", Map.of(
-            "PRODUCTID", "P-104", "PNAME", "Sunflower Oil", "CATEGORY", "Oils", "UNITPRICE", 132.00, "id", "P-104", "name", "Sunflower Oil"
-        ));
-        addNode("PRODUCT_P108", "Sona Masoori [P-108]", "PRODUCT", Map.of(
-            "PRODUCTID", "P-108", "PNAME", "Sona Masoori Rice", "CATEGORY", "Staples", "UNITPRICE", 445.00, "id", "P-108", "name", "Sona Masoori Rice"
-        ));
-        addNode("PRODUCT_P210", "Frozen Peas [P-210]", "PRODUCT", Map.of(
-            "PRODUCTID", "P-210", "PNAME", "Frozen Peas", "CATEGORY", "Frozen", "UNITPRICE", 96.00, "id", "P-210", "name", "Frozen Peas"
-        ));
-        addNode("PRODUCT_P301", "Industrial Solvent [P-301]", "PRODUCT", Map.of(
-            "PRODUCTID", "P-301", "PNAME", "Industrial Solvent", "CATEGORY", "Chemicals", "UNITPRICE", 1250.00, "id", "P-301", "name", "Industrial Solvent"
-        ));
+        // 4. PRODUCT (da2)
+        addNode("PRODUCT_P100", "Basmati Rice [P-100]", "PRODUCT", mapOf("PRODUCTID", "P-100", "PNAME", "Basmati Rice", "CATEGORY", "Staples", "UNITPRICE", 480, "id", "P-100", "name", "Basmati Rice"));
+        addNode("PRODUCT_P104", "Sunflower Oil [P-104]", "PRODUCT", mapOf("PRODUCTID", "P-104", "PNAME", "Sunflower Oil", "CATEGORY", "Oils", "UNITPRICE", 132, "id", "P-104", "name", "Sunflower Oil"));
+        addNode("PRODUCT_P108", "Sona Masoori [P-108]", "PRODUCT", mapOf("PRODUCTID", "P-108", "PNAME", "Sona Masoori", "CATEGORY", "Staples", "UNITPRICE", 445, "id", "P-108", "name", "Sona Masoori"));
+        addNode("PRODUCT_P210", "Frozen Peas [P-210]", "PRODUCT", mapOf("PRODUCTID", "P-210", "PNAME", "Frozen Peas", "CATEGORY", "Frozen", "UNITPRICE", 96, "id", "P-210", "name", "Frozen Peas"));
+        addNode("PRODUCT_P420", "Industrial Sanitizer [P-420]", "PRODUCT", mapOf("PRODUCTID", "P-420", "PNAME", "Industrial Sanitizer", "CATEGORY", "Chemicals", "UNITPRICE", 350.00, "id", "P-420", "name", "Industrial Sanitizer"));
 
-        // 5. PERISHABLE_PRODUCT & HAZARDOUS_PRODUCT
-        addNode("PERISHABLE_P210", "Frozen Peas [Perishable]", "PERISHABLE_PRODUCT", Map.of(
-            "PRODUCTID", "P-210", "SHELFLIFEDAYS", 90, "STORAGETEMPC", "-18°C", "id", "P-210", "name", "Frozen Peas [Perishable]"
-        ));
-        addNode("HAZARDOUS_P301", "Solvent [Hazmat]", "HAZARDOUS_PRODUCT", Map.of(
-            "PRODUCTID", "P-301", "HAZARDCLASS", "Class 3 Flammable", "HANDLINGNOTE", "Keep away from sparks", "id", "P-301", "name", "Industrial Solvent [Hazmat]"
-        ));
+        // 5. PERISHABLE_PRODUCT & HAZARDOUS_PRODUCT (da2)
+        addNode("PERISHABLE_P210", "Frozen Peas [Perishable]", "PERISHABLE_PRODUCT", mapOf("PRODUCTID", "P-210", "SHELFLIFEDAYS", 90, "STORAGETEMPC", "-18C", "id", "P-210"));
+        addNode("HAZARDOUS_P420", "Sanitizer [Hazmat]", "HAZARDOUS_PRODUCT", mapOf("PRODUCTID", "P-420", "HAZARDCLASS", "Class 3 Flammable Liquid", "HANDLINGNOTE", "Keep away from heat and open flame", "id", "P-420"));
 
-        // 6. SUPPLIES
-        addNode("SUPPLIES_1", "Supply S01 -> P100", "SUPPLIES", Map.of("SUPPLIERID", "S01", "PRODUCTID", "P-100", "LEADTIMEDAYS", 4, "id", "SUP_1"));
-        addNode("SUPPLIES_2", "Supply S03 -> P104", "SUPPLIES", Map.of("SUPPLIERID", "S03", "PRODUCTID", "P-104", "LEADTIMEDAYS", 3, "id", "SUP_2"));
-        addNode("SUPPLIES_3", "Supply S05 -> P210", "SUPPLIES", Map.of("SUPPLIERID", "S05", "PRODUCTID", "P-210", "LEADTIMEDAYS", 2, "id", "SUP_3"));
+        // 6. CUSTOMER (da2)
+        addNode("CUSTOMER_C01", "Shama Retail [C-01]", "CUSTOMER", mapOf("CUSTID", "C-01", "CNAME", "Shama Retail", "STREET", "12 MG Rd", "CITY", "Chennai", "PHONE", "9840011223", "id", "C-01", "name", "Shama Retail"));
+        addNode("CUSTOMER_C03", "Metro Mart [C-03]", "CUSTOMER", mapOf("CUSTID", "C-03", "CNAME", "Metro Mart", "STREET", "5 Link Rd", "CITY", "Mumbai", "PHONE", "9820044556", "id", "C-03", "name", "Metro Mart"));
+        addNode("CUSTOMER_C05", "Anand Stores [C-05]", "CUSTOMER", mapOf("CUSTID", "C-05", "CNAME", "Anand Stores", "STREET", "7 Anna Salai", "CITY", "Chennai", "PHONE", "9845567788", "id", "C-05", "name", "Anand Stores"));
 
-        // 7. INSPECTION
-        addNode("INSP_01", "Inspection #01", "INSPECTION", Map.of(
-            "INSPID", "INSP-01", "SUPPLIERID", "S01", "PRODUCTID", "P-100", "INSPDATE", "2026-03-15", "RESULT", "PASSED_GRADE_A", "id", "INSP-01"
-        ));
-        addNode("INSP_02", "Inspection #02", "INSPECTION", Map.of(
-            "INSPID", "INSP-02", "SUPPLIERID", "S05", "PRODUCTID", "P-210", "INSPDATE", "2026-03-20", "RESULT", "PASSED_COLD_CHAIN", "id", "INSP-02"
-        ));
+        // 7. ORDERS (da2)
+        addNode("ORDER_O101", "Order #O-101", "ORDERS", mapOf("ORDERID", "O-101", "ORDERDATE", "2026-04-02", "STATUS", "SHIPPED", "CUSTID", "C-01", "id", "O-101"));
+        addNode("ORDER_O102", "Order #O-102", "ORDERS", mapOf("ORDERID", "O-102", "ORDERDATE", "2026-04-05", "STATUS", "NEW", "CUSTID", "C-03", "id", "O-102"));
+        addNode("ORDER_O103", "Order #O-103", "ORDERS", mapOf("ORDERID", "O-103", "ORDERDATE", "2026-04-09", "STATUS", "SHIPPED", "CUSTID", "C-01", "id", "O-103"));
+        addNode("ORDER_O104", "Order #O-104", "ORDERS", mapOf("ORDERID", "O-104", "ORDERDATE", "2026-04-11", "STATUS", "NEW", "CUSTID", "C-05", "id", "O-104"));
+        addNode("ORDER_O105", "Order #O-105", "ORDERS", mapOf("ORDERID", "O-105", "ORDERDATE", "2026-04-14", "STATUS", "SHIPPED", "CUSTID", "C-03", "id", "O-105"));
+        addNode("ORDER_O106", "Order #O-106", "ORDERS", mapOf("ORDERID", "O-106", "ORDERDATE", "2026-04-16", "STATUS", "NEW", "CUSTID", "C-05", "id", "O-106"));
 
-        // 8. WAREHOUSE
-        addNode("WAREHOUSE_W01", "Chennai Central Hub [W-01]", "WAREHOUSE", Map.of(
-            "WAREHOUSEID", "W-01", "WNAME", "Chennai Central Hub", "CITY", "Chennai", "CAPACITY", 50000, "MANAGERID", "M-01", "id", "W-01", "name", "Chennai Central Hub"
-        ));
-        addNode("WAREHOUSE_W02", "Mumbai Port Depot [W-02]", "WAREHOUSE", Map.of(
-            "WAREHOUSEID", "W-02", "WNAME", "Mumbai Port Depot", "CITY", "Mumbai", "CAPACITY", 75000, "MANAGERID", "M-02", "id", "W-02", "name", "Mumbai Port Depot"
-        ));
+        // 8. ORDER_ITEM (da2)
+        addNode("OI_1", "Item O101 P100", "ORDER_ITEM", mapOf("ORDERID", "O-101", "PRODUCTID", "P-100", "QTY", 20, "PRICE", 480, "id", "O-101_P-100"));
+        addNode("OI_2", "Item O101 P104", "ORDER_ITEM", mapOf("ORDERID", "O-101", "PRODUCTID", "P-104", "QTY", 50, "PRICE", 132, "id", "O-101_P-104"));
+        addNode("OI_3", "Item O102 P210", "ORDER_ITEM", mapOf("ORDERID", "O-102", "PRODUCTID", "P-210", "QTY", 30, "PRICE", 96, "id", "O-102_P-210"));
+        addNode("OI_4", "Item O103 P100", "ORDER_ITEM", mapOf("ORDERID", "O-103", "PRODUCTID", "P-100", "QTY", 15, "PRICE", 480, "id", "O-103_P-100"));
+        addNode("OI_5", "Item O104 P108", "ORDER_ITEM", mapOf("ORDERID", "O-104", "PRODUCTID", "P-108", "QTY", 12, "PRICE", 445, "id", "O-104_P-108"));
+        addNode("OI_6", "Item O105 P104", "ORDER_ITEM", mapOf("ORDERID", "O-105", "PRODUCTID", "P-104", "QTY", 25, "PRICE", 132, "id", "O-105_P-104"));
+        addNode("OI_7", "Item O105 P210", "ORDER_ITEM", mapOf("ORDERID", "O-105", "PRODUCTID", "P-210", "QTY", 40, "PRICE", 96, "id", "O-105_P-210"));
+        addNode("OI_8", "Item O106 P100", "ORDER_ITEM", mapOf("ORDERID", "O-106", "PRODUCTID", "P-100", "QTY", 18, "PRICE", 480, "id", "O-106_P-100"));
 
-        // 9. STOCK
-        addNode("STOCK_1", "Stock W01 P100", "STOCK", Map.of("WAREHOUSEID", "W-01", "PRODUCTID", "P-100", "QUANTITY", 1200, "id", "ST_1"));
-        addNode("STOCK_2", "Stock W01 P210", "STOCK", Map.of("WAREHOUSEID", "W-01", "PRODUCTID", "P-210", "QUANTITY", 400, "id", "ST_2"));
-        addNode("STOCK_3", "Stock W02 P104", "STOCK", Map.of("WAREHOUSEID", "W-02", "PRODUCTID", "P-104", "QUANTITY", 2500, "id", "ST_3"));
+        // 9. EMPLOYEE, DRIVER, MANAGER (da2)
+        addNode("EMP_D05", "Driver D-05", "EMPLOYEE", mapOf("EMPID", "D-05", "ROLE", "Driver", "id", "D-05"));
+        addNode("EMP_D09", "Driver D-09", "EMPLOYEE", mapOf("EMPID", "D-09", "ROLE", "Driver", "id", "D-09"));
+        addNode("EMP_D11", "Driver D-11", "EMPLOYEE", mapOf("EMPID", "D-11", "ROLE", "Driver", "id", "D-11"));
+        addNode("EMP_M01", "Kavita Sharma [M-01]", "EMPLOYEE", mapOf("EMPID", "M-01", "ENAME", "Kavita Sharma", "ROLE", "Manager", "SALARY", 85000, "id", "M-01", "name", "Kavita Sharma"));
+        addNode("EMP_M02", "Arun Nair [M-02]", "EMPLOYEE", mapOf("EMPID", "M-02", "ENAME", "Arun Nair", "ROLE", "Manager", "SALARY", 82000, "id", "M-02", "name", "Arun Nair"));
 
-        // 10. EMPLOYEE, MANAGER, DRIVER
-        addNode("EMP_M01", "Kavita Sharma [M-01]", "EMPLOYEE", Map.of(
-            "EMPID", "M-01", "ENAME", "Kavita Sharma", "ROLE", "Manager", "SALARY", 85000.00, "WAREHOUSEID", "W-01", "id", "M-01", "name", "Kavita Sharma"
-        ));
-        addNode("EMP_D05", "Ramesh Kumar [D-05]", "EMPLOYEE", Map.of(
-            "EMPID", "D-05", "ENAME", "Ramesh Kumar", "ROLE", "Driver", "SALARY", 32000.00, "WAREHOUSEID", "W-01", "id", "D-05", "name", "Ramesh Kumar"
-        ));
-        addNode("EMP_D09", "Suresh Patil [D-09]", "EMPLOYEE", Map.of(
-            "EMPID", "D-09", "ENAME", "Suresh Patil", "ROLE", "Driver", "SALARY", 34000.00, "WAREHOUSEID", "W-02", "id", "D-09", "name", "Suresh Patil"
-        ));
-        addNode("EMP_D11", "Venkatesh Rao [D-11]", "EMPLOYEE", Map.of(
-            "EMPID", "D-11", "ENAME", "Venkatesh Rao", "ROLE", "Driver", "SALARY", 31000.00, "WAREHOUSEID", "W-01", "id", "D-11", "name", "Venkatesh Rao"
-        ));
+        addNode("DRIVER_D05", "Driver D-05", "DRIVER", mapOf("EMPID", "D-05", "id", "D-05"));
+        addNode("DRIVER_D09", "Driver D-09", "DRIVER", mapOf("EMPID", "D-09", "id", "D-09"));
+        addNode("DRIVER_D11", "Driver D-11", "DRIVER", mapOf("EMPID", "D-11", "id", "D-11"));
 
-        addNode("MANAGER_M01", "Manager M-01 (Kavita)", "MANAGER", Map.of("EMPID", "M-01", "LEVELNO", "L3", "BONUS", 15000.00, "id", "M-01"));
-        addNode("DRIVER_D05", "Driver D-05 (Ramesh)", "DRIVER", Map.of("EMPID", "D-05", "LICENSENO", "TN-02-2021-998", "EXPIRY", "2028-12-31", "id", "D-05"));
-        addNode("DRIVER_D09", "Driver D-09 (Suresh)", "DRIVER", Map.of("EMPID", "D-09", "LICENSENO", "MH-01-2020-412", "EXPIRY", "2027-08-15", "id", "D-09"));
-        addNode("DRIVER_D11", "Driver D-11 (Venkatesh)", "DRIVER", Map.of("EMPID", "D-11", "LICENSENO", "TN-05-2022-771", "EXPIRY", "2029-05-20", "id", "D-11"));
+        addNode("MANAGER_M01", "Manager M-01", "MANAGER", mapOf("EMPID", "M-01", "LEVELNO", "Senior L3", "BONUS", 15000.00, "id", "M-01"));
+        addNode("MANAGER_M02", "Manager M-02", "MANAGER", mapOf("EMPID", "M-02", "LEVELNO", "Regional L2", "BONUS", 12000.00, "id", "M-02"));
 
-        // 11. DRIVER_CITY
-        addNode("DC_1", "D05 Chennai", "DRIVER_CITY", Map.of("DRIVERID", "D-05", "CITY", "Chennai", "id", "DC_1"));
-        addNode("DC_2", "D09 Mumbai", "DRIVER_CITY", Map.of("DRIVERID", "D-09", "CITY", "Mumbai", "id", "DC_2"));
+        // 10. WAREHOUSE (da2)
+        addNode("WAREHOUSE_W01", "Central Chennai Depot [W-01]", "WAREHOUSE", mapOf("WAREHOUSEID", "W-01", "WNAME", "Central Chennai Depot", "CITY", "Chennai", "CAPACITY", 15000, "MANAGERID", "M-01", "id", "W-01", "name", "Central Chennai Depot"));
+        addNode("WAREHOUSE_W02", "Navi Mumbai Hub [W-02]", "WAREHOUSE", mapOf("WAREHOUSEID", "W-02", "WNAME", "Navi Mumbai Hub", "CITY", "Mumbai", "CAPACITY", 22000, "MANAGERID", "M-02", "id", "W-02", "name", "Navi Mumbai Hub"));
+        addNode("WAREHOUSE_W03", "Whitefield Logistics Center [W-03]", "WAREHOUSE", mapOf("WAREHOUSEID", "W-03", "WNAME", "Whitefield Logistics Center", "CITY", "Bengaluru", "CAPACITY", 18000, "MANAGERID", "M-01", "id", "W-03", "name", "Whitefield Logistics Center"));
 
-        // 12. CUSTOMER
-        addNode("CUSTOMER_C01", "Shama Retail [C-01]", "CUSTOMER", Map.of(
-            "CUSTID", "C-01", "CNAME", "Shama Retail", "STREET", "12 MG Rd", "CITY", "Chennai", "PHONE", "9840011223", "id", "C-01", "name", "Shama Retail"
-        ));
-        addNode("CUSTOMER_C03", "Metro Mart [C-03]", "CUSTOMER", Map.of(
-            "CUSTID", "C-03", "CNAME", "Metro Mart", "STREET", "5 Link Rd", "CITY", "Mumbai", "PHONE", "9820044556", "id", "C-03", "name", "Metro Mart"
-        ));
-        addNode("CUSTOMER_C05", "Anand Stores [C-05]", "CUSTOMER", Map.of(
-            "CUSTID", "C-05", "CNAME", "Anand Stores", "STREET", "7 Anna Salai", "CITY", "Chennai", "PHONE", "9845567788", "id", "C-05", "name", "Anand Stores"
-        ));
+        // 11. ORDER_DRIVER (da2)
+        addNode("OD_1", "Order Driver O101 D05", "ORDER_DRIVER", mapOf("ORDERID", "O-101", "DRIVERID", "D-05", "id", "O-101_D-05"));
+        addNode("OD_2", "Order Driver O102 D09", "ORDER_DRIVER", mapOf("ORDERID", "O-102", "DRIVERID", "D-09", "id", "O-102_D-09"));
+        addNode("OD_3", "Order Driver O103 D05", "ORDER_DRIVER", mapOf("ORDERID", "O-103", "DRIVERID", "D-05", "id", "O-103_D-05"));
+        addNode("OD_4", "Order Driver O104 D05", "ORDER_DRIVER", mapOf("ORDERID", "O-104", "DRIVERID", "D-05", "id", "O-104_D-05"));
+        addNode("OD_5", "Order Driver O105 D09", "ORDER_DRIVER", mapOf("ORDERID", "O-105", "DRIVERID", "D-09", "id", "O-105_D-09"));
+        addNode("OD_6", "Order Driver O106 D11", "ORDER_DRIVER", mapOf("ORDERID", "O-106", "DRIVERID", "D-11", "id", "O-106_D-11"));
 
-        // 13. ORDERS
-        addNode("ORDER_O101", "Order #O-101", "ORDERS", Map.of(
-            "ORDERID", "O-101", "ORDERDATE", "2026-04-02", "STATUS", "SHIPPED", "CUSTID", "C-01", "AMOUNT", 16200.00, "id", "O-101", "name", "Order #O-101"
-        ));
-        addNode("ORDER_O102", "Order #O-102", "ORDERS", Map.of(
-            "ORDERID", "O-102", "ORDERDATE", "2026-04-05", "STATUS", "NEW", "CUSTID", "C-03", "AMOUNT", 2880.00, "id", "O-102", "name", "Order #O-102"
-        ));
-        addNode("ORDER_O103", "Order #O-103", "ORDERS", Map.of(
-            "ORDERID", "O-103", "ORDERDATE", "2026-04-09", "STATUS", "SHIPPED", "CUSTID", "C-01", "AMOUNT", 7200.00, "id", "O-103", "name", "Order #O-103"
-        ));
-        addNode("ORDER_O104", "Order #O-104", "ORDERS", Map.of(
-            "ORDERID", "O-104", "ORDERDATE", "2026-04-11", "STATUS", "NEW", "CUSTID", "C-05", "AMOUNT", 5340.00, "id", "O-104", "name", "Order #O-104"
-        ));
-        addNode("ORDER_O105", "Order #O-105", "ORDERS", Map.of(
-            "ORDERID", "O-105", "ORDERDATE", "2026-04-14", "STATUS", "SHIPPED", "CUSTID", "C-03", "AMOUNT", 7140.00, "id", "O-105", "name", "Order #O-105"
-        ));
-        addNode("ORDER_O106", "Order #O-106", "ORDERS", Map.of(
-            "ORDERID", "O-106", "ORDERDATE", "2026-04-16", "STATUS", "NEW", "CUSTID", "C-05", "AMOUNT", 8640.00, "id", "O-106", "name", "Order #O-106"
-        ));
+        // 12. DELIVERY_DUTY (da2)
+        addNode("DD_1", "Duty O101 Chennai", "DELIVERY_DUTY", mapOf("ORDERID", "O-101", "DRIVERID", "D-05", "CITY", "Chennai", "id", "O-101_Chennai"));
+        addNode("DD_2", "Duty O101 Mumbai", "DELIVERY_DUTY", mapOf("ORDERID", "O-101", "DRIVERID", "D-09", "CITY", "Mumbai", "id", "O-101_Mumbai"));
+        addNode("DD_3", "Duty O102 Mumbai", "DELIVERY_DUTY", mapOf("ORDERID", "O-102", "DRIVERID", "D-09", "CITY", "Mumbai", "id", "O-102_Mumbai"));
+        addNode("DD_4", "Duty O103 Chennai", "DELIVERY_DUTY", mapOf("ORDERID", "O-103", "DRIVERID", "D-05", "CITY", "Chennai", "id", "O-103_Chennai"));
+        addNode("DD_5", "Duty O104 Chennai", "DELIVERY_DUTY", mapOf("ORDERID", "O-104", "DRIVERID", "D-05", "CITY", "Chennai", "id", "O-104_Chennai"));
+        addNode("DD_6", "Duty O105 Mumbai", "DELIVERY_DUTY", mapOf("ORDERID", "O-105", "DRIVERID", "D-09", "CITY", "Mumbai", "id", "O-105_Mumbai"));
+        addNode("DD_7", "Duty O106 Chennai", "DELIVERY_DUTY", mapOf("ORDERID", "O-106", "DRIVERID", "D-11", "CITY", "Chennai", "id", "O-106_Chennai"));
+        addNode("DD_8", "Duty O107 Bengaluru", "DELIVERY_DUTY", mapOf("ORDERID", "O-107", "DRIVERID", "D-11", "CITY", "Bengaluru", "id", "O-107_Bengaluru"));
 
-        // 14. ORDER_ITEM
-        addNode("OI_1", "Item O101 P100", "ORDER_ITEM", Map.of("ORDERID", "O-101", "PRODUCTID", "P-100", "QTY", 20, "PRICE", 480.00, "id", "OI_1"));
-        addNode("OI_2", "Item O101 P104", "ORDER_ITEM", Map.of("ORDERID", "O-101", "PRODUCTID", "P-104", "QTY", 50, "PRICE", 132.00, "id", "OI_2"));
-        addNode("OI_3", "Item O102 P210", "ORDER_ITEM", Map.of("ORDERID", "O-102", "PRODUCTID", "P-210", "QTY", 30, "PRICE", 96.00, "id", "OI_3"));
-        addNode("OI_4", "Item O105 P104", "ORDER_ITEM", Map.of("ORDERID", "O-105", "PRODUCTID", "P-104", "QTY", 25, "PRICE", 132.00, "id", "OI_4"));
+        // 13. DRIVER_CITY (da2)
+        addNode("DC_1", "D05 Chennai", "DRIVER_CITY", mapOf("DRIVERID", "D-05", "CITY", "Chennai", "id", "D-05_Chennai"));
+        addNode("DC_2", "D09 Mumbai", "DRIVER_CITY", mapOf("DRIVERID", "D-09", "CITY", "Mumbai", "id", "D-09_Mumbai"));
+        addNode("DC_3", "D11 Bengaluru", "DRIVER_CITY", mapOf("DRIVERID", "D-11", "CITY", "Bengaluru", "id", "D-11_Bengaluru"));
 
-        // 15. ORDER_DRIVER & DELIVERY_DUTY
-        addNode("OD_1", "Driver O101 D05", "ORDER_DRIVER", Map.of("ORDERID", "O-101", "DRIVERID", "D-05", "id", "OD_1"));
-        addNode("OD_2", "Driver O102 D09", "ORDER_DRIVER", Map.of("ORDERID", "O-102", "DRIVERID", "D-09", "id", "OD_2"));
+        // 14. STOCK (da2)
+        addNode("ST_1", "Stock W01 P100", "STOCK", mapOf("WAREHOUSEID", "W-01", "PRODUCTID", "P-100", "QUANTITY", 450, "id", "W-01_P-100"));
+        addNode("ST_2", "Stock W01 P104", "STOCK", mapOf("WAREHOUSEID", "W-01", "PRODUCTID", "P-104", "QUANTITY", 600, "id", "W-01_P-104"));
+        addNode("ST_3", "Stock W01 P210", "STOCK", mapOf("WAREHOUSEID", "W-01", "PRODUCTID", "P-210", "QUANTITY", 300, "id", "W-01_P-210"));
+        addNode("ST_4", "Stock W02 P100", "STOCK", mapOf("WAREHOUSEID", "W-02", "PRODUCTID", "P-100", "QUANTITY", 800, "id", "W-02_P-100"));
+        addNode("ST_5", "Stock W02 P108", "STOCK", mapOf("WAREHOUSEID", "W-02", "PRODUCTID", "P-108", "QUANTITY", 520, "id", "W-02_P-108"));
 
-        addNode("DD_1", "Delivery O101 Chennai", "DELIVERY_DUTY", Map.of("ORDERID", "O-101", "DRIVERID", "D-05", "CITY", "Chennai", "id", "DD_1"));
-        addNode("DD_2", "Delivery O102 Mumbai", "DELIVERY_DUTY", Map.of("ORDERID", "O-102", "DRIVERID", "D-09", "CITY", "Mumbai", "id", "DD_2"));
+        // 15. SUPPLIES (da2)
+        addNode("SUP_1", "Supply S01 P100", "SUPPLIES", mapOf("SUPPLIERID", "S01", "PRODUCTID", "P-100", "LEADTIMEDAYS", 3, "id", "S01_P-100"));
+        addNode("SUP_2", "Supply S05 P210", "SUPPLIES", mapOf("SUPPLIERID", "S05", "PRODUCTID", "P-210", "LEADTIMEDAYS", 4, "id", "S05_P-210"));
 
-        // 16. GOODS_MOVEMENT, SHIPMENT, GOODS_RETURN
-        addNode("GM_1", "Movement MOV-01", "GOODS_MOVEMENT", Map.of(
-            "MOVEMENTID", "MOV-01", "ORDERID", "O-101", "WAREHOUSEID", "W-01", "MOVEDATE", "2026-04-03", "STATUS", "DISPATCHED", "id", "MOV-01"
-        ));
-        addNode("GM_2", "Movement MOV-02", "GOODS_MOVEMENT", Map.of(
-            "MOVEMENTID", "MOV-02", "ORDERID", "O-103", "WAREHOUSEID", "W-01", "MOVEDATE", "2026-04-10", "STATUS", "DELIVERED", "id", "MOV-02"
-        ));
-        addNode("GM_3", "Movement MOV-03", "GOODS_MOVEMENT", Map.of(
-            "MOVEMENTID", "MOV-03", "ORDERID", "O-105", "WAREHOUSEID", "W-02", "MOVEDATE", "2026-04-15", "STATUS", "DELIVERED", "id", "MOV-03"
-        ));
+        // 16. INSPECTION (da2)
+        addNode("INSP_1", "Inspection INS-01", "INSPECTION", mapOf("INSPID", "INS-01", "SUPPLIERID", "S01", "PRODUCTID", "P-100", "INSPDATE", "2026-04-01", "RESULT", "PASSED", "id", "INS-01"));
+        addNode("INSP_2", "Inspection INS-02", "INSPECTION", mapOf("INSPID", "INS-02", "SUPPLIERID", "S05", "PRODUCTID", "P-210", "INSPDATE", "2026-04-04", "RESULT", "PASSED", "id", "INS-02"));
 
-        addNode("SH_1", "Shipment MOV-01", "SHIPMENT", Map.of("MOVEMENTID", "MOV-01", "DELIVERYDATE", "2026-04-04", "id", "MOV-01"));
-        addNode("GR_1", "Return MOV-03", "GOODS_RETURN", Map.of("MOVEMENTID", "MOV-03", "REASON", "Packaging damaged", "REFUNDAMT", 1250.00, "id", "MOV-03"));
+        // 17. GOODS_MOVEMENT, SHIPMENT, GOODS_RETURN (da2)
+        addNode("GM_1", "Movement M-01", "GOODS_MOVEMENT", mapOf("MOVEMENTID", "M-01", "ORDERID", "O-101", "WAREHOUSEID", "W-01", "MOVEDATE", "2026-04-03", "STATUS", "DISPATCHED", "id", "M-01"));
+        addNode("GM_2", "Movement M-02", "GOODS_MOVEMENT", mapOf("MOVEMENTID", "M-02", "ORDERID", "O-103", "WAREHOUSEID", "W-01", "MOVEDATE", "2026-04-10", "STATUS", "DISPATCHED", "id", "M-02"));
+        addNode("GM_3", "Movement M-03", "GOODS_MOVEMENT", mapOf("MOVEMENTID", "M-03", "ORDERID", "O-105", "WAREHOUSEID", "W-02", "MOVEDATE", "2026-04-15", "STATUS", "DISPATCHED", "id", "M-03"));
 
-        // Relationships for Graph Studio
-        addLink("SUPPLIER_S01", "PRODUCT_P100", "SUPPLIES", Map.of("leadTimeDays", 4));
-        addLink("SUPPLIER_S01", "PRODUCT_P108", "SUPPLIES", Map.of("leadTimeDays", 5));
-        addLink("SUPPLIER_S03", "PRODUCT_P104", "SUPPLIES", Map.of("leadTimeDays", 3));
-        addLink("SUPPLIER_S05", "PRODUCT_P210", "SUPPLIES", Map.of("leadTimeDays", 2, "coldChain", true));
-        addLink("SUPPLIER_S05", "PRODUCT_P301", "SUPPLIES", Map.of("leadTimeDays", 7, "hazmatCertified", true));
+        addNode("SH_1", "Shipment M-01", "SHIPMENT", mapOf("MOVEMENTID", "M-01", "DELIVERYDATE", "2026-04-04", "id", "M-01"));
+        addNode("SH_2", "Shipment M-02", "SHIPMENT", mapOf("MOVEMENTID", "M-02", "DELIVERYDATE", "2026-04-11", "id", "M-02"));
+        addNode("SH_3", "Shipment M-03", "SHIPMENT", mapOf("MOVEMENTID", "M-03", "DELIVERYDATE", "2026-04-16", "id", "M-03"));
 
-        addLink("WAREHOUSE_W01", "PRODUCT_P100", "STOCKS", Map.of("quantity", 1200));
-        addLink("WAREHOUSE_W01", "PRODUCT_P108", "STOCKS", Map.of("quantity", 850));
-        addLink("WAREHOUSE_W01", "PRODUCT_P210", "STOCKS", Map.of("quantity", 400));
-        addLink("WAREHOUSE_W02", "PRODUCT_P104", "STOCKS", Map.of("quantity", 2500));
-        addLink("WAREHOUSE_W02", "PRODUCT_P301", "STOCKS", Map.of("quantity", 150));
+        addNode("GR_1", "Goods Return M-02", "GOODS_RETURN", mapOf("MOVEMENTID", "M-02", "REASON", "Damaged packaging during transit", "REFUNDAMT", 480.00, "id", "M-02"));
+
+        // Relationships (da2)
+        addLink("SUPPLIER_S01", "PRODUCT_P100", "SUPPLIES", mapOf("leadTimeDays", 3));
+        addLink("SUPPLIER_S05", "PRODUCT_P210", "SUPPLIES", mapOf("leadTimeDays", 4));
+
+        addLink("WAREHOUSE_W01", "PRODUCT_P100", "STOCKS", mapOf("quantity", 450));
+        addLink("WAREHOUSE_W01", "PRODUCT_P104", "STOCKS", mapOf("quantity", 600));
+        addLink("WAREHOUSE_W01", "PRODUCT_P210", "STOCKS", mapOf("quantity", 300));
+        addLink("WAREHOUSE_W02", "PRODUCT_P100", "STOCKS", mapOf("quantity", 800));
+        addLink("WAREHOUSE_W02", "PRODUCT_P108", "STOCKS", mapOf("quantity", 520));
 
         addLink("CUSTOMER_C01", "ORDER_O101", "PLACED", Map.of());
         addLink("CUSTOMER_C03", "ORDER_O102", "PLACED", Map.of());
@@ -1976,23 +1978,36 @@ public class GraphDatabaseService {
         addLink("CUSTOMER_C03", "ORDER_O105", "PLACED", Map.of());
         addLink("CUSTOMER_C05", "ORDER_O106", "PLACED", Map.of());
 
-        addLink("ORDER_O101", "PRODUCT_P100", "CONTAINS", Map.of("qty", 20, "price", 480));
-        addLink("ORDER_O101", "PRODUCT_P104", "CONTAINS", Map.of("qty", 50, "price", 132));
-        addLink("ORDER_O102", "PRODUCT_P210", "CONTAINS", Map.of("qty", 30, "price", 96));
-        addLink("ORDER_O103", "PRODUCT_P100", "CONTAINS", Map.of("qty", 15, "price", 480));
-        addLink("ORDER_O104", "PRODUCT_P108", "CONTAINS", Map.of("qty", 12, "price", 445));
-        addLink("ORDER_O105", "PRODUCT_P104", "CONTAINS", Map.of("qty", 25, "price", 132));
-        addLink("ORDER_O105", "PRODUCT_P210", "CONTAINS", Map.of("qty", 40, "price", 96));
-        addLink("ORDER_O106", "PRODUCT_P100", "CONTAINS", Map.of("qty", 18, "price", 480));
+        addLink("ORDER_O101", "PRODUCT_P100", "CONTAINS", mapOf("qty", 20, "price", 480));
+        addLink("ORDER_O101", "PRODUCT_P104", "CONTAINS", mapOf("qty", 50, "price", 132));
+        addLink("ORDER_O102", "PRODUCT_P210", "CONTAINS", mapOf("qty", 30, "price", 96));
+        addLink("ORDER_O103", "PRODUCT_P100", "CONTAINS", mapOf("qty", 15, "price", 480));
+        addLink("ORDER_O104", "PRODUCT_P108", "CONTAINS", mapOf("qty", 12, "price", 445));
+        addLink("ORDER_O105", "PRODUCT_P104", "CONTAINS", mapOf("qty", 25, "price", 132));
+        addLink("ORDER_O105", "PRODUCT_P210", "CONTAINS", mapOf("qty", 40, "price", 96));
+        addLink("ORDER_O106", "PRODUCT_P100", "CONTAINS", mapOf("qty", 18, "price", 480));
 
-        addLink("DRIVER_D05", "ORDER_O101", "DELIVERS", Map.of("assignedCity", "Chennai"));
-        addLink("DRIVER_D09", "ORDER_O102", "DELIVERS", Map.of("assignedCity", "Mumbai"));
-        addLink("DRIVER_D05", "ORDER_O103", "DELIVERS", Map.of("assignedCity", "Chennai"));
-        addLink("DRIVER_D05", "ORDER_O104", "DELIVERS", Map.of("assignedCity", "Chennai"));
-        addLink("DRIVER_D09", "ORDER_O105", "DELIVERS", Map.of("assignedCity", "Mumbai"));
-        addLink("DRIVER_D11", "ORDER_O106", "DELIVERS", Map.of("assignedCity", "Chennai"));
+        addLink("DRIVER_D05", "ORDER_O101", "DELIVERS", mapOf("assignedCity", "Chennai"));
+        addLink("DRIVER_D09", "ORDER_O102", "DELIVERS", mapOf("assignedCity", "Mumbai"));
+        addLink("DRIVER_D05", "ORDER_O103", "DELIVERS", mapOf("assignedCity", "Chennai"));
+        addLink("DRIVER_D05", "ORDER_O104", "DELIVERS", mapOf("assignedCity", "Chennai"));
+        addLink("DRIVER_D09", "ORDER_O105", "DELIVERS", mapOf("assignedCity", "Mumbai"));
+        addLink("DRIVER_D11", "ORDER_O106", "DELIVERS", mapOf("assignedCity", "Chennai"));
 
-        addLink("MANAGER_M01", "WAREHOUSE_W01", "MANAGES", Map.of("since", "2024"));
+        addLink("MANAGER_M01", "WAREHOUSE_W01", "MANAGES", Map.of());
+        addLink("MANAGER_M02", "WAREHOUSE_W02", "MANAGES", Map.of());
+
+        addLink("DRIVER_D05", "EMP_D05", "IS_A", Map.of());
+        addLink("DRIVER_D09", "EMP_D09", "IS_A", Map.of());
+        addLink("DRIVER_D11", "EMP_D11", "IS_A", Map.of());
+        addLink("MANAGER_M01", "EMP_M01", "IS_A", Map.of());
+        addLink("MANAGER_M02", "EMP_M02", "IS_A", Map.of());
+        addLink("PERISHABLE_P210", "PRODUCT_P210", "IS_A", Map.of());
+        addLink("HAZARDOUS_P420", "PRODUCT_P420", "IS_A", Map.of());
+        addLink("SH_1", "GM_1", "IS_A", Map.of());
+        addLink("SH_2", "GM_2", "IS_A", Map.of());
+        addLink("SH_3", "GM_3", "IS_A", Map.of());
+        addLink("GR_1", "GM_2", "IS_A", Map.of());
     }
 
     private void addNode(String id, String label, String type, Map<String, Object> properties) {

@@ -68,8 +68,5 @@ public class GraphController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/seed")
-    public ResponseEntity<?> seedAllEntities() {
-        return ResponseEntity.ok(graphService.seedLiveDatabase());
-    }
+
 }
