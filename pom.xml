@@ -9,161 +9,47 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-
         <groupId>org.springframework.boot</groupId>
-
         <artifactId>spring-boot-starter-parent</artifactId>
-
         <version>3.5.5</version>
-
         <relativePath/>
-
     </parent>
 
+    <groupId>com.dbms</groupId>
+    <artifactId>oracle-dbms-dashboard</artifactId>
+    <version>1.0.0</version>
 
-    <groupId>
-        com.dbms
-    </groupId>
-
-    <artifactId>
-        oracle-dbms-dashboard
-    </artifactId>
-
-    <version>
-        1.0.0
-    </version>
-
-
-    <name>
-        Oracle Data Studio
-    </name>
-
+    <name>Neo4j Graph Database Studio</name>
     <description>
-        Oracle DBMS Dashboard using Spring Boot and JDBC
+        Modern Supply Chain Management Studio powered 100% by Neo4j Graph Database
     </description>
 
-
     <properties>
-
-        <java.version>
-            21
-        </java.version>
-
+        <java.version>21</java.version>
     </properties>
 
-
     <dependencies>
-
-
         <!-- Spring Web -->
-
         <dependency>
-
-            <groupId>
-                org.springframework.boot
-            </groupId>
-
-            <artifactId>
-                spring-boot-starter-web
-            </artifactId>
-
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-
-        <!-- JDBC -->
-
+        <!-- Neo4j Java Driver (Sole Primary Database Engine) -->
         <dependency>
-
-            <groupId>
-                org.springframework.boot
-            </groupId>
-
-            <artifactId>
-                spring-boot-starter-jdbc
-            </artifactId>
-
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>5.28.1</version>
         </dependency>
-
-
-        <!-- Oracle JDBC -->
-
-        <dependency>
-
-            <groupId>
-                com.oracle.database.jdbc
-            </groupId>
-
-            <artifactId>
-                ojdbc11
-            </artifactId>
-
-            <version>
-                23.8.0.25.04
-            </version>
-
-        </dependency>
-
-
-        <!-- Neo4j Java Driver for Modern Graph Database -->
-
-        <dependency>
-
-            <groupId>
-                org.neo4j.driver
-            </groupId>
-
-            <artifactId>
-                neo4j-java-driver
-            </artifactId>
-
-            <version>
-                5.28.1
-            </version>
-
-        </dependency>
-
-
-        <!-- H2 Database for Cloud Resilient Fallback -->
-
-        <dependency>
-
-            <groupId>
-                com.h2database
-            </groupId>
-
-            <artifactId>
-                h2
-            </artifactId>
-
-            <scope>
-                runtime
-            </scope>
-
-        </dependency>
-
-
     </dependencies>
 
-
     <build>
-
         <plugins>
-
             <plugin>
-
-                <groupId>
-                    org.springframework.boot
-                </groupId>
-
-                <artifactId>
-                    spring-boot-maven-plugin
-                </artifactId>
-
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
         </plugins>
-
     </build>
-
 
 </project>

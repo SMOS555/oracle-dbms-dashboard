@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,8 +12,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Primary Database Service: Unified Relational and Graph Database Integration.
- * Routes tables, rows, columns, updates, deletes, triggers, cursors, and queries.
+ * Primary Database Service: 100% Pure Neo4j Graph Database Integration.
+ * Routes all tables, rows, columns, updates, deletes, cursors, triggers,
+ * and unified SQL/Cypher queries directly to Neo4j.
  */
 @Service
 public class DatabaseService {
@@ -22,12 +22,10 @@ public class DatabaseService {
     private static final Logger log = LoggerFactory.getLogger(DatabaseService.class);
 
     private final GraphDatabaseService graphService;
-    private final JdbcTemplate jdbc;
 
     @Autowired
-    public DatabaseService(GraphDatabaseService graphService, Optional<JdbcTemplate> jdbc) {
+    public DatabaseService(GraphDatabaseService graphService) {
         this.graphService = graphService;
-        this.jdbc = jdbc.orElse(null);
     }
 
     public boolean isOracle() {
@@ -52,15 +50,6 @@ public class DatabaseService {
 
     public List<Map<String, Object>> rows(String table) {
         String upperTable = (table == null) ? "" : table.toUpperCase(Locale.ROOT).trim();
-        if (jdbc != null) {
-            try {
-                List<Map<String, Object>> sqlRows = jdbc.queryForList("SELECT * FROM " + upperTable);
-                if (sqlRows != null && !sqlRows.isEmpty()) {
-                    return deduplicateRows(upperTable, sqlRows);
-                }
-            } catch (Exception ignored) {
-            }
-        }
         return deduplicateRows(upperTable, graphService.getNodesByLabel(upperTable));
     }
 
@@ -72,7 +61,7 @@ public class DatabaseService {
         for (Map<String, Object> r : rowsList) {
             List<String> keyParts = new ArrayList<>();
             for (String pk : pks) {
-                Object v = GraphDatabaseService.getPropertyCaseInsensitive(r, pk);
+                Object v = getParam(r, pk);
                 if (v != null) keyParts.add(String.valueOf(v).trim().toUpperCase(Locale.ROOT));
             }
             String compositeKey = keyParts.isEmpty() ? r.toString() : String.join("||", keyParts);
@@ -100,7 +89,7 @@ public class DatabaseService {
     }
 
     // =========================
-    // SQL QUERY CONSOLE
+    // UNIFIED QUERY CONSOLE (SQL & CYPHER ON NEO4J)
     // =========================
 
     public Map<String, Object> executeQuery(String query) {
@@ -117,38 +106,7 @@ public class DatabaseService {
             throw new IllegalArgumentException("DDL/security commands are restricted in this studio.");
         }
 
-        // If Cypher syntax is passed, route to Neo4j
-        if (u.startsWith("MATCH") || u.startsWith("CREATE") || u.startsWith("MERGE") ||
-            u.startsWith("RETURN") || u.startsWith("CALL") || u.startsWith("SHOW")) {
-            return graphService.executeCypher(q);
-        }
-
-        // Standard SQL Console query (SELECT, INSERT, UPDATE, DELETE)
-        if (jdbc != null) {
-            try {
-                if (u.startsWith("SELECT") || u.startsWith("WITH")) {
-                    List<Map<String, Object>> rows = jdbc.queryForList(q);
-                    return Map.of(
-                        "type", "result",
-                        "rows", rows,
-                        "rowCount", rows.size()
-                    );
-                } else if (u.startsWith("INSERT") || u.startsWith("UPDATE") || u.startsWith("DELETE")) {
-                    int count = jdbc.update(q);
-                    return Map.of(
-                        "type", "update",
-                        "affectedRows", count
-                    );
-                }
-            } catch (Exception e) {
-                try {
-                    return graphService.executeUnifiedQuery(q);
-                } catch (Exception ignored) {
-                    throw new RuntimeException(extractTriggerOrDbError(e), e);
-                }
-            }
-        }
-
+        // Cypher or SQL query routed 100% to Neo4j
         return graphService.executeUnifiedQuery(q);
     }
 
@@ -162,35 +120,6 @@ public class DatabaseService {
         }
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
         validateTriggersAndConstraints(upperTable, "INSERT", values, null);
-
-        if (jdbc != null) {
-            try {
-                StringBuilder sql = new StringBuilder("INSERT INTO " + upperTable + " (");
-                StringBuilder placeholders = new StringBuilder();
-                List<Object> params = new ArrayList<>();
-                int i = 0;
-                for (Map.Entry<String, Object> e : values.entrySet()) {
-                    String k = e.getKey();
-                    if ("id".equalsIgnoreCase(k) || "name".equalsIgnoreCase(k)) continue;
-                    Object val = e.getValue();
-                    if (val == null || val.toString().trim().isEmpty() || "null".equalsIgnoreCase(val.toString())) continue;
-                    if (i++ > 0) {
-                        sql.append(", ");
-                        placeholders.append(", ");
-                    }
-                    sql.append(k);
-                    placeholders.append("?");
-                    params.add(val);
-                }
-                sql.append(") VALUES (").append(placeholders).append(")");
-                if (!params.isEmpty()) {
-                    jdbc.update(sql.toString(), params.toArray());
-                }
-            } catch (Exception e) {
-                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
-            }
-        }
-
         int count = graphService.insertNode(upperTable, values);
         return Math.max(count, 1);
     }
@@ -206,7 +135,7 @@ public class DatabaseService {
             boolean empHasD05 = employees.stream().anyMatch(e -> "D-05".equalsIgnoreCase(String.valueOf(e.get("EMPID"))));
 
             if ((driverHasD099 && !driverHasD05) || (empHasD099 && !empHasD05)) {
-                log.info("Auto-reconciling Driver D-05 to D-099 across dependent tables...");
+                log.info("Auto-reconciling Driver D-05 to D-099 across dependent tables in Neo4j...");
                 updateSingle("DRIVER", Map.of("EMPID", "D-099"), Map.of("EMPID", "D-05"));
                 updateSingle("EMPLOYEE", Map.of("EMPID", "D-099"), Map.of("EMPID", "D-05"));
                 updateSingle("DRIVER_CITY", Map.of("DRIVERID", "D-099"), Map.of("DRIVERID", "D-05"));
@@ -471,50 +400,12 @@ public class DatabaseService {
     }
 
     private int deleteSingle(String table, Map<String, String> where) {
-        if (jdbc != null) {
-            try {
-                StringBuilder sql = new StringBuilder("DELETE FROM " + table + " WHERE ");
-                List<Object> params = new ArrayList<>();
-                int i = 0;
-                for (Map.Entry<String, String> e : where.entrySet()) {
-                    if (i++ > 0) sql.append(" AND ");
-                    sql.append(e.getKey()).append(" = ?");
-                    params.add(e.getValue());
-                }
-                jdbc.update(sql.toString(), params.toArray());
-            } catch (Exception e) {
-                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
-            }
-        }
         int count = graphService.deleteNode(table, where);
         return Math.max(count, 1);
     }
 
     private int updateSingle(String table, Map<String, Object> values, Map<String, String> where) {
-        if (jdbc != null) {
-            try {
-                StringBuilder sql = new StringBuilder("UPDATE " + table + " SET ");
-                List<Object> params = new ArrayList<>();
-                int i = 0;
-                for (Map.Entry<String, Object> e : values.entrySet()) {
-                    if (i++ > 0) sql.append(", ");
-                    sql.append(e.getKey()).append(" = ?");
-                    params.add(e.getValue());
-                }
-                sql.append(" WHERE ");
-                i = 0;
-                for (Map.Entry<String, String> e : where.entrySet()) {
-                    if (i++ > 0) sql.append(" AND ");
-                    sql.append(e.getKey()).append(" = ?");
-                    params.add(e.getValue());
-                }
-                jdbc.update(sql.toString(), params.toArray());
-            } catch (Exception e) {
-                throw new IllegalArgumentException(extractTriggerOrDbError(e), e);
-            }
-        }
-        int count = graphService.updateNode(table, values, where);
-        return count;
+        return graphService.updateNode(table, values, where);
     }
 
     private int cascadeDeleteCity(String city) {
@@ -632,34 +523,11 @@ public class DatabaseService {
     }
 
     // =========================
-    // TRIGGERS / PL/SQL TRIGGERS
+    // TRIGGERS / GRAPH CONSTRAINTS
     // =========================
 
     public List<Map<String, Object>> triggers() {
-        if (jdbc != null) {
-            try {
-                List<Map<String, Object>> dbTriggers = jdbc.queryForList(
-                    "SELECT TRIGGER_NAME, TRIGGER_TYPE, TRIGGERING_EVENT, TABLE_NAME, STATUS " +
-                    "FROM USER_TRIGGERS ORDER BY TRIGGER_NAME"
-                );
-                if (dbTriggers != null && !dbTriggers.isEmpty()) {
-                    return dbTriggers;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return List.of(
-            Map.of("TRIGGER_NAME", "TRG_STOCK_NO_NEGATIVE", "TABLE_NAME", "STOCK", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents negative stock quantity (:NEW.QUANTITY >= 0)"),
-            Map.of("TRIGGER_NAME", "TRG_ORDER_ITEM_VALIDATION", "TABLE_NAME", "ORDER_ITEM", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Validates order quantity (:NEW.QTY > 0) and item price (:NEW.PRICE >= 0)"),
-            Map.of("TRIGGER_NAME", "TRG_ORDER_DATE_VALIDATION", "TABLE_NAME", "ORDERS", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents future order dates (:NEW.ORDERDATE <= SYSDATE)"),
-            Map.of("TRIGGER_NAME", "TRG_ORDER_STATUS_VALIDATION", "TABLE_NAME", "ORDERS", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Validates order status in (NEW, PROCESSING, SHIPPED, DELIVERED, CANCELLED)"),
-            Map.of("TRIGGER_NAME", "TRG_SALARY_VALIDATION", "TABLE_NAME", "EMPLOYEE", "TRIGGERING_EVENT", "BEFORE UPDATE OF SALARY", "STATUS", "ENABLED", "DESCRIPTION", "Prevents reducing employee salary (:NEW.SALARY >= :OLD.SALARY)"),
-            Map.of("TRIGGER_NAME", "TRG_SALARY_AUDIT", "TABLE_NAME", "EMPLOYEE", "TRIGGERING_EVENT", "AFTER UPDATE OF SALARY", "STATUS", "ENABLED", "DESCRIPTION", "Audits salary changes into SALARY_AUDIT table"),
-            Map.of("TRIGGER_NAME", "TRG_ORDER_SHIP_STATUS", "TABLE_NAME", "SHIPMENT", "TRIGGERING_EVENT", "AFTER INSERT", "STATUS", "ENABLED", "DESCRIPTION", "Automatically marks associated order as SHIPPED"),
-            Map.of("TRIGGER_NAME", "TRG_CUSTOMER_DELETE_CHECK", "TABLE_NAME", "CUSTOMER", "TRIGGERING_EVENT", "BEFORE DELETE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents deleting customers who have active orders"),
-            Map.of("TRIGGER_NAME", "TRG_RETURN_AMOUNT_VALIDATION", "TABLE_NAME", "GOODS_RETURN", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE", "STATUS", "ENABLED", "DESCRIPTION", "Prevents negative refund amounts (:NEW.REFUNDAMT >= 0)"),
-            Map.of("TRIGGER_NAME", "TRG_INSPECTION_RESULT", "TABLE_NAME", "INSPECTION", "TRIGGERING_EVENT", "BEFORE INSERT", "STATUS", "ENABLED", "DESCRIPTION", "Defaults inspection result to 'PENDING' if unspecified")
-        );
+        return graphService.getTriggers();
     }
 
     // =========================
@@ -824,77 +692,8 @@ public class DatabaseService {
             String m = curr.getMessage();
             if (m != null && !m.isBlank()) {
                 rawMsg = m;
-                // Check for Oracle PL/SQL Application Error codes (-20001 to -20008)
-                if (m.contains("ORA-20001")) {
-                    return "Trigger Violation [TRG_STOCK_NO_NEGATIVE]: Stock quantity cannot be negative.";
-                }
-                if (m.contains("ORA-20002")) {
-                    return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Order quantity must be greater than zero.";
-                }
-                if (m.contains("ORA-20003")) {
-                    return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Item price cannot be negative.";
-                }
-                if (m.contains("ORA-20004")) {
-                    return "Trigger Violation [TRG_ORDER_DATE_VALIDATION]: Order date cannot be in the future.";
-                }
-                if (m.contains("ORA-20005")) {
-                    Matcher mat = Pattern.compile("ORA-20005:\\s*([^\\r\\n]+)").matcher(m);
-                    if (mat.find()) return "Trigger Violation [TRG_ORDER_STATUS_VALIDATION]: " + mat.group(1).trim();
-                    return "Trigger Violation [TRG_ORDER_STATUS_VALIDATION]: Invalid order status.";
-                }
-                if (m.contains("ORA-20006")) {
-                    Matcher mat = Pattern.compile("ORA-20006:\\s*([^\\r\\n]+)").matcher(m);
-                    if (mat.find()) return "Trigger Violation [TRG_SALARY_VALIDATION]: " + mat.group(1).trim();
-                    return "Trigger Violation [TRG_SALARY_VALIDATION]: Salary cannot be reduced.";
-                }
-                if (m.contains("ORA-20007")) {
-                    Matcher mat = Pattern.compile("ORA-20007:\\s*([^\\r\\n]+)").matcher(m);
-                    if (mat.find()) return "Trigger Violation [TRG_CUSTOMER_DELETE_CHECK]: " + mat.group(1).trim();
-                    return "Trigger Violation [TRG_CUSTOMER_DELETE_CHECK]: Cannot delete customer because associated orders exist.";
-                }
-                if (m.contains("ORA-20008")) {
-                    return "Trigger Violation [TRG_RETURN_AMOUNT_VALIDATION]: Refund amount cannot be negative.";
-                }
-                Matcher customOra = Pattern.compile("ORA-20\\d{3}:\\s*([^\\r\\n]+)").matcher(m);
-                if (customOra.find()) {
-                    return "Trigger Violation: " + customOra.group(1).trim();
-                }
-
-                // Check constraints (H2 or Oracle ORA-02290)
-                String upperM = m.toUpperCase(Locale.ROOT);
-                if (upperM.contains("CHECK") || upperM.contains("ORA-02290")) {
-                    if (upperM.contains("QUANTITY")) {
-                        return "Trigger Violation [TRG_STOCK_NO_NEGATIVE]: Stock quantity cannot be negative.";
-                    }
-                    if (upperM.contains("QTY")) {
-                        return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Order quantity must be greater than zero.";
-                    }
-                    if (upperM.contains("PRICE")) {
-                        return "Trigger Violation [TRG_ORDER_ITEM_VALIDATION]: Item price cannot be negative.";
-                    }
-                    if (upperM.contains("UNITPRICE")) {
-                        return "Constraint Violation: Product unit price cannot be negative.";
-                    }
-                    if (upperM.contains("SALARY")) {
-                        return "Constraint Violation: Employee salary cannot be negative.";
-                    }
-                    if (upperM.contains("SHELFLIFEDAYS")) {
-                        return "Constraint Violation: Shelf life days must be greater than zero.";
-                    }
-                    if (upperM.contains("REFUNDAMT")) {
-                        return "Trigger Violation [TRG_RETURN_AMOUNT_VALIDATION]: Refund amount cannot be negative.";
-                    }
-                    return "Constraint Violation: Value violates database check constraint.";
-                }
-
-                // Foreign Key / Referential constraints
-                if (upperM.contains("ORA-02291") || upperM.contains("ORA-02292") || upperM.contains("REFERENTIAL INTEGRITY")) {
-                    return "Integrity Constraint Violation: Foreign key constraint violated (parent record does not exist or record has dependent children).";
-                }
-
-                // Unique / Primary key constraints
-                if (upperM.contains("ORA-00001") || upperM.contains("UNIQUE INDEX") || upperM.contains("PRIMARY KEY")) {
-                    return "Constraint Violation: Record with this primary key already exists.";
+                if (m.contains("Trigger Violation") || m.contains("Constraint Violation")) {
+                    return m;
                 }
             }
             curr = curr.getCause();

@@ -1046,34 +1046,302 @@ public class GraphDatabaseService {
         }
 
         String trimmed = query.trim();
+        while (trimmed.endsWith(";")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
+        }
         String upper = trimmed.toUpperCase(Locale.ROOT);
 
-        // Cypher execution (Native)
+        // Native Cypher execution
         if (upper.startsWith("MATCH") || upper.startsWith("CREATE") || upper.startsWith("MERGE") ||
-            upper.startsWith("RETURN") || upper.startsWith("CALL") || upper.startsWith("SHOW")) {
+            upper.startsWith("RETURN") || upper.startsWith("CALL") || upper.startsWith("SHOW") ||
+            upper.startsWith("DETACH") || upper.startsWith("DROP")) {
             return executeCypher(trimmed);
         }
 
-        // SQL Translation bridge to Neo4j
-        // Example: SELECT * FROM CUSTOMER
-        Pattern selectFromPattern = Pattern.compile("(?i)SELECT\\s+\\*\\s+FROM\\s+([A-Za-z0-9_]+)");
-        Matcher matcher = selectFromPattern.matcher(trimmed);
-        if (matcher.find()) {
-            String table = matcher.group(1).toUpperCase(Locale.ROOT);
+        long start = System.currentTimeMillis();
+
+        // SQL Bridge to Neo4j
+        if (upper.startsWith("SELECT")) {
+            return executeSqlSelect(trimmed, start);
+        }
+
+        if (upper.startsWith("INSERT")) {
+            return executeSqlInsert(trimmed, start);
+        }
+
+        if (upper.startsWith("UPDATE")) {
+            return executeSqlUpdate(trimmed, start);
+        }
+
+        if (upper.startsWith("DELETE")) {
+            return executeSqlDelete(trimmed, start);
+        }
+
+        // Fallback Cypher execution
+        return executeCypher(trimmed);
+    }
+
+    private Map<String, Object> executeSqlSelect(String sql, long startTime) {
+        Pattern p = Pattern.compile("(?i)SELECT\\s+(.+?)\\s+FROM\\s+([A-Za-z0-9_]+)(?:\\s+WHERE\\s+(.+?))?(?:\\s+ORDER\\s+BY\\s+(.+?))?(?:\\s+LIMIT\\s+(\\d+))?$");
+        Matcher m = p.matcher(sql);
+        if (!m.find()) {
+            Pattern simpleP = Pattern.compile("(?i)SELECT\\s+(.+?)\\s+FROM\\s+([A-Za-z0-9_]+)");
+            Matcher sm = simpleP.matcher(sql);
+            if (!sm.find()) {
+                throw new IllegalArgumentException("Invalid SELECT query syntax.");
+            }
+            String table = sm.group(2).toUpperCase(Locale.ROOT).trim();
             List<Map<String, Object>> rows = getNodesByLabel(table);
-            List<String> cols = rows.isEmpty() ? List.of("RESULT") : new ArrayList<>(rows.get(0).keySet());
+            List<String> cols = rows.isEmpty() ? getCanonicalColumnNames(table) : new ArrayList<>(rows.get(0).keySet());
+            long duration = System.currentTimeMillis() - startTime;
             return Map.of(
                 "type", "result",
                 "columns", cols,
                 "rows", rows,
                 "rowCount", rows.size(),
-                "durationMs", 1L,
-                "source", "Neo4j SQL Bridge -> (" + table + ")"
+                "durationMs", Math.max(1, duration),
+                "source", "Neo4j Graph Engine (" + table + ")"
             );
         }
 
-        // Default Cypher execution
-        return executeCypher(trimmed);
+        String colStr = m.group(1).trim();
+        String table = m.group(2).toUpperCase(Locale.ROOT).trim();
+        String whereClause = m.group(3);
+        String orderByClause = m.group(4);
+        String limitStr = m.group(5);
+
+        List<Map<String, Object>> rows = new ArrayList<>(getNodesByLabel(table));
+
+        if (whereClause != null && !whereClause.isBlank()) {
+            rows = filterRows(rows, whereClause.trim());
+        }
+
+        if (orderByClause != null && !orderByClause.isBlank()) {
+            sortRows(rows, orderByClause.trim());
+        }
+
+        if (limitStr != null && !limitStr.isBlank()) {
+            try {
+                int limit = Integer.parseInt(limitStr.trim());
+                if (limit >= 0 && limit < rows.size()) {
+                    rows = new ArrayList<>(rows.subList(0, limit));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        List<String> cols;
+        if ("*".equals(colStr)) {
+            cols = rows.isEmpty() ? getCanonicalColumnNames(table) : new ArrayList<>(rows.get(0).keySet());
+        } else {
+            String[] reqCols = colStr.split(",");
+            cols = new ArrayList<>();
+            for (String c : reqCols) {
+                cols.add(c.trim().toUpperCase(Locale.ROOT));
+            }
+            List<Map<String, Object>> projected = new ArrayList<>();
+            for (Map<String, Object> r : rows) {
+                Map<String, Object> newRow = new LinkedHashMap<>();
+                for (String c : cols) {
+                    Object val = r.get(c);
+                    if (val == null) val = r.get(c.toLowerCase(Locale.ROOT));
+                    newRow.put(c, val);
+                }
+                projected.add(newRow);
+            }
+            rows = projected;
+        }
+
+        long duration = System.currentTimeMillis() - startTime;
+        return Map.of(
+            "type", "result",
+            "columns", cols,
+            "rows", rows,
+            "rowCount", rows.size(),
+            "durationMs", Math.max(1, duration),
+            "source", "Neo4j Graph Engine (" + table + ")"
+        );
+    }
+
+    private List<Map<String, Object>> filterRows(List<Map<String, Object>> rows, String where) {
+        String[] conditions = where.split("(?i)\\s+AND\\s+");
+        List<Map<String, Object>> filtered = new ArrayList<>();
+
+        for (Map<String, Object> r : rows) {
+            boolean matchAll = true;
+            for (String cond : conditions) {
+                if (!evaluateCondition(r, cond.trim())) {
+                    matchAll = false;
+                    break;
+                }
+            }
+            if (matchAll) {
+                filtered.add(r);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean evaluateCondition(Map<String, Object> row, String cond) {
+        if (cond.contains("!=") || cond.contains("<>")) {
+            String op = cond.contains("!=") ? "!=" : "<>";
+            String[] parts = cond.split(Pattern.quote(op), 2);
+            String key = parts[0].trim().toUpperCase(Locale.ROOT);
+            String val = unquote(parts[1].trim());
+            Object actual = getRowValue(row, key);
+            if (actual == null) return !"null".equalsIgnoreCase(val);
+            return !String.valueOf(actual).trim().equalsIgnoreCase(val);
+        } else if (cond.contains("=")) {
+            String[] parts = cond.split("=", 2);
+            String key = parts[0].trim().toUpperCase(Locale.ROOT);
+            String val = unquote(parts[1].trim());
+            Object actual = getRowValue(row, key);
+            if (actual == null) return "null".equalsIgnoreCase(val);
+            return String.valueOf(actual).trim().equalsIgnoreCase(val);
+        } else if (cond.toUpperCase(Locale.ROOT).contains(" LIKE ")) {
+            String[] parts = cond.split("(?i)\\s+LIKE\\s+", 2);
+            String key = parts[0].trim().toUpperCase(Locale.ROOT);
+            String val = unquote(parts[1].trim()).replace("%", ".*");
+            Object actual = getRowValue(row, key);
+            if (actual == null) return false;
+            return String.valueOf(actual).matches("(?i)" + val);
+        }
+        return true;
+    }
+
+    private Object getRowValue(Map<String, Object> row, String key) {
+        for (Map.Entry<String, Object> e : row.entrySet()) {
+            if (e.getKey().equalsIgnoreCase(key)) return e.getValue();
+        }
+        return null;
+    }
+
+    private String unquote(String s) {
+        if (s == null) return "";
+        s = s.trim();
+        if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith("\"") && s.endsWith("\""))) {
+            return s.substring(1, s.length() - 1);
+        }
+        return s;
+    }
+
+    private void sortRows(List<Map<String, Object>> rows, String orderBy) {
+        String[] parts = orderBy.trim().split("\\s+");
+        String col = parts[0].trim();
+        boolean desc = parts.length > 1 && "DESC".equalsIgnoreCase(parts[1].trim());
+        rows.sort((a, b) -> {
+            Object va = getRowValue(a, col);
+            Object vb = getRowValue(b, col);
+            if (va == null && vb == null) return 0;
+            if (va == null) return desc ? 1 : -1;
+            if (vb == null) return desc ? -1 : 1;
+            int cmp = String.valueOf(va).compareToIgnoreCase(String.valueOf(vb));
+            return desc ? -cmp : cmp;
+        });
+    }
+
+    private List<String> getCanonicalColumnNames(String table) {
+        List<Map<String, Object>> colMeta = CANONICAL_TABLE_COLUMNS.get(table.toUpperCase(Locale.ROOT));
+        if (colMeta != null && !colMeta.isEmpty()) {
+            List<String> list = new ArrayList<>();
+            for (Map<String, Object> m : colMeta) {
+                list.add(String.valueOf(m.get("name")));
+            }
+            return list;
+        }
+        return List.of("RESULT");
+    }
+
+    private Map<String, Object> executeSqlInsert(String sql, long startTime) {
+        Pattern p = Pattern.compile("(?i)INSERT\\s+INTO\\s+([A-Za-z0-9_]+)\\s*\\((.+?)\\)\\s*VALUES\\s*\\((.+?)\\)");
+        Matcher m = p.matcher(sql);
+        if (!m.find()) {
+            throw new IllegalArgumentException("Invalid INSERT SQL syntax. Format: INSERT INTO <table> (col1, col2) VALUES (val1, val2)");
+        }
+        String table = m.group(1).toUpperCase(Locale.ROOT).trim();
+        String[] cols = m.group(2).split(",");
+        String[] vals = m.group(3).split(",");
+        if (cols.length != vals.length) {
+            throw new IllegalArgumentException("Column count (" + cols.length + ") does not match value count (" + vals.length + ").");
+        }
+        Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i < cols.length; i++) {
+            map.put(cols[i].trim().toUpperCase(Locale.ROOT), unquote(vals[i].trim()));
+        }
+        int count = insertNode(table, map);
+        long duration = System.currentTimeMillis() - startTime;
+        return Map.of(
+            "type", "update",
+            "affectedRows", count,
+            "durationMs", Math.max(1, duration),
+            "source", "Neo4j Graph Database"
+        );
+    }
+
+    private Map<String, Object> executeSqlUpdate(String sql, long startTime) {
+        Pattern p = Pattern.compile("(?i)UPDATE\\s+([A-Za-z0-9_]+)\\s+SET\\s+(.+?)(?:\\s+WHERE\\s+(.+?))?$");
+        Matcher m = p.matcher(sql);
+        if (!m.find()) {
+            throw new IllegalArgumentException("Invalid UPDATE SQL syntax. Format: UPDATE <table> SET col=val WHERE col=val");
+        }
+        String table = m.group(1).toUpperCase(Locale.ROOT).trim();
+        String setPart = m.group(2).trim();
+        String wherePart = m.group(3);
+
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (String pair : setPart.split(",")) {
+            String[] kv = pair.split("=", 2);
+            if (kv.length == 2) {
+                values.put(kv[0].trim().toUpperCase(Locale.ROOT), unquote(kv[1].trim()));
+            }
+        }
+
+        Map<String, String> where = new LinkedHashMap<>();
+        if (wherePart != null && !wherePart.isBlank()) {
+            for (String pair : wherePart.split("(?i)\\s+AND\\s+")) {
+                String[] kv = pair.split("=", 2);
+                if (kv.length == 2) {
+                    where.put(kv[0].trim().toUpperCase(Locale.ROOT), unquote(kv[1].trim()));
+                }
+            }
+        }
+
+        int count = updateNode(table, values, where);
+        long duration = System.currentTimeMillis() - startTime;
+        return Map.of(
+            "type", "update",
+            "affectedRows", count,
+            "durationMs", Math.max(1, duration),
+            "source", "Neo4j Graph Database"
+        );
+    }
+
+    private Map<String, Object> executeSqlDelete(String sql, long startTime) {
+        Pattern p = Pattern.compile("(?i)DELETE\\s+(?:FROM\\s+)?([A-Za-z0-9_]+)(?:\\s+WHERE\\s+(.+?))?$");
+        Matcher m = p.matcher(sql);
+        if (!m.find()) {
+            throw new IllegalArgumentException("Invalid DELETE SQL syntax. Format: DELETE FROM <table> WHERE col=val");
+        }
+        String table = m.group(1).toUpperCase(Locale.ROOT).trim();
+        String wherePart = m.group(2);
+
+        Map<String, String> where = new LinkedHashMap<>();
+        if (wherePart != null && !wherePart.isBlank()) {
+            for (String pair : wherePart.split("(?i)\\s+AND\\s+")) {
+                String[] kv = pair.split("=", 2);
+                if (kv.length == 2) {
+                    where.put(kv[0].trim().toUpperCase(Locale.ROOT), unquote(kv[1].trim()));
+                }
+            }
+        }
+
+        int count = deleteNode(table, where);
+        long duration = System.currentTimeMillis() - startTime;
+        return Map.of(
+            "type", "update",
+            "affectedRows", count,
+            "durationMs", Math.max(1, duration),
+            "source", "Neo4j Graph Database"
+        );
     }
 
     public Map<String, Object> executeCypher(String cypher) {
