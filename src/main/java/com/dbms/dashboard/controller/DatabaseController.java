@@ -178,6 +178,35 @@ public class DatabaseController {
     }
 
     // =========================
+    // CURSOR 4: STOCK SHORTAGE ALERT CURSOR
+    // =========================
+
+    @GetMapping("/cursors/stock-alerts")
+    public Map<String, Object> stockAlertCursor() {
+
+        return Map.of(
+            "cursor", "Low Stock Alert Cursor",
+            "rows", db.stockAlertCursor()
+        );
+    }
+
+    // =========================
+    // CURSOR 5: DRIVER DELIVERY DUTIES CURSOR
+    // =========================
+
+    @GetMapping("/cursors/driver-duties")
+    public Map<String, Object> driverDutiesCursor(
+        @RequestParam(required = false, defaultValue = "D-05") String driverId
+    ) {
+
+        return Map.of(
+            "cursor", "Driver Delivery Duty Cursor",
+            "driverId", driverId,
+            "rows", db.driverDutiesCursor(driverId)
+        );
+    }
+
+    // =========================
     // HEALTH
     // =========================
 

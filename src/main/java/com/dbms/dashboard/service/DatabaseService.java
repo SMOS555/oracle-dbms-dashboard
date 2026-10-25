@@ -121,6 +121,23 @@ public class DatabaseService {
         String upperTable = table.toUpperCase(Locale.ROOT).trim();
         validateTriggersAndConstraints(upperTable, "INSERT", values, null);
         int count = graphService.insertNode(upperTable, values);
+
+        // TRG_ORDER_SHIP_STATUS: Automatically update ORDER status to SHIPPED upon shipment creation
+        if ("SHIPMENT".equals(upperTable)) {
+            String movId = getParam(values, "MOVEMENTID");
+            if (movId != null) {
+                List<Map<String, Object>> movements = findMatchingRows("GOODS_MOVEMENT", "MOVEMENTID", movId);
+                if (!movements.isEmpty()) {
+                    Object ordId = getParam(movements.get(0), "ORDERID");
+                    if (ordId != null) {
+                        try {
+                            graphService.updateNode("ORDERS", Map.of("ORDERID", String.valueOf(ordId)), Map.of("STATUS", "SHIPPED"));
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+        }
+
         return Math.max(count, 1);
     }
 
@@ -726,5 +743,21 @@ public class DatabaseService {
 
     public List<Map<String, Object>> orderTotalCursor() {
         return graphService.getOrderTotalCursor();
+    }
+
+    // =========================
+    // CURSOR 4: STOCK SHORTAGE / ALERT CURSOR
+    // =========================
+
+    public List<Map<String, Object>> stockAlertCursor() {
+        return graphService.getStockAlertCursor();
+    }
+
+    // =========================
+    // CURSOR 5: DRIVER DELIVERY DUTIES CURSOR
+    // =========================
+
+    public List<Map<String, Object>> driverDutiesCursor(String driverId) {
+        return graphService.getDriverDutiesCursor(driverId);
     }
 }

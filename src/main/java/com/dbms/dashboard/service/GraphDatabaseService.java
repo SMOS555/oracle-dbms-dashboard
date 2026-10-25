@@ -1782,32 +1782,54 @@ public class GraphDatabaseService {
         return result;
     }
 
+    public List<Map<String, Object>> getStockAlertCursor() {
+        List<Map<String, Object>> stocks = getNodesByLabel("STOCK");
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> s : stocks) {
+            String whId = String.valueOf(s.getOrDefault("WAREHOUSEID", s.get("warehouseId")));
+            String pId = String.valueOf(s.getOrDefault("PRODUCTID", s.get("productId")));
+            double qty = Double.parseDouble(String.valueOf(s.getOrDefault("QUANTITY", s.getOrDefault("quantity", 0))));
+            if (qty <= 500) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("WAREHOUSEID", whId);
+                row.put("PRODUCTID", pId);
+                row.put("QUANTITY", (long) qty);
+                row.put("THRESHOLD", 500);
+                row.put("ALERT_STATUS", "LOW STOCK - REORDER");
+                result.add(row);
+            }
+        }
+        return result;
+    }
+
+    public List<Map<String, Object>> getDriverDutiesCursor(String driverId) {
+        List<Map<String, Object>> duties = getNodesByLabel("DELIVERY_DUTY");
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> d : duties) {
+            String dId = String.valueOf(d.getOrDefault("DRIVERID", d.get("driverId")));
+            if (driverId == null || driverId.isBlank() || dId.equalsIgnoreCase(driverId.trim())) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("DRIVERID", dId);
+                row.put("ORDERID", d.getOrDefault("ORDERID", d.get("orderId")));
+                row.put("CITY", d.getOrDefault("CITY", d.get("city")));
+                result.add(row);
+            }
+        }
+        return result;
+    }
+
     public List<Map<String, Object>> getTriggers() {
         return List.of(
-            Map.of(
-                "TRIGGER_NAME", "TRG_NEO4J_STOCK_INTEGRITY",
-                "STATUS", "ENABLED",
-                "TRIGGERING_EVENT", "CREATE OR UPDATE (:STOCK)",
-                "TRIGGER_TYPE", "BEFORE GRAPH COMMIT"
-            ),
-            Map.of(
-                "TRIGGER_NAME", "TRG_NEO4J_ORDER_LIFECYCLE",
-                "STATUS", "ENABLED",
-                "TRIGGERING_EVENT", "UPDATE (:ORDERS)",
-                "TRIGGER_TYPE", "AFTER GRAPH EVENT"
-            ),
-            Map.of(
-                "TRIGGER_NAME", "TRG_NEO4J_COLD_CHAIN_ALERT",
-                "STATUS", "ENABLED",
-                "TRIGGERING_EVENT", "MERGE (:PERISHABLE_PRODUCT)",
-                "TRIGGER_TYPE", "GRAPH CONSTRAINT"
-            ),
-            Map.of(
-                "TRIGGER_NAME", "TRG_NEO4J_FLEET_AUDIT",
-                "STATUS", "ENABLED",
-                "TRIGGERING_EVENT", "CREATE ([:DELIVERS])",
-                "TRIGGER_TYPE", "AFTER RELATIONSHIP COMMIT"
-            )
+            Map.of("TRIGGER_NAME", "TRG_STOCK_NO_NEGATIVE", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE ON STOCK", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_ITEM_VALIDATION", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE ON ORDER_ITEM", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_DATE_VALIDATION", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE ON ORDERS", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_STATUS_VALIDATION", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE ON ORDERS", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_SALARY_VALIDATION", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE UPDATE OF SALARY ON EMPLOYEE", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_SALARY_AUDIT", "STATUS", "ENABLED", "TRIGGERING_EVENT", "AFTER UPDATE OF SALARY ON EMPLOYEE", "TRIGGER_TYPE", "AFTER EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_ORDER_SHIP_STATUS", "STATUS", "ENABLED", "TRIGGERING_EVENT", "AFTER INSERT ON SHIPMENT", "TRIGGER_TYPE", "AFTER EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_CUSTOMER_DELETE_CHECK", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE DELETE ON CUSTOMER", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_RETURN_AMOUNT_VALIDATION", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT OR UPDATE ON GOODS_RETURN", "TRIGGER_TYPE", "BEFORE EACH ROW"),
+            Map.of("TRIGGER_NAME", "TRG_INSPECTION_RESULT", "STATUS", "ENABLED", "TRIGGERING_EVENT", "BEFORE INSERT ON INSPECTION", "TRIGGER_TYPE", "BEFORE EACH ROW")
         );
     }
 

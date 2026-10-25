@@ -96,15 +96,6 @@
             </button>
 
 
-            <button class="nav-button" data-page="eer">
-
-                <span class="nav-icon">📐</span>
-
-                <span>ER / EER Studio</span>
-
-            </button>
-
-
         </nav>
 
 
@@ -771,6 +762,137 @@
 
             </section>
 
+
+            <!-- CURSOR 04: STOCK SHORTAGE ALERT CURSOR -->
+            <section class="panel cursor-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            CURSOR 04
+                        </div>
+
+                        <h3>
+                            Inventory Shortage &amp; Reorder Alert Cursor
+                        </h3>
+
+                        <p>
+                            Explicit cursor scanning warehouse stock to identify low-inventory items requiring replenishment (quantity &le; 500 units).
+                        </p>
+
+                    </div>
+
+                    <button
+                        id="runStockAlertCursor"
+                        class="button primary-button">
+
+                        ▶ Run Cursor
+
+                    </button>
+
+                </div>
+
+                <div
+                    id="stockAlertCursorResult"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <h3>
+                            Cursor not executed
+                        </h3>
+
+                        <p>
+                            Click "Run Cursor" to scan stock levels across all warehouses.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- CURSOR 05: PARAMETERIZED DRIVER DUTIES CURSOR -->
+            <section class="panel cursor-panel">
+
+                <div class="panel-header compact">
+
+                    <div>
+
+                        <div class="panel-kicker">
+                            CURSOR 05
+                        </div>
+
+                        <h3>
+                            Parameterized Driver Delivery Duty Cursor
+                        </h3>
+
+                        <p>
+                            Parameterized cursor accepting Driver ID to traverse assigned orders and delivery destinations.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="cursor-controls" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <label for="cursorDriverSelect">Driver ID:</label>
+                    <select id="cursorDriverSelect" style="padding:8px 12px; background:var(--bg-dark); border:1px solid var(--border-color); color:var(--text-main); border-radius:6px; font-size:0.88rem;">
+                        <option value="D-05">D-05 · Ramesh Kumar (Chennai)</option>
+                        <option value="D-09">D-09 · Suresh Patil (Mumbai)</option>
+                        <option value="D-11">D-11 · Venkatesh Rao (Bengaluru)</option>
+                    </select>
+                    <input
+                        type="text"
+                        id="cursorDriverId"
+                        placeholder="Driver ID (e.g. D-05)"
+                        value="D-05"
+                        style="width:130px;"
+                    >
+                    <button
+                        id="runDriverDutiesCursor"
+                        class="button primary-button">
+                        ▶ Run Cursor
+                    </button>
+                    <div style="width:100%; font-size:0.8rem; color:#94a3b8; margin-top:2px; display:flex; align-items:center; gap:8px;">
+                        <span>Quick select:</span>
+                        <button type="button" class="pill-btn cursor-driver-pill" data-driver="D-05">D-05</button>
+                        <button type="button" class="pill-btn cursor-driver-pill" data-driver="D-09">D-09</button>
+                        <button type="button" class="pill-btn cursor-driver-pill" data-driver="D-11">D-11</button>
+                    </div>
+                </div>
+
+                <div
+                    id="driverDutiesCursorResult"
+                    class="result-container">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            🚚
+                        </div>
+
+                        <h3>
+                            Cursor not executed
+                        </h3>
+
+                        <p>
+                            Select a driver ID and run the cursor to view active delivery assignments.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
         </section>
 
 
@@ -912,1112 +1034,6 @@
                 </div>
             </section>
         </section>
-        <!-- ================= ER & EER STUDIO ================= -->
-        <section id="eerPage" class="page">
-            <div class="workspace-toolbar">
-                <div>
-                    <div class="section-label">CONCEPTUAL & RELATIONAL SCHEMA</div>
-                    <h2>ER & Enhanced ER (EER) Studio</h2>
-                </div>
-                <div class="toolbar-controls">
-                    <button id="btnViewEer" class="button primary-button">Enhanced ER (EER) Model</button>
-                    <button id="btnViewRelationalEr" class="button secondary-button">Classic ER Model (Chen Notation)</button>
-                </div>
-            </div>
-
-            <!-- EER Conceptual View -->
-            <div id="eerConceptualView" class="eer-view-container">
-                <section class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <div class="panel-kicker">INTERACTIVE ARCHITECTURE &middot; CHEN &amp; EER NOTATION</div>
-                            <h3>Enhanced Entity-Relationship (EER) Conceptual Architecture</h3>
-                            <p>Click any entity below to navigate to the live table in Data Explorer and inspect database records directly.</p>
-                        </div>
-                        <div class="canvas-actions">
-                            <span class="badge badge-purple">Live Oracle / H2 Schema Active</span>
-                        </div>
-                    </div>
-
-                    <div class="diagram-viewport-wrap">
-    <div class="diagram-live-hint">
-        <span class="live-dot"></span>
-        <span>Interactive Architecture · Click any Entity to query live database rows in Data Explorer</span>
-    </div>
-    <div class="diagram-viewport-toolbar">
-        <button id="btnZoomInEer" class="button secondary-button small" title="Zoom in">+</button>
-        <button id="btnZoomOutEer" class="button secondary-button small" title="Zoom out">&minus;</button>
-        <button id="btnResetEerZoom" class="button secondary-button small" title="Reset zoom">&#x21ba; Reset</button>
-    </div>
-    <div id="eerSvgContainer" class="diagram-svg-container">
-        <svg id="eerSvgDiagram" class="diagram-svg" viewBox="0 0 1440 940" width="1440" height="940" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="entityGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e293b"/>
-                    <stop offset="100%" stop-color="#0f172a"/>
-                </linearGradient>
-                <linearGradient id="subclassGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#064e3b"/>
-                    <stop offset="100%" stop-color="#022c22"/>
-                </linearGradient>
-                <linearGradient id="relGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e293b"/>
-                    <stop offset="100%" stop-color="#111827"/>
-                </linearGradient>
-                <filter id="glowCyan" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38bdf8" flood-opacity="0.6"/>
-                </filter>
-            </defs>
-
-            <!-- SUB-HEADER ANNOTATION -->
-            <text x="720" y="45" text-anchor="middle" fill="#94a3b8" font-family="'DM Sans', sans-serif" font-style="italic" font-size="14.5" letter-spacing="1.2">
-                added: specialization &middot; weak entity &middot; multivalued, composite and derived attributes &middot; recursive relationship
-            </text>
-
-            <!-- ================= CONNECTING LINES ================= -->
-
-            <!-- SUPPLIER Attributes Lines -->
-            <line x1="150" y1="230" x2="70" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="175" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="70" y2="195" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="175" y2="195" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- PRODUCT Attributes Lines -->
-            <line x1="440" y1="230" x2="370" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="475" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="370" y2="195" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="475" y2="195" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- WAREHOUSE Attributes Lines -->
-            <line x1="730" y1="230" x2="660" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="765" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="660" y2="195" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="765" y2="195" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- EMPLOYEE Attributes Lines -->
-            <line x1="1040" y1="230" x2="970" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="1075" y2="145" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="970" y2="195" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="1075" y2="195" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- TOP ROW RELATIONSHIP TRUNKS -->
-            <!-- SUPPLIER to SUPPLIES -->
-            <line x1="220" y1="255" x2="250" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- SUPPLIES to PRODUCT -->
-            <line x1="340" y1="255" x2="370" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- PRODUCT to STORED_IN -->
-            <line x1="510" y1="255" x2="540" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- STORED_IN to WAREHOUSE -->
-            <line x1="630" y1="255" x2="660" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- WAREHOUSE to WORKS_AT -->
-            <line x1="800" y1="255" x2="830" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- WORKS_AT to EMPLOYEE (Double line = Total Participation) -->
-            <line x1="920" y1="253" x2="970" y2="253" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="920" y1="257" x2="970" y2="257" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- EMPLOYEE Recursive SUPERVISES Loop -->
-            <path d="M 1110 245 L 1185 245" fill="none" stroke="#94a3b8" stroke-width="2"/>
-            <path d="M 1110 265 L 1185 265" fill="none" stroke="#94a3b8" stroke-width="2"/>
-
-            <!-- PRODUCT Downward Branches -->
-            <!-- To Specialization (d) -->
-            <line x1="410" y1="280" x2="278" y2="398" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="262" y1="422" x2="200" y2="475" stroke="#94a3b8" stroke-width="2"/>
-            <!-- To FOR diamond -->
-            <line x1="440" y1="280" x2="440" y2="365" stroke="#94a3b8" stroke-width="2"/>
-
-            <!-- FOR to ORDER_ITEM (Double line = Total Participation) -->
-            <line x1="438" y1="415" x2="438" y2="465" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="442" y1="415" x2="442" y2="465" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- ORDER_ITEM to HAS (Double line = Total Participation) -->
-            <line x1="438" y1="515" x2="438" y2="565" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="442" y1="515" x2="442" y2="565" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- HAS to ORDERS -->
-            <line x1="440" y1="615" x2="440" y2="685" stroke="#94a3b8" stroke-width="2"/>
-
-            <!-- PERISHABLE_PRODUCT Attributes Lines -->
-            <line x1="125" y1="475" x2="80" y2="435" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="125" y1="525" x2="80" y2="565" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- ORDER_ITEM Attributes Lines -->
-            <line x1="365" y1="490" x2="310" y2="490" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="515" y1="475" x2="570" y2="435" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- WAREHOUSE to DISPATCHED_FROM -->
-            <line x1="730" y1="280" x2="730" y2="465" stroke="#94a3b8" stroke-width="2"/>
-            <!-- DISPATCHED_FROM to SHIPMENT (Double line) -->
-            <line x1="728" y1="515" x2="728" y2="685" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="732" y1="515" x2="732" y2="685" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- EMPLOYEE to Specialization (d) (Double line = Total Specialization) -->
-            <line x1="1038" y1="280" x2="1038" y2="395" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="1042" y1="280" x2="1042" y2="395" stroke="#94a3b8" stroke-width="1.8"/>
-            <!-- (d) to MANAGER and DRIVER -->
-            <line x1="1025" y1="420" x2="945" y2="485" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="1055" y1="420" x2="1135" y2="485" stroke="#94a3b8" stroke-width="2"/>
-
-            <!-- MANAGER Attributes Lines -->
-            <line x1="910" y1="535" x2="875" y2="585" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="960" y1="535" x2="980" y2="585" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- DRIVER Attributes Lines -->
-            <line x1="1120" y1="535" x2="1090" y2="585" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1170" y1="535" x2="1190" y2="585" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- BOTTOM ROW RELATIONSHIP TRUNKS -->
-            <!-- CUSTOMER to PLACES -->
-            <line x1="220" y1="710" x2="250" y2="710" stroke="#94a3b8" stroke-width="2"/>
-            <!-- PLACES to ORDERS -->
-            <line x1="340" y1="710" x2="370" y2="710" stroke="#94a3b8" stroke-width="2"/>
-            <!-- ORDERS to SHIPPED_BY -->
-            <line x1="510" y1="710" x2="540" y2="710" stroke="#94a3b8" stroke-width="2"/>
-            <!-- SHIPPED_BY to SHIPMENT (Double line = Total Participation) -->
-            <line x1="630" y1="708" x2="660" y2="708" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="630" y1="712" x2="660" y2="712" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- CUSTOMER Attributes Lines -->
-            <line x1="150" y1="735" x2="70" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="735" x2="180" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="735" x2="125" y2="835" stroke="#64748b" stroke-width="1.5"/>
-            <!-- Composite Address Children -->
-            <line x1="125" y1="855" x2="55" y2="905" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="125" y1="855" x2="125" y2="905" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="125" y1="855" x2="195" y2="905" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- ORDERS Attributes Lines -->
-            <line x1="440" y1="735" x2="370" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="735" x2="475" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="735" x2="370" y2="835" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="735" x2="475" y2="835" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- SHIPMENT Attributes Lines -->
-            <line x1="730" y1="735" x2="660" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="735" x2="765" y2="775" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="735" x2="660" y2="835" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="735" x2="765" y2="835" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- ================= ATTRIBUTE ELLIPSES ================= -->
-
-            <!-- SUPPLIER Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="70" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="139" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">SupplierID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="175" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="175" y="139" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">SName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="70" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">City</text>
-            </g>
-            <g class="svg-attr">
-                <!-- Multivalued Attribute Phone (Double Ellipse) -->
-                <ellipse cx="175" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <ellipse cx="175" cy="185" rx="39" ry="15" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <text x="175" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Phone</text>
-                <text x="238" y="189" fill="#34d399" font-style="italic" font-size="11.5" font-family="'DM Sans', sans-serif">multivalued</text>
-            </g>
-
-            <!-- PRODUCT Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="370" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="139" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">ProductID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="139" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">PName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="370" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Category</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">UnitPrice</text>
-            </g>
-
-            <!-- PERISHABLE_PRODUCT Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="75" cy="425" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="75" y="429" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">ShelfLifeDays</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="75" cy="575" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="75" y="579" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">StorageTempC</text>
-            </g>
-            <text x="135" y="625" text-anchor="middle" fill="#34d399" font-style="italic" font-size="11" font-family="'DM Sans', sans-serif">
-                partial &mdash; most products are not perishable
-            </text>
-
-            <!-- ORDER_ITEM Attributes -->
-            <g class="svg-attr">
-                <!-- Partial Key / Discriminator (dashed underline) -->
-                <ellipse cx="280" cy="490" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="280" y="494" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700">ItemNo</text>
-                <line x1="260" y1="498" x2="300" y2="498" stroke="#f8fafc" stroke-width="1.2" stroke-dasharray="3 2"/>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="570" cy="425" rx="40" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="570" y="429" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Qty</text>
-            </g>
-
-            <!-- WAREHOUSE Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="660" cy="135" rx="46" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="139" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">WarehouseID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="139" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">WName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="660" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">City</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Capacity</text>
-            </g>
-
-            <!-- EMPLOYEE Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="970" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="970" y="139" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">EmpID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="1075" cy="135" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1075" y="139" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">EName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="970" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="970" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Role</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="1075" cy="185" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1075" y="189" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Salary</text>
-            </g>
-
-            <!-- MANAGER Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="875" cy="595" rx="40" ry="18" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="875" y="599" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">Level</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="980" cy="595" rx="40" ry="18" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="980" y="599" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">Bonus</text>
-            </g>
-
-            <!-- DRIVER Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="1090" cy="595" rx="44" ry="18" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1090" y="599" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">LicenseNo</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="1190" cy="595" rx="40" ry="18" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1190" y="599" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">Expiry</text>
-            </g>
-            <text x="1040" y="650" text-anchor="middle" fill="#34d399" font-style="italic" font-size="11.5" font-family="'DM Sans', sans-serif">
-                total + disjoint &mdash; every employee is exactly one of these
-            </text>
-
-            <!-- CUSTOMER Attributes & Composite -->
-            <g class="svg-attr">
-                <ellipse cx="70" cy="775" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="779" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">CustomerID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="180" cy="775" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="180" y="779" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">CName</text>
-            </g>
-            <g class="svg-attr">
-                <!-- Composite Attribute Address -->
-                <ellipse cx="125" cy="835" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="125" y="839" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Address</text>
-                <text x="195" y="839" fill="#34d399" font-style="italic" font-size="11" font-family="'DM Sans', sans-serif">composite</text>
-            </g>
-            <!-- Children of Address -->
-            <g class="svg-attr">
-                <ellipse cx="55" cy="912" rx="36" ry="17" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="55" y="916" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="'DM Sans', sans-serif">Street</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="125" cy="912" rx="34" ry="17" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="125" y="916" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="'DM Sans', sans-serif">City</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="195" cy="912" rx="36" ry="17" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="195" y="916" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="'DM Sans', sans-serif">Pincode</text>
-            </g>
-
-            <!-- ORDERS Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="370" cy="775" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="779" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">OrderID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="775" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="779" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">OrderDate</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="370" cy="835" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="839" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Status</text>
-            </g>
-            <g class="svg-attr">
-                <!-- Derived Attribute TotalAmt (Dashed Ellipse) -->
-                <ellipse cx="475" cy="835" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3"/>
-                <text x="475" y="839" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">TotalAmt</text>
-                <text x="545" y="839" fill="#34d399" font-style="italic" font-size="11" font-family="'DM Sans', sans-serif">derived</text>
-            </g>
-
-            <!-- SHIPMENT Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="660" cy="775" rx="46" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="779" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">ShipmentID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="775" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="779" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Status</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="660" cy="835" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="839" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">DispatchDate</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="835" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="839" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">DeliveryDate</text>
-            </g>
-
-            <!-- ================= RELATIONSHIPS (DIAMONDS) ================= -->
-
-            <!-- SUPPLIES (M:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SUPPLIES')" title="SUPPLIES: M:N relationship between SUPPLIER and PRODUCT (Click to inspect table)">
-                <polygon points="295,230 340,255 295,280 250,255" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="295" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">SUPPLIES</text>
-            </g>
-
-            <!-- STORED_IN (M:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('STOCK')" title="STORED_IN: M:N relationship between PRODUCT and WAREHOUSE (Click to inspect STOCK)">
-                <polygon points="585,230 630,255 585,280 540,255" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="585" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="11.5">STORED_IN</text>
-            </g>
-
-            <!-- WORKS_AT (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('EMPLOYEE')" title="WORKS_AT: 1:N relationship from WAREHOUSE to EMPLOYEE (Click to inspect EMPLOYEE)">
-                <polygon points="875,230 920,255 875,280 830,255" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="875" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">WORKS_AT</text>
-            </g>
-
-            <!-- SUPERVISES (1:N Recursive) -->
-            <g class="svg-rel" onclick="openTableInExplorer('EMPLOYEE')" title="SUPERVISES: Recursive 1:N supervision within EMPLOYEE (Click to inspect)">
-                <polygon points="1240,230 1290,255 1240,280 1190,255" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="1240" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="11.5">SUPERVISES</text>
-            </g>
-
-            <!-- FOR (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('ORDER_ITEM')" title="FOR: 1:N relationship between PRODUCT and ORDER_ITEM (Click to inspect)">
-                <polygon points="440,365 475,390 440,415 405,390" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="440" y="394" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">FOR</text>
-            </g>
-
-            <!-- HAS (Identifying Relationship - Double Diamond) -->
-            <g class="svg-rel" onclick="openTableInExplorer('ORDER_ITEM')" title="HAS: Identifying relationship for weak entity ORDER_ITEM (Click to inspect)">
-                <!-- Outer diamond -->
-                <polygon points="440,565 485,590 440,615 395,590" fill="url(#relGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <!-- Inner diamond -->
-                <polygon points="440,571 475,590 440,609 405,590" fill="none" stroke="#38bdf8" stroke-width="1.5"/>
-                <text x="440" y="594" text-anchor="middle" fill="#f8fafc" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">HAS</text>
-                <text x="525" y="594" fill="#34d399" font-style="italic" font-size="11.5" font-family="'DM Sans', sans-serif">identifying relationship</text>
-            </g>
-
-            <!-- DISPATCHED_FROM (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SHIPMENT')" title="DISPATCHED_FROM: 1:N relationship between WAREHOUSE and SHIPMENT (Click to inspect)">
-                <polygon points="730,465 775,490 730,515 685,490" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="730" y="486" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="10.5">DISPATCHED</text>
-                <text x="730" y="498" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="10.5">FROM</text>
-            </g>
-
-            <!-- PLACES (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('ORDERS')" title="PLACES: 1:N relationship between CUSTOMER and ORDERS (Click to inspect)">
-                <polygon points="295,685 340,710 295,735 250,710" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="295" y="714" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">PLACES</text>
-            </g>
-
-            <!-- SHIPPED_BY (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SHIPMENT')" title="SHIPPED_BY: 1:N relationship between ORDERS and SHIPMENT (Click to inspect)">
-                <polygon points="585,685 630,710 585,735 540,710" fill="url(#relGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="585" y="714" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="11.5">SHIPPED_BY</text>
-            </g>
-
-            <!-- SPECIALIZATION CIRCLES (d) -->
-            <!-- Product (d) -->
-            <g class="svg-isa-circle">
-                <circle cx="270" cy="410" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-                <text x="270" y="415" text-anchor="middle" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">d</text>
-            </g>
-            <!-- Employee (d) -->
-            <g class="svg-isa-circle">
-                <circle cx="1040" cy="410" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-                <text x="1040" y="415" text-anchor="middle" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">d</text>
-            </g>
-
-            <!-- ================= ENTITIES (RECTANGLES) ================= -->
-
-            <!-- SUPPLIER -->
-            <g class="svg-entity" onclick="openTableInExplorer('SUPPLIER')" title="Click to view SUPPLIER in Data Explorer">
-                <rect class="entity-box" x="80" y="230" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="150" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">SUPPLIER</text>
-            </g>
-
-            <!-- PRODUCT -->
-            <g class="svg-entity" onclick="openTableInExplorer('PRODUCT')" title="Click to view PRODUCT in Data Explorer">
-                <rect class="entity-box" x="370" y="230" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="440" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">PRODUCT</text>
-            </g>
-
-            <!-- WAREHOUSE -->
-            <g class="svg-entity" onclick="openTableInExplorer('WAREHOUSE')" title="Click to view WAREHOUSE in Data Explorer">
-                <rect class="entity-box" x="660" y="230" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="730" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">WAREHOUSE</text>
-            </g>
-
-            <!-- EMPLOYEE -->
-            <g class="svg-entity" onclick="openTableInExplorer('EMPLOYEE')" title="Click to view EMPLOYEE in Data Explorer">
-                <rect class="entity-box" x="970" y="230" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="1040" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">EMPLOYEE</text>
-            </g>
-
-            <!-- PERISHABLE_PRODUCT (Subclass) -->
-            <g class="svg-entity" onclick="openTableInExplorer('PERISHABLE_PRODUCT')" title="Click to view PERISHABLE_PRODUCT in Data Explorer">
-                <rect class="subclass-box" x="80" y="475" width="150" height="50" rx="6" fill="url(#subclassGrad)" stroke="#10b981" stroke-width="2"/>
-                <text class="entity-title" x="155" y="497" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">PERISHABLE</text>
-                <text class="entity-title" x="155" y="513" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">PRODUCT</text>
-            </g>
-
-            <!-- ORDER_ITEM (Weak Entity - Double Rectangle) -->
-            <g class="svg-entity" onclick="openTableInExplorer('ORDER_ITEM')" title="Click to view ORDER_ITEM (Weak Entity) in Data Explorer">
-                <!-- Outer Rect -->
-                <rect class="weak-box" x="365" y="465" width="150" height="50" rx="6" fill="url(#entityGrad)" stroke="#22d3ee" stroke-width="2"/>
-                <!-- Inner Rect -->
-                <rect x="370" y="470" width="140" height="40" rx="4" fill="none" stroke="#22d3ee" stroke-width="1.5"/>
-                <text class="entity-title" x="440" y="495" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="13">ORDER_ITEM</text>
-                <text x="525" y="495" fill="#22d3ee" font-style="italic" font-size="11.5" font-family="'DM Sans', sans-serif">weak entity</text>
-            </g>
-
-            <!-- MANAGER (Subclass) -->
-            <g class="svg-entity" onclick="openTableInExplorer('MANAGER')" title="Click to view MANAGER in Data Explorer">
-                <rect class="subclass-box" x="880" y="485" width="120" height="50" rx="6" fill="url(#subclassGrad)" stroke="#10b981" stroke-width="2"/>
-                <text class="entity-title" x="940" y="515" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="13">MANAGER</text>
-            </g>
-
-            <!-- DRIVER (Subclass) -->
-            <g class="svg-entity" onclick="openTableInExplorer('DRIVER')" title="Click to view DRIVER in Data Explorer">
-                <rect class="subclass-box" x="1080" y="485" width="120" height="50" rx="6" fill="url(#subclassGrad)" stroke="#10b981" stroke-width="2"/>
-                <text class="entity-title" x="1140" y="515" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="13">DRIVER</text>
-            </g>
-
-            <!-- CUSTOMER -->
-            <g class="svg-entity" onclick="openTableInExplorer('CUSTOMER')" title="Click to view CUSTOMER in Data Explorer">
-                <rect class="entity-box" x="80" y="685" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="150" y="715" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">CUSTOMER</text>
-            </g>
-
-            <!-- ORDERS -->
-            <g class="svg-entity" onclick="openTableInExplorer('ORDERS')" title="Click to view ORDERS in Data Explorer">
-                <rect class="entity-box" x="370" y="685" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="440" y="715" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">ORDERS</text>
-            </g>
-
-            <!-- SHIPMENT -->
-            <g class="svg-entity" onclick="openTableInExplorer('SHIPMENT')" title="Click to view SHIPMENT in Data Explorer">
-                <rect class="entity-box" x="660" y="685" width="140" height="50" rx="6" fill="url(#entityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="730" y="715" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">SHIPMENT</text>
-            </g>
-
-            <!-- ================= CARDINALITY LABELS ================= -->
-            <!-- SUPPLIER - M - SUPPLIES - N - PRODUCT -->
-            <text class="cardinality-tag" x="230" y="250">M</text>
-            <text class="cardinality-tag" x="355" y="250">N</text>
-
-            <!-- PRODUCT - M - STORED_IN - N - WAREHOUSE -->
-            <text class="cardinality-tag" x="520" y="250">M</text>
-            <text class="cardinality-tag" x="645" y="250">N</text>
-
-            <!-- WAREHOUSE - 1 - WORKS_AT - N - EMPLOYEE -->
-            <text class="cardinality-tag" x="812" y="250">1</text>
-            <text class="cardinality-tag" x="935" y="250">N</text>
-
-            <!-- EMPLOYEE Recursive Supervision -->
-            <text class="cardinality-tag" x="1120" y="238">1 supervisor</text>
-            <text class="cardinality-tag" x="1120" y="280">N subordinate</text>
-
-            <!-- PRODUCT - 1 - FOR - N - ORDER_ITEM -->
-            <text class="cardinality-tag" x="445" y="325">1</text>
-            <text class="cardinality-tag" x="448" y="445">N</text>
-
-            <!-- ORDER_ITEM - N - HAS - 1 - ORDERS -->
-            <text class="cardinality-tag" x="448" y="545">N</text>
-            <text class="cardinality-tag" x="445" y="650">1</text>
-
-            <!-- WAREHOUSE - 1 - DISPATCHED_FROM - N - SHIPMENT -->
-            <text class="cardinality-tag" x="735" y="375">1</text>
-            <text class="cardinality-tag" x="735" y="605">N</text>
-
-            <!-- CUSTOMER - 1 - PLACES - N - ORDERS -->
-            <text class="cardinality-tag" x="230" y="705">1</text>
-            <text class="cardinality-tag" x="355" y="705">N</text>
-
-            <!-- ORDERS - 1 - SHIPPED_BY - N - SHIPMENT -->
-            <text class="cardinality-tag" x="520" y="705">1</text>
-            <text class="cardinality-tag" x="645" y="705">N</text>
-
-            <!-- ================= WHAT EER ADDED BOX ================= -->
-            <g class="svg-info-card">
-                <rect x="870" y="700" width="510" height="215" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="1.8"/>
-                <text x="895" y="730" fill="#34d399" font-family="'DM Sans', sans-serif" font-weight="700" font-size="15">
-                    What EER added to the ER model
-                </text>
-                <text x="895" y="760" fill="#e2e8f0" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    &bull; <tspan font-weight="700" fill="#38bdf8">ORDER_ITEM</tspan> &mdash; a weak entity replacing the M:N CONTAINS
-                </text>
-                <text x="895" y="790" fill="#e2e8f0" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    &bull; <tspan font-weight="700" fill="#38bdf8">EMPLOYEE</tspan> split into <tspan font-weight="700" fill="#34d399">MANAGER</tspan> and <tspan font-weight="700" fill="#34d399">DRIVER</tspan> (specialization)
-                </text>
-                <text x="895" y="820" fill="#e2e8f0" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    &bull; <tspan font-weight="700" fill="#34d399">PERISHABLE_PRODUCT</tspan> &mdash; a partial specialization of PRODUCT
-                </text>
-                <text x="895" y="850" fill="#e2e8f0" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    &bull; Phone multivalued, Address composite, TotalAmt derived
-                </text>
-                <text x="895" y="880" fill="#e2e8f0" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    &bull; <tspan font-weight="700" fill="#f59e0b">SUPERVISES</tspan> &mdash; EMPLOYEE related back to itself (Recursive 1:N)
-                </text>
-            </g>
-        </svg>
-    </div>
-</div>
-
-                    <!-- Expandable Reference Archive Sketch -->
-                    <details class="diagram-archive-accordion" style="margin: 20px 16px;">
-                        <summary>📷 View Original Reference Diagram (Paper Sketch Archive)</summary>
-                        <div class="diagram-archive-box">
-                            <img src="images/eer_diagram.png" alt="Enhanced ER Model Original Sketch">
-                        </div>
-                    </details>
-                </section>
-            </div>
-
-            <!-- Classic Relational ER View (Chen Notation) -->
-            <div id="relationalErView" class="eer-view-container hidden">
-                <section class="panel">
-                    <div class="panel-header">
-                        <div>
-                            <div class="panel-kicker">CHEN NOTATION &middot; 7 CORE ENTITIES &amp; 7 RELATIONSHIPS</div>
-                            <h3>Classic Entity-Relationship (ER) Relational Schema</h3>
-                            <p>Formal 7-entity relational architecture. Click any table or relationship to open its live database view in Data Explorer.</p>
-                        </div>
-                        <div class="canvas-actions">
-                            <span class="badge badge-green">7 Core Entities Connected</span>
-                        </div>
-                    </div>
-
-                    <div class="diagram-viewport-wrap">
-    <div class="diagram-live-hint">
-        <span class="live-dot"></span>
-        <span>Chen Notation Architecture · Click any Entity to query live database rows in Data Explorer</span>
-    </div>
-    <div class="diagram-viewport-toolbar">
-        <button id="btnZoomInRel" class="button secondary-button small" title="Zoom in">+</button>
-        <button id="btnZoomOutRel" class="button secondary-button small" title="Zoom out">&minus;</button>
-        <button id="btnResetRelZoom" class="button secondary-button small" title="Reset zoom">&#x21ba; Reset</button>
-    </div>
-    <div id="relSvgContainer" class="diagram-svg-container">
-        <svg id="relSvgDiagram" class="diagram-svg" viewBox="0 0 1440 880" width="1440" height="880" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="relEntityGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e293b"/>
-                    <stop offset="100%" stop-color="#0f172a"/>
-                </linearGradient>
-                <linearGradient id="relDiamondGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#1e293b"/>
-                    <stop offset="100%" stop-color="#111827"/>
-                </linearGradient>
-            </defs>
-
-            <!-- SUB-HEADER ANNOTATION -->
-            <text x="720" y="45" text-anchor="middle" fill="#94a3b8" font-family="'DM Sans', sans-serif" font-style="italic" font-size="14.5" letter-spacing="1.2">
-                7 entities &middot; 7 relationships &middot; Chen notation
-            </text>
-
-            <!-- ================= CONNECTING LINES ================= -->
-
-            <!-- SUPPLIER Attributes Lines -->
-            <line x1="150" y1="230" x2="70" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="175" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="70" y2="190" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="230" x2="175" y2="190" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- SUPPLIES Attribute LeadTimeDays -->
-            <line x1="295" y1="230" x2="295" y2="175" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- PRODUCT Attributes Lines -->
-            <line x1="440" y1="230" x2="370" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="475" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="370" y2="190" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="230" x2="475" y2="190" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- STORED_IN Attribute Quantity -->
-            <line x1="585" y1="230" x2="585" y2="175" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- WAREHOUSE Attributes Lines -->
-            <line x1="730" y1="230" x2="660" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="765" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="660" y2="190" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="230" x2="765" y2="190" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- EMPLOYEE Attributes Lines -->
-            <line x1="1040" y1="230" x2="970" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="1075" y2="140" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="970" y2="190" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="1040" y1="230" x2="1075" y2="190" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- TOP ROW RELATIONSHIP TRUNKS -->
-            <!-- SUPPLIER to SUPPLIES -->
-            <line x1="220" y1="255" x2="250" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- SUPPLIES to PRODUCT -->
-            <line x1="340" y1="255" x2="370" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- PRODUCT to STORED_IN -->
-            <line x1="510" y1="255" x2="540" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- STORED_IN to WAREHOUSE -->
-            <line x1="630" y1="255" x2="660" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- WAREHOUSE to WORKS_AT -->
-            <line x1="800" y1="255" x2="830" y2="255" stroke="#94a3b8" stroke-width="2"/>
-            <!-- WORKS_AT to EMPLOYEE (Double line = Total Participation) -->
-            <line x1="920" y1="253" x2="970" y2="253" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="920" y1="257" x2="970" y2="257" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- VERTICAL CONNECTIONS -->
-            <!-- PRODUCT down to CONTAINS -->
-            <line x1="440" y1="280" x2="440" y2="435" stroke="#94a3b8" stroke-width="2"/>
-            <!-- CONTAINS down to ORDERS (Double line = Total Participation) -->
-            <line x1="438" y1="485" x2="438" y2="645" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="442" y1="485" x2="442" y2="645" stroke="#94a3b8" stroke-width="1.8"/>
-            <!-- CONTAINS Attribute Qty -->
-            <line x1="485" y1="460" x2="530" y2="460" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- WAREHOUSE down to DISPATCHED_FROM -->
-            <line x1="730" y1="280" x2="730" y2="435" stroke="#94a3b8" stroke-width="2"/>
-            <!-- DISPATCHED_FROM down to SHIPMENT (Double line = Total Participation) -->
-            <line x1="728" y1="485" x2="728" y2="645" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="732" y1="485" x2="732" y2="645" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- BOTTOM ROW RELATIONSHIP TRUNKS -->
-            <!-- CUSTOMER to PLACES -->
-            <line x1="220" y1="670" x2="250" y2="670" stroke="#94a3b8" stroke-width="2"/>
-            <!-- PLACES to ORDERS -->
-            <line x1="340" y1="670" x2="370" y2="670" stroke="#94a3b8" stroke-width="2"/>
-            <!-- ORDERS to SHIPPED_BY -->
-            <line x1="510" y1="670" x2="540" y2="670" stroke="#94a3b8" stroke-width="2"/>
-            <!-- SHIPPED_BY to SHIPMENT (Double line = Total Participation) -->
-            <line x1="630" y1="668" x2="660" y2="668" stroke="#94a3b8" stroke-width="1.8"/>
-            <line x1="630" y1="672" x2="660" y2="672" stroke="#94a3b8" stroke-width="1.8"/>
-
-            <!-- CUSTOMER Attributes Lines -->
-            <line x1="150" y1="695" x2="70" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="695" x2="180" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="695" x2="70" y2="805" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="150" y1="695" x2="180" y2="805" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- ORDERS Attributes Lines -->
-            <line x1="440" y1="695" x2="370" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="695" x2="475" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="695" x2="370" y2="805" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="440" y1="695" x2="475" y2="805" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- SHIPMENT Attributes Lines -->
-            <line x1="730" y1="695" x2="660" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="695" x2="765" y2="745" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="695" x2="660" y2="805" stroke="#64748b" stroke-width="1.5"/>
-            <line x1="730" y1="695" x2="765" y2="805" stroke="#64748b" stroke-width="1.5"/>
-
-            <!-- ================= ATTRIBUTE ELLIPSES ================= -->
-
-            <!-- SUPPLIER Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="70" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="134" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">SupplierID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="175" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="175" y="134" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">SName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="70" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">City</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="175" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="175" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Phone</text>
-            </g>
-
-            <!-- SUPPLIES Attribute -->
-            <g class="svg-attr">
-                <ellipse cx="295" cy="165" rx="50" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="295" y="169" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">LeadTimeDays</text>
-            </g>
-
-            <!-- PRODUCT Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="370" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="134" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">ProductID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="134" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">PName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="370" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Category</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">UnitPrice</text>
-            </g>
-
-            <!-- STORED_IN Attribute -->
-            <g class="svg-attr">
-                <ellipse cx="585" cy="165" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="585" y="169" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Quantity</text>
-            </g>
-
-            <!-- WAREHOUSE Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="660" cy="130" rx="46" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="134" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">WarehouseID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="134" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">WName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="660" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">City</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Capacity</text>
-            </g>
-
-            <!-- EMPLOYEE Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="970" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="970" y="134" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">EmpID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="1075" cy="130" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1075" y="134" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">EName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="970" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="970" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Role</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="1075" cy="180" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="1075" y="184" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Salary</text>
-            </g>
-
-            <!-- CONTAINS Attribute Qty -->
-            <g class="svg-attr">
-                <ellipse cx="570" cy="460" rx="40" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="570" y="464" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Qty</text>
-            </g>
-
-            <!-- CUSTOMER Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="70" cy="745" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="749" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">CustomerID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="180" cy="745" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="180" y="749" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">CName</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="70" cy="805" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="70" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Address</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="180" cy="805" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="180" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Phone</text>
-            </g>
-
-            <!-- ORDERS Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="370" cy="745" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="749" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">OrderID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="745" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="749" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">OrderDate</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="370" cy="805" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="370" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Status</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="475" cy="805" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="475" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">TotalAmt</text>
-            </g>
-
-            <!-- SHIPMENT Attributes -->
-            <g class="svg-attr">
-                <ellipse cx="660" cy="745" rx="46" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="749" text-anchor="middle" fill="#f8fafc" font-size="11.5" font-family="'DM Sans', sans-serif" font-weight="700" text-decoration="underline">ShipmentID</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="745" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="749" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">DispatchDate</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="660" cy="805" rx="48" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="660" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11" font-family="'DM Sans', sans-serif">DeliveryDate</text>
-            </g>
-            <g class="svg-attr">
-                <ellipse cx="765" cy="805" rx="44" ry="19" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
-                <text x="765" y="809" text-anchor="middle" fill="#cbd5e1" font-size="11.5" font-family="'DM Sans', sans-serif">Status</text>
-            </g>
-
-            <!-- ================= RELATIONSHIPS (DIAMONDS) ================= -->
-
-            <!-- SUPPLIES (M:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SUPPLIES')" title="SUPPLIES: M:N relationship between SUPPLIER and PRODUCT (Click to inspect table)">
-                <polygon points="295,230 340,255 295,280 250,255" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="295" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">SUPPLIES</text>
-            </g>
-
-            <!-- STORED_IN (M:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('STOCK')" title="STORED_IN: M:N relationship between PRODUCT and WAREHOUSE (Click to inspect STOCK)">
-                <polygon points="585,230 630,255 585,280 540,255" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="585" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="11.5">STORED_IN</text>
-            </g>
-
-            <!-- WORKS_AT (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('EMPLOYEE')" title="WORKS_AT: 1:N relationship from WAREHOUSE to EMPLOYEE (Click to inspect EMPLOYEE)">
-                <polygon points="875,230 920,255 875,280 830,255" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="875" y="259" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">WORKS_AT</text>
-            </g>
-
-            <!-- CONTAINS (M:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('ORDER_ITEM')" title="CONTAINS: M:N relationship between PRODUCT and ORDERS (Click to inspect ORDER_ITEM)">
-                <polygon points="440,435 485,460 440,485 395,460" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="440" y="464" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">CONTAINS</text>
-            </g>
-
-            <!-- DISPATCHED_FROM (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SHIPMENT')" title="DISPATCHED_FROM: 1:N relationship between WAREHOUSE and SHIPMENT (Click to inspect)">
-                <polygon points="730,435 775,460 730,485 685,460" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="730" y="456" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="10.5">DISPATCHED</text>
-                <text x="730" y="468" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="10.5">FROM</text>
-            </g>
-
-            <!-- PLACES (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('ORDERS')" title="PLACES: 1:N relationship between CUSTOMER and ORDERS (Click to inspect)">
-                <polygon points="295,645 340,670 295,695 250,670" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="295" y="674" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">PLACES</text>
-            </g>
-
-            <!-- SHIPPED_BY (1:N) -->
-            <g class="svg-rel" onclick="openTableInExplorer('SHIPMENT')" title="SHIPPED_BY: 1:N relationship between ORDERS and SHIPMENT (Click to inspect)">
-                <polygon points="585,645 630,670 585,695 540,670" fill="url(#relDiamondGrad)" stroke="#475569" stroke-width="2"/>
-                <text x="585" y="674" text-anchor="middle" fill="#f1f5f9" font-family="'DM Sans', sans-serif" font-weight="700" font-size="11.5">SHIPPED_BY</text>
-            </g>
-
-            <!-- ================= ENTITIES (RECTANGLES) ================= -->
-
-            <!-- SUPPLIER -->
-            <g class="svg-entity" onclick="openTableInExplorer('SUPPLIER')" title="Click to view SUPPLIER in Data Explorer">
-                <rect class="entity-box" x="80" y="230" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="150" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">SUPPLIER</text>
-            </g>
-
-            <!-- PRODUCT -->
-            <g class="svg-entity" onclick="openTableInExplorer('PRODUCT')" title="Click to view PRODUCT in Data Explorer">
-                <rect class="entity-box" x="370" y="230" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="440" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">PRODUCT</text>
-            </g>
-
-            <!-- WAREHOUSE -->
-            <g class="svg-entity" onclick="openTableInExplorer('WAREHOUSE')" title="Click to view WAREHOUSE in Data Explorer">
-                <rect class="entity-box" x="660" y="230" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="730" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">WAREHOUSE</text>
-            </g>
-
-            <!-- EMPLOYEE -->
-            <g class="svg-entity" onclick="openTableInExplorer('EMPLOYEE')" title="Click to view EMPLOYEE in Data Explorer">
-                <rect class="entity-box" x="970" y="230" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="1040" y="260" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">EMPLOYEE</text>
-            </g>
-
-            <!-- CUSTOMER -->
-            <g class="svg-entity" onclick="openTableInExplorer('CUSTOMER')" title="Click to view CUSTOMER in Data Explorer">
-                <rect class="entity-box" x="80" y="645" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="150" y="675" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">CUSTOMER</text>
-            </g>
-
-            <!-- ORDERS -->
-            <g class="svg-entity" onclick="openTableInExplorer('ORDERS')" title="Click to view ORDERS in Data Explorer">
-                <rect class="entity-box" x="370" y="645" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="440" y="675" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">ORDERS</text>
-            </g>
-
-            <!-- SHIPMENT -->
-            <g class="svg-entity" onclick="openTableInExplorer('SHIPMENT')" title="Click to view SHIPMENT in Data Explorer">
-                <rect class="entity-box" x="660" y="645" width="140" height="50" rx="6" fill="url(#relEntityGrad)" stroke="#38bdf8" stroke-width="2"/>
-                <text class="entity-title" x="730" y="675" text-anchor="middle" fill="#ffffff" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">SHIPMENT</text>
-            </g>
-
-            <!-- ================= CARDINALITY LABELS ================= -->
-            <!-- SUPPLIER - M - SUPPLIES - N - PRODUCT -->
-            <text class="cardinality-tag" x="230" y="250">M</text>
-            <text class="cardinality-tag" x="355" y="250">N</text>
-
-            <!-- PRODUCT - M - STORED_IN - N - WAREHOUSE -->
-            <text class="cardinality-tag" x="520" y="250">M</text>
-            <text class="cardinality-tag" x="645" y="250">N</text>
-
-            <!-- WAREHOUSE - 1 - WORKS_AT - N - EMPLOYEE -->
-            <text class="cardinality-tag" x="812" y="250">1</text>
-            <text class="cardinality-tag" x="935" y="250">N</text>
-
-            <!-- PRODUCT - N - CONTAINS - M - ORDERS -->
-            <text class="cardinality-tag" x="445" y="340">N</text>
-            <text class="cardinality-tag" x="445" y="580">M</text>
-
-            <!-- WAREHOUSE - 1 - DISPATCHED_FROM - N - SHIPMENT -->
-            <text class="cardinality-tag" x="735" y="340">1</text>
-            <text class="cardinality-tag" x="735" y="580">N</text>
-
-            <!-- CUSTOMER - 1 - PLACES - N - ORDERS -->
-            <text class="cardinality-tag" x="230" y="665">1</text>
-            <text class="cardinality-tag" x="355" y="665">N</text>
-
-            <!-- ORDERS - 1 - SHIPPED_BY - N - SHIPMENT -->
-            <text class="cardinality-tag" x="520" y="665">1</text>
-            <text class="cardinality-tag" x="645" y="665">N</text>
-
-            <!-- ================= GUIDE CARD (BOTTOM LEFT) ================= -->
-            <g class="svg-guide-card">
-                <rect x="60" y="330" width="280" height="235" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                <text x="80" y="360" fill="#f8fafc" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14.5">
-                    How to read this diagram
-                </text>
-                <text x="80" y="395" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan fill="#38bdf8" font-weight="700">&#9645;</tspan> Rectangle = entity
-                </text>
-                <text x="80" y="425" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan fill="#f59e0b" font-weight="700">&#9671;</tspan> Diamond = relationship
-                </text>
-                <text x="80" y="455" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan fill="#94a3b8" font-weight="700">&#11054;</tspan> Ellipse = attribute
-                </text>
-                <text x="80" y="485" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan text-decoration="underline" font-weight="700" fill="#ffffff">Underlined</tspan> = primary key
-                </text>
-                <text x="80" y="515" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan fill="#ef4444" font-weight="700">1 / M / N</tspan> = how many can take part
-                </text>
-                <text x="80" y="545" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12.5">
-                    <tspan font-weight="700" fill="#ffffff">= Double line</tspan> = must take part
-                </text>
-            </g>
-
-            <!-- ================= SUMMARY TABLE (RIGHT) ================= -->
-            <g class="svg-summary-card">
-                <rect x="850" y="330" width="530" height="255" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-                <text x="875" y="360" fill="#f8fafc" font-family="'DM Sans', sans-serif" font-weight="700" font-size="15">
-                    The 7 relationships
-                </text>
-
-                <!-- Row 1 -->
-                <text x="875" y="390" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">SUPPLIES</text>
-                <text x="1020" y="390" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">SUPPLIER &mdash; PRODUCT</text>
-                <text x="1330" y="390" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">M:N</text>
-
-                <!-- Row 2 -->
-                <text x="875" y="418" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">STORED_IN</text>
-                <text x="1020" y="418" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">PRODUCT &mdash; WAREHOUSE</text>
-                <text x="1330" y="418" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">M:N</text>
-
-                <!-- Row 3 -->
-                <text x="875" y="446" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">CONTAINS</text>
-                <text x="1020" y="446" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">PRODUCT &mdash; ORDERS</text>
-                <text x="1330" y="446" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">M:N</text>
-
-                <!-- Row 4 -->
-                <text x="875" y="474" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">WORKS_AT</text>
-                <text x="1020" y="474" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">WAREHOUSE &mdash; EMPLOYEE</text>
-                <text x="1330" y="474" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">1:N</text>
-
-                <!-- Row 5 -->
-                <text x="875" y="502" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">PLACES</text>
-                <text x="1020" y="502" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">CUSTOMER &mdash; ORDERS</text>
-                <text x="1330" y="502" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">1:N</text>
-
-                <!-- Row 6 -->
-                <text x="875" y="530" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">SHIPPED_BY</text>
-                <text x="1020" y="530" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">ORDERS &mdash; SHIPMENT</text>
-                <text x="1330" y="530" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">1:N</text>
-
-                <!-- Row 7 -->
-                <text x="875" y="558" fill="#38bdf8" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12">DISPATCHED_FROM</text>
-                <text x="1020" y="558" fill="#cbd5e1" font-family="'DM Sans', sans-serif" font-size="12">WAREHOUSE &mdash; SHIPMENT</text>
-                <text x="1330" y="558" fill="#ef4444" font-family="'DM Sans', sans-serif" font-weight="700" font-size="12" text-anchor="end">1:N</text>
-            </g>
-        </svg>
-    </div>
-</div>
-
-                    <!-- Core Relationships Table -->
-                    <div class="schema-cluster" style="margin: 0 16px 20px 16px;">
-                        <div class="schema-cluster-header">
-                            <h3><span>📑</span> Formal Relational Constraints &amp; Cardinality Matrix</h3>
-                        </div>
-                        <div style="overflow-x:auto;">
-                            <table class="report-table">
-                                <thead>
-                                    <tr>
-                                        <th>Relationship</th>
-                                        <th>Participating Entities</th>
-                                        <th>Cardinality</th>
-                                        <th>Attributes / Participation Rules</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td><strong>SUPPLIES</strong></td><td>SUPPLIER &mdash; PRODUCT</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>LeadTimeDays</code></td><td><button class="button small secondary-button" onclick="openTableInExplorer('SUPPLIES')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>STORED_IN</strong></td><td>PRODUCT &mdash; WAREHOUSE</td><td><span class="badge badge-purple">M:N</span></td><td>Has descriptive attribute: <code>Quantity</code> (STOCK table)</td><td><button class="button small secondary-button" onclick="openTableInExplorer('STOCK')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>CONTAINS</strong></td><td>PRODUCT &mdash; ORDERS</td><td><span class="badge badge-purple">M:N</span></td><td>Has attribute: <code>Qty</code> (Double line = ORDERS total participation)</td><td><button class="button small secondary-button" onclick="openTableInExplorer('ORDER_ITEM')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>WORKS_AT</strong></td><td>WAREHOUSE &mdash; EMPLOYEE</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = EMPLOYEE total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('EMPLOYEE')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>PLACES</strong></td><td>CUSTOMER &mdash; ORDERS</td><td><span class="badge badge-blue">1:N</span></td><td>Customer places 1 or many orders</td><td><button class="button small secondary-button" onclick="openTableInExplorer('ORDERS')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>SHIPPED_BY</strong></td><td>ORDERS &mdash; SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('SHIPMENT')">View Table &#x2197;</button></td></tr>
-                                    <tr><td><strong>DISPATCHED_FROM</strong></td><td>WAREHOUSE &mdash; SHIPMENT</td><td><span class="badge badge-blue">1:N</span></td><td>Double line = SHIPMENT total participation</td><td><button class="button small secondary-button" onclick="openTableInExplorer('GOODS_MOVEMENT')">View Table &#x2197;</button></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Expandable Reference Archive Sketch -->
-                    <details class="diagram-archive-accordion" style="margin: 20px 16px;">
-                        <summary>📷 View Classic ER Paper Sketch Archive (Chen Notation Original)</summary>
-                        <div class="diagram-archive-box">
-                            <img src="images/er_diagram.png" alt="Classic ER Model Original Sketch">
-                        </div>
-                    </details>
-                </section>
-            </div>
-        </section>
-
     </main>
 
 </div>

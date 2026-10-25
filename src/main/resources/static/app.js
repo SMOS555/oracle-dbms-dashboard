@@ -1022,7 +1022,6 @@ function showPage(page) {
         graph: "Neo4j Graph (Organized Supply Chain)",
         triggers: "Database Triggers",
         cursors: "Database Cursors",
-        eer: "ER & Enhanced ER (EER) Studio",
         cloud: "Cloud Deployment & Architecture"
     };
 
@@ -1039,8 +1038,6 @@ function showPage(page) {
                 layoutVisibleNodes();
             }
         }, 60);
-    } else if (page === "eer") {
-        initEerStudio();
     } else if (page === "cloud") {
         checkCloudHealth();
     } else if (page === "triggers") {
@@ -1657,10 +1654,66 @@ async function runOrderTotalCursor() {
     }
 }
 
+
+/* =====================================================
+   CURSOR 4
+   INVENTORY SHORTAGE / REORDER ALERT CURSOR
+===================================================== */
+
+async function runStockAlertCursor() {
+    const wrap = $("stockAlertCursorResult");
+    if (wrap) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Scanning inventory levels across warehouses...</h3></div>`;
+    }
+    try {
+        const data = await api("/api/cursors/stock-alerts");
+        renderCursorResult(
+            "stockAlertCursorResult",
+            data.rows,
+            "All warehouse stock levels are healthy (> 500 units)."
+        );
+    } catch (error) {
+        if (wrap) {
+            wrap.innerHTML = `<div class="affected"><strong>Cursor Error: </strong>${escapeHtml(error.message)}</div>`;
+        }
+        showToast(error.message);
+    }
+}
+
+
+/* =====================================================
+   CURSOR 5
+   PARAMETERIZED DRIVER DELIVERY DUTIES CURSOR
+===================================================== */
+
+async function runDriverDutiesCursor() {
+    const driverInput = $("cursorDriverId");
+    const driverId = driverInput ? driverInput.value.trim() : "D-05";
+    const wrap = $("driverDutiesCursorResult");
+    if (wrap) {
+        wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><h3>Traversing delivery assignments for ${escapeHtml(driverId)}...</h3></div>`;
+    }
+    try {
+        const data = await api(`/api/cursors/driver-duties?driverId=${encodeURIComponent(driverId)}`);
+        renderCursorResult(
+            "driverDutiesCursorResult",
+            data.rows,
+            `No delivery duties assigned to driver ${driverId}.`
+        );
+    } catch (error) {
+        if (wrap) {
+            wrap.innerHTML = `<div class="affected"><strong>Cursor Error: </strong>${escapeHtml(error.message)}</div>`;
+        }
+        showToast(error.message);
+    }
+}
+
 async function loadAllCursors() {
     runCustomerCursor();
     runOrderCursor();
     runOrderTotalCursor();
+    runStockAlertCursor();
+    runDriverDutiesCursor();
 }
 
 
@@ -1886,6 +1939,38 @@ if ($("runOrderTotalCursor")) {
         );
 
 }
+
+
+/* STOCK SHORTAGE CURSOR */
+
+if ($("runStockAlertCursor")) {
+    $("runStockAlertCursor").addEventListener("click", runStockAlertCursor);
+}
+
+
+/* DRIVER DUTIES CURSOR */
+
+if ($("runDriverDutiesCursor")) {
+    $("runDriverDutiesCursor").addEventListener("click", runDriverDutiesCursor);
+}
+
+if ($("cursorDriverSelect")) {
+    $("cursorDriverSelect").addEventListener("change", (e) => {
+        if ($("cursorDriverId")) {
+            $("cursorDriverId").value = e.target.value;
+        }
+        runDriverDutiesCursor();
+    });
+}
+
+document.querySelectorAll(".cursor-driver-pill").forEach(pill => {
+    pill.addEventListener("click", () => {
+        const val = pill.dataset.driver;
+        if ($("cursorDriverId")) $("cursorDriverId").value = val;
+        if ($("cursorDriverSelect")) $("cursorDriverSelect").value = val;
+        runDriverDutiesCursor();
+    });
+});
 
 
 /* CLOSE MODAL */
@@ -3066,440 +3151,6 @@ async function loadBottlenecks() {
         }
     } catch (ignored) {}
 }
-
-
-/* =====================================================
-   ER & ENHANCED ER (EER) STUDIO
-===================================================== */
-
-const EER_MERMAID_CODE = `classDiagram
-    direction TB
-
-    class PRODUCT {
-        <<Superclass>>
-        +String PRODUCTID
-        +String PNAME
-        +String CATEGORY
-        +Decimal UNITPRICE
-    }
-    class PERISHABLE_PRODUCT {
-        <<Subclass>>
-        +Integer SHELFLIFEDAYS
-        +String STORAGETEMPC
-    }
-    class HAZARDOUS_PRODUCT {
-        <<Subclass>>
-        +String HAZARDCLASS
-        +String HANDLINGNOTE
-    }
-    PRODUCT <|-- PERISHABLE_PRODUCT : Disjoint
-    PRODUCT <|-- HAZARDOUS_PRODUCT : Disjoint
-
-    class EMPLOYEE {
-        <<Superclass>>
-        +String EMPID
-        +String ENAME
-        +String ROLE
-        +Decimal SALARY
-        +String SUPERVISORID
-    }
-    class MANAGER {
-        <<Subclass>>
-        +String LEVELNO
-        +Decimal BONUS
-    }
-    class DRIVER {
-        <<Subclass>>
-        +String LICENSENO
-        +Date EXPIRY
-    }
-    EMPLOYEE <|-- MANAGER : Disjoint
-    EMPLOYEE <|-- DRIVER : Disjoint
-
-    class GOODS_MOVEMENT {
-        <<Superclass>>
-        +String MOVEMENTID
-        +String ORDERID
-        +String WAREHOUSEID
-        +Date MOVEDATE
-    }
-    class SHIPMENT {
-        <<Subclass>>
-        +Date DELIVERYDATE
-    }
-    class GOODS_RETURN {
-        <<Subclass>>
-        +String REASON
-        +Decimal REFUNDAMT
-    }
-    GOODS_MOVEMENT <|-- SHIPMENT : Disjoint
-    GOODS_MOVEMENT <|-- GOODS_RETURN : Disjoint
-
-    class CUSTOMER {
-        +String CUSTID
-        +String CNAME
-        +String CITY
-    }
-    class ORDERS {
-        +String ORDERID
-        +Date ORDERDATE
-        +String STATUS
-    }
-    class ORDER_ITEM {
-        <<Weak Entity>>
-        +String ORDERID
-        +String PRODUCTID
-        +Integer QTY
-        +Decimal PRICE
-    }
-    class WAREHOUSE {
-        +String WAREHOUSEID
-        +String WNAME
-        +String CITY
-        +Integer CAPACITY
-    }
-    class SUPPLIER {
-        +String SUPPLIERID
-        +String SNAME
-        +String CITY
-    }
-
-    CUSTOMER --> ORDERS : places
-    ORDERS *-- ORDER_ITEM : contains
-    ORDER_ITEM --> PRODUCT : references
-    SUPPLIER --> PRODUCT : supplies
-    ORDERS --> GOODS_MOVEMENT : triggers
-    WAREHOUSE --> GOODS_MOVEMENT : fulfills
-`;
-
-const RELATIONAL_ER_MERMAID_CODE = `erDiagram
-    CITY ||--o{ SUPPLIER : "located_in"
-    CITY ||--o{ CUSTOMER : "resides_in"
-    CITY ||--o{ WAREHOUSE : "located_in"
-    CITY ||--o{ DRIVER_CITY : "transit_route"
-    CITY ||--o{ DELIVERY_DUTY : "delivery_city"
-
-    SUPPLIER ||--|{ SUPPLIER_PHONE : "has"
-    SUPPLIER ||--o{ SUPPLIES : "supplies"
-    SUPPLIER ||--o{ INSPECTION : "inspected"
-
-    PRODUCT ||--o{ SUPPLIES : "supplied_by"
-    PRODUCT ||--o{ INSPECTION : "tested_in"
-    PRODUCT ||--o{ STOCK : "stored_in"
-    PRODUCT ||--o| PERISHABLE_PRODUCT : "specializes"
-    PRODUCT ||--o| HAZARDOUS_PRODUCT : "specializes"
-    PRODUCT ||--o{ ORDER_ITEM : "ordered_in"
-
-    WAREHOUSE ||--o{ STOCK : "holds"
-    WAREHOUSE ||--o{ EMPLOYEE : "employs"
-    WAREHOUSE ||--o{ GOODS_MOVEMENT : "originates"
-    WAREHOUSE ||--o| MANAGER : "managed_by"
-
-    EMPLOYEE ||--o| MANAGER : "is_a"
-    EMPLOYEE ||--o| DRIVER : "is_a"
-    EMPLOYEE ||--o{ EMPLOYEE : "supervises"
-
-    DRIVER ||--o{ DRIVER_CITY : "covers"
-    DRIVER ||--o{ ORDER_DRIVER : "assigned"
-    DRIVER ||--o{ DELIVERY_DUTY : "delivers"
-
-    CUSTOMER ||--o{ ORDERS : "places"
-
-    ORDERS ||--|{ ORDER_ITEM : "contains"
-    ORDERS ||--o{ ORDER_DRIVER : "dispatched_to"
-    ORDERS ||--o{ DELIVERY_DUTY : "routed"
-    ORDERS ||--o{ GOODS_MOVEMENT : "triggers"
-
-    GOODS_MOVEMENT ||--o| SHIPMENT : "completes"
-    GOODS_MOVEMENT ||--o| GOODS_RETURN : "reverses"
-
-    CITY {
-        string CITY PK
-        string STATE
-    }
-    SUPPLIER {
-        string SUPPLIERID PK
-        string SNAME
-        string CITY FK
-    }
-    SUPPLIER_PHONE {
-        string SUPPLIERID PK
-        string PHONE PK
-    }
-    PRODUCT {
-        string PRODUCTID PK
-        string PNAME
-        string CATEGORY
-        number UNITPRICE
-    }
-    PERISHABLE_PRODUCT {
-        string PRODUCTID PK
-        int SHELFLIFEDAYS
-        string STORAGETEMPC
-    }
-    HAZARDOUS_PRODUCT {
-        string PRODUCTID PK
-        string HAZARDCLASS
-        string HANDLINGNOTE
-    }
-    WAREHOUSE {
-        string WAREHOUSEID PK
-        string WNAME
-        string CITY FK
-        int CAPACITY
-    }
-    CUSTOMER {
-        string CUSTID PK
-        string CNAME
-        string CITY FK
-        string PHONE
-    }
-    ORDERS {
-        string ORDERID PK
-        string CUSTID FK
-        date ORDERDATE
-        string STATUS
-    }
-    ORDER_ITEM {
-        string ORDERID PK
-        string PRODUCTID PK
-        int QTY
-        number PRICE
-    }
-`;
-
-let eerStudioInitialized = false;
-let eerZoom = 1.0;
-let relZoom = 1.0;
-let eerRendered = false;
-let relRendered = false;
-
-function applyDiagramZoom(type) {
-    const isEer = type === "eer";
-    const zoom = isEer ? eerZoom : relZoom;
-    const target = $(isEer ? "eerSvgDiagram" : "relSvgDiagram") || $(isEer ? "eerDiagramImg" : "erDiagramImg") || $(isEer ? "eerMermaidSvg" : "relMermaidSvg");
-    if (target) {
-        target.style.transform = `scale(${zoom})`;
-    }
-}
-
-function setupDiagramPanAndZoom(containerId, svgId, type) {
-    const container = $(containerId);
-    const svg = $(svgId);
-    if (!container || !svg) return;
-
-    let isPanning = false;
-    let startX = 0;
-    let startY = 0;
-    let scrollLeft = 0;
-    let scrollTop = 0;
-
-    container.addEventListener("mousedown", (e) => {
-        if (e.target.closest(".svg-entity") || e.target.closest(".svg-rel")) return;
-        isPanning = true;
-        startX = e.pageX - container.offsetLeft;
-        startY = e.pageY - container.offsetTop;
-        scrollLeft = container.scrollLeft;
-        scrollTop = container.scrollTop;
-    });
-
-    window.addEventListener("mouseup", () => {
-        isPanning = false;
-    });
-
-    container.addEventListener("mousemove", (e) => {
-        if (!isPanning) return;
-        e.preventDefault();
-        const x = e.pageX - container.offsetLeft;
-        const y = e.pageY - container.offsetTop;
-        const walkX = (x - startX) * 1.5;
-        const walkY = (y - startY) * 1.5;
-        container.scrollLeft = scrollLeft - walkX;
-        container.scrollTop = scrollTop - walkY;
-    });
-
-    container.addEventListener("wheel", (e) => {
-        if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                if (type === "eer") {
-                    eerZoom = Math.min(2.5, +(eerZoom + 0.1).toFixed(2));
-                } else {
-                    relZoom = Math.min(2.5, +(relZoom + 0.1).toFixed(2));
-                }
-            } else {
-                if (type === "eer") {
-                    eerZoom = Math.max(0.4, +(eerZoom - 0.1).toFixed(2));
-                } else {
-                    relZoom = Math.max(0.4, +(relZoom - 0.1).toFixed(2));
-                }
-            }
-            applyDiagramZoom(type);
-        }
-    }, { passive: false });
-}
-
-async function renderEerSvgDiagram() {
-    applyDiagramZoom("eer");
-}
-
-async function renderRelationalErSvgDiagram() {
-    applyDiagramZoom("rel");
-}
-
-function initEerStudio() {
-    if (!eerStudioInitialized) {
-        eerStudioInitialized = true;
-
-        setupDiagramPanAndZoom("eerSvgContainer", "eerSvgDiagram", "eer");
-        setupDiagramPanAndZoom("relSvgContainer", "relSvgDiagram", "rel");
-
-        // View toggle buttons
-        if ($("btnViewEer")) {
-            $("btnViewEer").addEventListener("click", () => {
-                $("eerConceptualView").classList.remove("hidden");
-                $("relationalErView").classList.add("hidden");
-                $("btnViewEer").className = "button primary-button";
-                $("btnViewRelationalEr").className = "button secondary-button";
-                applyDiagramZoom("eer");
-            });
-        }
-
-        if ($("btnViewRelationalEr")) {
-            $("btnViewRelationalEr").addEventListener("click", () => {
-                $("eerConceptualView").classList.add("hidden");
-                $("relationalErView").classList.remove("hidden");
-                $("btnViewEer").className = "button secondary-button";
-                $("btnViewRelationalEr").className = "button primary-button";
-                applyDiagramZoom("rel");
-                if ($("schemaTableSelect")) {
-                    populateSchemaTableSelect();
-                }
-            });
-        }
-
-        // Copy Mermaid code (if present)
-        if ($("btnCopyMermaid")) {
-            $("btnCopyMermaid").addEventListener("click", () => {
-                const isEer = !$("eerConceptualView").classList.contains("hidden");
-                const code = isEer ? EER_MERMAID_CODE : RELATIONAL_ER_MERMAID_CODE;
-                navigator.clipboard.writeText(code).then(() => {
-                    showToast("Diagram code copied to clipboard!");
-                });
-            });
-        }
-
-        // Zoom controls for EER
-        if ($("btnZoomInEer")) {
-            $("btnZoomInEer").addEventListener("click", () => {
-                eerZoom = Math.min(2.5, +(eerZoom + 0.15).toFixed(2));
-                applyDiagramZoom("eer");
-            });
-        }
-        if ($("btnZoomOutEer")) {
-            $("btnZoomOutEer").addEventListener("click", () => {
-                eerZoom = Math.max(0.4, +(eerZoom - 0.15).toFixed(2));
-                applyDiagramZoom("eer");
-            });
-        }
-        if ($("btnResetEerZoom")) {
-            $("btnResetEerZoom").addEventListener("click", () => {
-                eerZoom = 1.0;
-                applyDiagramZoom("eer");
-            });
-        }
-
-        // Zoom controls for Relational ER
-        if ($("btnZoomInRel")) {
-            $("btnZoomInRel").addEventListener("click", () => {
-                relZoom = Math.min(2.5, +(relZoom + 0.15).toFixed(2));
-                applyDiagramZoom("rel");
-            });
-        }
-        if ($("btnZoomOutRel")) {
-            $("btnZoomOutRel").addEventListener("click", () => {
-                relZoom = Math.max(0.4, +(relZoom - 0.15).toFixed(2));
-                applyDiagramZoom("rel");
-            });
-        }
-        if ($("btnResetRelZoom")) {
-            $("btnResetRelZoom").addEventListener("click", () => {
-                relZoom = 1.0;
-                applyDiagramZoom("rel");
-            });
-        }
-
-        if ($("schemaTableSelect")) {
-            $("schemaTableSelect").addEventListener("change", e => {
-                inspectTableSchema(e.target.value);
-            });
-        }
-    }
-
-    applyDiagramZoom("eer");
-}
-
-function populateSchemaTableSelect() {
-    const sel = $("schemaTableSelect");
-    if (!sel || sel.options.length > 1) return;
-
-    const tables = state.tables.length ? state.tables : [
-        "CITY", "SUPPLIER", "SUPPLIER_PHONE", "PRODUCT", "PERISHABLE_PRODUCT",
-        "HAZARDOUS_PRODUCT", "SUPPLIES", "INSPECTION", "WAREHOUSE", "STOCK",
-        "EMPLOYEE", "MANAGER", "DRIVER", "DRIVER_CITY", "CUSTOMER", "ORDERS",
-        "ORDER_ITEM", "ORDER_DRIVER", "DELIVERY_DUTY", "GOODS_MOVEMENT",
-        "SHIPMENT", "GOODS_RETURN"
-    ];
-
-    sel.innerHTML = `<option value="">Select a table to inspect...</option>` +
-        tables.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
-}
-
-async function inspectTableSchema(tableName) {
-    const box = $("tableSchemaDetails");
-    if (!box || !tableName) return;
-
-    box.innerHTML = `<p style="color:#94a3b8;">Loading schema for ${escapeHtml(tableName)}...</p>`;
-
-    try {
-        const data = await api(`/api/tables/${encodeURIComponent(tableName)}/columns`);
-        const cols = data.columns || [];
-        const pks = new Set(data.primaryKeys || []);
-
-        let html = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h4 style="margin:0; font-size:1rem; color:#f8fafc;">Table: <code>${escapeHtml(tableName)}</code></h4>
-                <span class="badge badge-purple">${cols.length} Columns</span>
-            </div>
-            <table class="result-table">
-                <thead>
-                    <tr>
-                        <th>Key</th>
-                        <th>Column Name</th>
-                        <th>Data Type</th>
-                        <th>Length</th>
-                        <th>Nullable</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${cols.map(c => `
-                        <tr>
-                            <td>${pks.has(c.name) ? `<span class="badge badge-amber">PK</span>` : ""}</td>
-                            <td><strong>${escapeHtml(c.name)}</strong></td>
-                            <td><code>${escapeHtml(c.type)}</code></td>
-                            <td>${c.length !== null ? escapeHtml(String(c.length)) : "-"}</td>
-                            <td>${c.nullable ? "NULL" : "NOT NULL"}</td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
-        `;
-        box.innerHTML = html;
-    } catch (e) {
-        box.innerHTML = `<p style="color:#ef4444;">Error: ${escapeHtml(e.message)}</p>`;
-    }
-}
-
 
 /* =====================================================
    CLOUD DEPLOYMENT & HEALTH CHECK
